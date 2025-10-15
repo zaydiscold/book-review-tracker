@@ -1,0 +1,12 @@
+{
+  "name": "book-review-tracker",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["book-review-tracker", "local-first", "zayd / cold"],
+  "author": "zayd / cold",
+  "license": "ISC",
+  "description": ""
+}

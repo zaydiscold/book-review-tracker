@@ -1,0 +1,20 @@
+# Codex Prompt — Book Review Tracker: Next Actions
+
+The scaffold now includes a React + Vite frontend, Express backend, IndexedDB data layer, OpenLibrary search + cover integration, inline review-on-save workflow with unread library tracking, export helpers, and optional Discord webhook posting. Use this prompt when you want the assistant to extend the project.
+
+## Suggested Follow-Up Tasks
+
+1. Harden the IndexedDB wrapper with migrations, per-user review history, and error handling.
+2. Flesh out `/api/scan` to parse ISBNs and query a public catalogue (OpenLibrary integration already exists client-side).
+3. Integrate a real spellcheck library (nspell or typo-js) behind the current helper.
+4. Add CI scripts plus lint/test commands in the frontend and backend `package.json` files.
+5. Prototype collaborative Discord features: emoji-vote averages, shared leaderboards, and opt-out/clear-vote flows.
+6. Implement import flows and alternative export formats (CSV, Markdown summaries).
+7. Extend the OpenLibrary availability prototype into a full borrow/download workflow with account linking and offline reader handoffs.
+
+8. Promote the Discord webhook into a full bot (store message IDs, sync reactions, and update embeds live).
+9. Finish the Discord sharing controls (full vs summary toggle) with richer reaction UX and secure opt-in per review.
+10. Flesh out the new library tools placeholders with real flows (imports, stats dashboards, device sync) and align the Discord panel polish with final UX.
+11. Add comprehensive OpenLibrary search testing: verify search results, cover fetching, availability data, and error handling with various ISBNs and titles.
+12. Improve star rating UX with visual feedback (hover states, click zones, accessibility labels).
+Provide one task (or a small batch) per run so the assistant can focus on it completely.
