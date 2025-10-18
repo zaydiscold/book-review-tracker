@@ -1,0 +1,28 @@
+:root {
+  --autumn-light: #fff5ec;
+  --autumn-peach: #f9dfc6;
+  --autumn-orange: #f2c199;
+  --burnt-orange: #d9822b;
+  --cranberry: #a73636;
+  --goldenrod: #e5b659;
+  --bark: #3c2f2f;
+  --espresso: #2c1e1e;
+
+  --autumn-gradient: linear-gradient(
+    to bottom,
+    #fff5ec 0%,
+    #f9dfc6 30%,
+    #f2c199 65%,
+    rgba(217, 130, 43, 0.95) 100%
+  );
+}
+
+body {
+  background: var(--autumn-gradient);
+  color: var(--bark);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+#root {
+  min-height: 100vh;
+}

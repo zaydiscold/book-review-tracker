@@ -194,55 +194,54 @@ export async function getBooks() {
 }
 
 export async function saveReview(review) {
+  if (!review || !review.bookId) {
+    throw new Error("saveReview requires a review with a bookId");
+  }
+
   const database = await initDB();
 
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(REVIEW_STORE, "readwrite");
     const store = transaction.objectStore(REVIEW_STORE);
-    const index = store.index("bookId");
-    const lookup = index.getAll(review.bookId);
-
     const now = new Date().toISOString();
 
-    lookup.onsuccess = () => {
-      const existingList = lookup.result ?? [];
-      const [primary, ...duplicates] = existingList;
-
-      if (primary) {
+    if (review.id) {
+      const existingRequest = store.get(review.id);
+      existingRequest.onsuccess = () => {
+        const existing = existingRequest.result ?? {};
         const updatedReview = {
-          ...primary,
+          ...existing,
           ...review,
-          id: primary.id,
-          createdAt: primary.createdAt ?? now,
+          id: review.id,
+          bookId: review.bookId,
+          createdAt: existing.createdAt ?? review.createdAt ?? now,
           updatedAt: now
         };
         const updateRequest = store.put(updatedReview);
         updateRequest.onsuccess = () => {
-          // Clean up any duplicate entries left from earlier versions.
-          duplicates.forEach((orphan) => store.delete(orphan.id));
           resolve({ ...updatedReview });
         };
         updateRequest.onerror = () => {
           reject(updateRequest.error ?? new Error("Failed to update review"));
         };
-      } else {
-        const newReview = {
-          ...review,
-          createdAt: review.createdAt ?? now,
-          updatedAt: now
-        };
-        const addRequest = store.add(newReview);
-        addRequest.onsuccess = (event) => {
-          resolve({ ...newReview, id: event.target.result });
-        };
-        addRequest.onerror = () => {
-          reject(addRequest.error ?? new Error("Failed to add review"));
-        };
-      }
-    };
+      };
+      existingRequest.onerror = () => {
+        reject(existingRequest.error ?? new Error("Failed to fetch review for update"));
+      };
+      return;
+    }
 
-    lookup.onerror = () => {
-      reject(lookup.error ?? new Error("Failed to look up review by book"));
+    const newReview = {
+      ...review,
+      createdAt: review.createdAt ?? now,
+      updatedAt: now
+    };
+    const addRequest = store.add(newReview);
+    addRequest.onsuccess = (event) => {
+      resolve({ ...newReview, id: event.target.result });
+    };
+    addRequest.onerror = () => {
+      reject(addRequest.error ?? new Error("Failed to add review"));
     };
 
     transaction.onerror = () => {
@@ -322,4 +321,12 @@ export async function deleteReviewByBookId(bookId) {
 export async function clearAll() {
   await withStore(BOOK_STORE, "readwrite", (store) => store.clear());
   await withStore(REVIEW_STORE, "readwrite", (store) => store.clear());
+}
+
+export async function deleteReviewById(reviewId) {
+  if (reviewId === undefined || reviewId === null) {
+    return false;
+  }
+
+  return withStore(REVIEW_STORE, "readwrite", (store) => store.delete(reviewId));
 }

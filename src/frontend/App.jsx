@@ -7,6 +7,7 @@ import {
   getReviews,
   saveReview,
   deleteReviewByBookId,
+  deleteReviewById,
   deleteBook
 } from "../data/db";
 import { spellcheckText } from "../utils/spellcheck";
@@ -17,20 +18,312 @@ import { getCoverUrl, hasCover } from "../utils/covers";
 
 // Placeholder: future UI modules (filters, charts, sync indicators) will mount here.
 const THEME = {
-  background: "linear-gradient(145deg, #fde3c8 0%, #f9d1a2 28%, #f6b16a 60%, #f1894d 85%, #392419 100%)",
-  backgroundSolid: "#2d1a13",
-  surface: "rgba(255, 248, 240, 0.72)",
-  surfaceAlt: "rgba(255, 255, 255, 0.85)",
-  border: "rgba(255, 145, 77, 0.4)",
-  textPrimary: "#2f1b13",
-  textMuted: "rgba(47, 27, 19, 0.68)",
-  accent: "#ff7a2a",
-  accentHover: "#ff9f61",
-  accentSoft: "rgba(255, 122, 42, 0.16)",
-  success: "#2f9f63",
-  warning: "#ffc153",
-  danger: "#e24652"
+  background: "linear-gradient(155deg, var(--autumn-light) 0%, var(--autumn-peach) 28%, rgba(242, 193, 153, 0.88) 60%, rgba(217, 130, 43, 0.92) 100%)",
+  backgroundSolid: "var(--espresso)",
+  surface: "rgba(249, 223, 198, 0.85)",
+  surfaceAlt: "rgba(242, 193, 153, 0.68)",
+  border: "rgba(217, 130, 43, 0.42)",
+  textPrimary: "var(--bark)",
+  textMuted: "rgba(60, 47, 47, 0.72)",
+  accent: "var(--burnt-orange)",
+  accentHover: "var(--goldenrod)",
+  accentSoft: "rgba(242, 193, 153, 0.28)",
+  success: "#2F9F63",
+  warning: "var(--goldenrod)",
+  danger: "var(--cranberry)"
 };
+
+const SAMPLE_LIBRARY = [
+  {
+    book: {
+      title: "Harry Potter and the Philosopher's Stone",
+      author: "J.K. Rowling",
+      status: "reading",
+      cover: { type: "id", value: "10521270" },
+      openLibraryUrl: "https://openlibrary.org/works/OL82563W",
+      openLibraryIdentifiers: {
+        id: "10521270",
+        isbn: ["9780747532699", "0747532699"],
+        olid: ["OL22856696M"],
+        lccn: [],
+        oclc: []
+      },
+      availability: {
+        status: "borrow_available",
+        isReadAvailable: false,
+        isBorrowAvailable: true,
+        previewUrl: "https://openlibrary.org/works/OL82563W",
+        borrowUrl: "https://openlibrary.org/books/OL22856696M",
+        openLibraryWorkUrl: "https://openlibrary.org/works/OL82563W",
+        openLibraryEditionUrl: "https://openlibrary.org/books/OL22856696M",
+        hasDownload: false,
+        identifier: null,
+        identifierType: null
+      }
+    }
+  },
+  {
+    book: {
+      title: "Dune",
+      author: "Frank Herbert",
+      status: "re-reading",
+      cover: { type: "id", value: "11481354" },
+      openLibraryUrl: "https://openlibrary.org/works/OL893415W",
+      openLibraryIdentifiers: {
+        id: "11481354",
+        isbn: ["9780441172719", "0441172717"],
+        olid: ["OL32848840M"],
+        lccn: [],
+        oclc: []
+      },
+      availability: {
+        status: "borrow_available",
+        isReadAvailable: false,
+        isBorrowAvailable: true,
+        previewUrl: "https://openlibrary.org/works/OL893415W",
+        borrowUrl: "https://openlibrary.org/books/OL32848840M",
+        openLibraryWorkUrl: "https://openlibrary.org/works/OL893415W",
+        openLibraryEditionUrl: "https://openlibrary.org/books/OL32848840M",
+        hasDownload: false,
+        identifier: null,
+        identifierType: null
+      }
+    },
+    review: {
+      rating: 9.2,
+      text: "Second journey through Arrakis still hits hard—annotated politics and spice routes all over the margins."
+    }
+  },
+  {
+    book: {
+      title: "The Lord of the Rings",
+      author: "J.R.R. Tolkien",
+      status: "finished",
+      cover: { type: "id", value: "14625765" },
+      openLibraryUrl: "https://openlibrary.org/works/OL27448W",
+      openLibraryIdentifiers: {
+        id: "14625765",
+        isbn: ["9780618640157", "0618640150"],
+        olid: ["OL51694024M"],
+        lccn: [],
+        oclc: []
+      },
+      availability: {
+        status: "borrow_available",
+        isReadAvailable: false,
+        isBorrowAvailable: true,
+        previewUrl: "https://openlibrary.org/works/OL27448W",
+        borrowUrl: "https://openlibrary.org/books/OL51694024M",
+        openLibraryWorkUrl: "https://openlibrary.org/works/OL27448W",
+        openLibraryEditionUrl: "https://openlibrary.org/books/OL51694024M",
+        hasDownload: false,
+        identifier: null,
+        identifierType: null
+      }
+    },
+    review: {
+      rating: 9.8,
+      text: "Extended-edition weekends paid off—every chapter still feels like the gold standard for epic fantasy."
+    }
+  },
+  {
+    book: {
+      title: "Nineteen Eighty-Four",
+      author: "George Orwell",
+      status: "did-not-finish",
+      cover: { type: "id", value: "9267242" },
+      openLibraryUrl: "https://openlibrary.org/works/OL1168083W",
+      openLibraryIdentifiers: {
+        id: "9267242",
+        isbn: ["9780451524935", "0451524934"],
+        olid: ["OL21733390M"],
+        lccn: [],
+        oclc: []
+      },
+      availability: {
+        status: "borrow_available",
+        isReadAvailable: false,
+        isBorrowAvailable: true,
+        previewUrl: "https://openlibrary.org/works/OL1168083W",
+        borrowUrl: "https://openlibrary.org/books/OL21733390M",
+        openLibraryWorkUrl: "https://openlibrary.org/works/OL1168083W",
+        openLibraryEditionUrl: "https://openlibrary.org/books/OL21733390M",
+        hasDownload: false,
+        identifier: null,
+        identifierType: null
+      }
+    },
+    review: {
+      rating: 6,
+      text: "Dystopian dread overload this pass—tapped out at Room 101 and logged it as a pause point."
+    }
+  },
+  {
+    book: {
+      title: "To Kill a Mockingbird",
+      author: "Harper Lee",
+      status: "library",
+      cover: { type: "id", value: "12606502" },
+      openLibraryUrl: "https://openlibrary.org/works/OL3140822W",
+      openLibraryIdentifiers: {
+        id: "12606502",
+        isbn: ["9780061120084", "0061120081"],
+        olid: ["OL37027359M"],
+        lccn: [],
+        oclc: []
+      },
+      availability: {
+        status: "borrow_available",
+        isReadAvailable: false,
+        isBorrowAvailable: true,
+        previewUrl: "https://openlibrary.org/works/OL3140822W",
+        borrowUrl: "https://openlibrary.org/books/OL37027359M",
+        openLibraryWorkUrl: "https://openlibrary.org/works/OL3140822W",
+        openLibraryEditionUrl: "https://openlibrary.org/books/OL37027359M",
+        hasDownload: false,
+        identifier: null,
+        identifierType: null
+      }
+    }
+  },
+  {
+    book: {
+      title: "Pride and Prejudice",
+      author: "Jane Austen",
+      status: "wishlist",
+      cover: null,
+      openLibraryUrl: "https://openlibrary.org/works/OL66554W",
+      openLibraryIdentifiers: {
+        id: "14348537",
+        isbn: ["9780141040349", "0141040343"],
+        olid: ["OL47044678M"],
+        lccn: [],
+        oclc: []
+      },
+      availability: null
+    }
+  },
+  {
+    book: {
+      title: "Moby Dick",
+      author: "Herman Melville",
+      status: "on-hold",
+      cover: { type: "id", value: "10544254" },
+      openLibraryUrl: "https://openlibrary.org/works/OL102749W",
+      openLibraryIdentifiers: {
+        id: "10544254",
+        isbn: ["9780142437247", "0142437247"],
+        olid: ["OL31857229M"],
+        lccn: [],
+        oclc: []
+      },
+      availability: {
+        status: "open",
+        isReadAvailable: true,
+        isBorrowAvailable: false,
+        previewUrl: "https://openlibrary.org/works/OL102749W",
+        borrowUrl: "https://openlibrary.org/works/OL102749W",
+        openLibraryWorkUrl: "https://openlibrary.org/works/OL102749W",
+        openLibraryEditionUrl: "https://openlibrary.org/books/OL31857229M",
+        hasDownload: true,
+        identifier: null,
+        identifierType: null
+      }
+    }
+  },
+  {
+    book: {
+      title: "The Great Gatsby",
+      author: "F. Scott Fitzgerald",
+      status: "finished",
+      cover: { type: "id", value: "10590366" },
+      openLibraryUrl: "https://openlibrary.org/works/OL468431W",
+      openLibraryIdentifiers: {
+        id: "10590366",
+        isbn: ["9780743273565", "0743273567"],
+        olid: ["OL22570129M"],
+        lccn: [],
+        oclc: []
+      },
+      availability: {
+        status: "borrow_available",
+        isReadAvailable: false,
+        isBorrowAvailable: true,
+        previewUrl: "https://openlibrary.org/works/OL468431W",
+        borrowUrl: "https://openlibrary.org/books/OL22570129M",
+        openLibraryWorkUrl: "https://openlibrary.org/works/OL468431W",
+        openLibraryEditionUrl: "https://openlibrary.org/books/OL22570129M",
+        hasDownload: false,
+        identifier: null,
+        identifierType: null
+      }
+    },
+    review: {
+      rating: 8.4,
+      text: "Jazz-age melancholy logged with a fresh read—Daisy notes and highlighted symbolism everywhere."
+    }
+  },
+  {
+    book: {
+      title: "The Catcher in the Rye",
+      author: "J.D. Salinger",
+      status: "reading",
+      cover: { type: "id", value: "9273490" },
+      openLibraryUrl: "https://openlibrary.org/works/OL3335245W",
+      openLibraryIdentifiers: {
+        id: "9273490",
+        isbn: ["9780316769488", "0316769487"],
+        olid: ["OL6089177M"],
+        lccn: [],
+        oclc: []
+      },
+      availability: {
+        status: "borrow_available",
+        isReadAvailable: false,
+        isBorrowAvailable: true,
+        previewUrl: "https://openlibrary.org/works/OL3335245W",
+        borrowUrl: "https://openlibrary.org/books/OL6089177M",
+        openLibraryWorkUrl: "https://openlibrary.org/works/OL3335245W",
+        openLibraryEditionUrl: "https://openlibrary.org/books/OL6089177M",
+        hasDownload: false,
+        identifier: null,
+        identifierType: null
+      }
+    }
+  },
+  {
+    book: {
+      title: "The Hobbit",
+      author: "J.R.R. Tolkien",
+      status: "finished",
+      cover: { type: "id", value: "14627509" },
+      openLibraryUrl: "https://openlibrary.org/works/OL27482W",
+      openLibraryIdentifiers: {
+        id: "14627509",
+        isbn: ["9780547928227", "054792822X"],
+        olid: ["OL51711263M"],
+        lccn: [],
+        oclc: []
+      },
+      availability: {
+        status: "borrow_available",
+        isReadAvailable: false,
+        isBorrowAvailable: true,
+        previewUrl: "https://openlibrary.org/works/OL27482W",
+        borrowUrl: "https://openlibrary.org/books/OL51711263M",
+        openLibraryWorkUrl: "https://openlibrary.org/works/OL27482W",
+        openLibraryEditionUrl: "https://openlibrary.org/books/OL51711263M",
+        hasDownload: false,
+        identifier: null,
+        identifierType: null
+      }
+    },
+    review: {
+      rating: 8.8,
+      text: "Comfort re-read logged with tea stains on the map foldout—perfect warm-up before another LOTR marathon."
+    }
+  }
+];
 const BOOK_STATUS_SECTIONS = [
   {
     label: "Plan & Collect",
@@ -62,10 +355,19 @@ const BOOK_STATUS_SECTIONS = [
 const BOOK_STATUSES = BOOK_STATUS_SECTIONS.flatMap((section) => section.options);
 
 const REVIEW_DISABLED_STATUSES = new Set(["wishlist", "library"]);
+const UNREAD_STATUSES = new Set(["wishlist", "library", "reading", "on-hold"]);
 const STATUS_LABELS = BOOK_STATUSES.reduce((acc, status) => {
   acc[status.value] = status.label;
   return acc;
 }, {});
+
+function isUnreadStatus(status) {
+  if (!status) {
+    return false;
+  }
+
+  return UNREAD_STATUSES.has(String(status));
+}
 
 const AVAILABILITY_STATUS_COPY = {
   open: "Available to read online",
@@ -136,11 +438,87 @@ const STAR_SYMBOL = "★";
 const STAR_COUNT = 5;
 const PST_TIME_ZONE = "America/Los_Angeles";
 const FUTURE_LIBRARY_TOOLS = [
-  "Bulk Import (Coming Soon)",
-  "Sync with eReader",
-  "Shelf Snapshot PDF",
-  "Reading Stats Dashboard"
+  { label: "Bulk Import (Coming Soon)" },
+  { label: "Sync with eReader" },
+  {
+    label: "Photo Stack Capture",
+    helper: "Snap a stack, auto-match via Open Library"
+  },
+  { label: "Shelf Snapshot PDF" },
+  { label: "Reading Stats Dashboard" }
 ];
+
+async function mergeSampleLibrary() {
+  const existing = await getBooks();
+  const existingByKey = new Map();
+
+  existing.forEach((book) => {
+    const key =
+      (book.openLibraryUrl ? book.openLibraryUrl.toLowerCase() : null) ??
+      (book.title ? book.title.toLowerCase() : null);
+    if (key) {
+      existingByKey.set(key, book);
+    }
+  });
+
+  const now = Date.now();
+
+  for (let index = 0; index < SAMPLE_LIBRARY.length; index += 1) {
+    const entry = SAMPLE_LIBRARY[index];
+    const baseKey =
+      (entry.book.openLibraryUrl ? entry.book.openLibraryUrl.toLowerCase() : null) ??
+      entry.book.title.toLowerCase();
+    const timestamp = new Date(now - index * 60000).toISOString();
+    const authorLower = entry.book.author ? entry.book.author.toLowerCase() : null;
+    const bookPayload = {
+      ...entry.book,
+      cover: entry.book.cover ? { ...entry.book.cover } : null,
+      openLibraryIdentifiers: entry.book.openLibraryIdentifiers
+        ? { ...entry.book.openLibraryIdentifiers }
+        : null,
+      availability: entry.book.availability ? { ...entry.book.availability } : null,
+      titleLower: entry.book.title.toLowerCase(),
+      authorLower,
+      updatedAt: timestamp
+    };
+
+    const existingBook = baseKey ? existingByKey.get(baseKey) : null;
+    let bookId;
+
+    if (existingBook) {
+      const mergedBook = {
+        ...existingBook,
+        ...bookPayload,
+        id: existingBook.id,
+        createdAt: existingBook.createdAt ?? timestamp
+      };
+      await updateBook(mergedBook);
+      existingByKey.set(baseKey, mergedBook);
+      bookId = mergedBook.id;
+    } else {
+      const createdAt = timestamp;
+      const bookWithTimestamps = {
+        ...bookPayload,
+        createdAt
+      };
+      bookId = await addBook(bookWithTimestamps);
+      if (baseKey) {
+        existingByKey.set(baseKey, { ...bookWithTimestamps, id: bookId });
+      }
+    }
+
+    if (entry.review && bookId) {
+      const reviewStatus = entry.review.status ?? entry.book.status ?? DEFAULT_STATUS;
+      await saveReview({
+        bookId,
+        rating: entry.review.rating,
+        text: entry.review.text,
+        status: reviewStatus,
+        unread: isUnreadStatus(reviewStatus)
+      });
+    }
+  }
+}
 
 function normalizeFiveValue(value) {
   if (typeof value !== "number" || Number.isNaN(value)) {
@@ -346,24 +724,232 @@ function shouldShowOpenLibraryLink(openLibraryUrl, availabilityActions) {
   return !availabilityActions.some((action) => action.url === openLibraryUrl);
 }
 
+function normalizeForMatch(value) {
+  if (!value) {
+    return "";
+  }
+
+  return String(value)
+    .toLowerCase()
+    .replace(/[’']/g, "'")
+    .replace(/[^a-z0-9']+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function compactForComparison(value) {
+  return normalizeForMatch(value).replace(/[\s']/g, "");
+}
+
+function extractAuthorCandidates(authorText) {
+  if (!authorText) {
+    return [];
+  }
+
+  return authorText
+    .replace(/&/g, ",")
+    .replace(/\band\b/gi, ",")
+    .split(",")
+    .map((part) => normalizeForMatch(part))
+    .filter(Boolean);
+}
+
+function authorsIntersect(bookAuthors, candidateAuthors) {
+  if (!Array.isArray(bookAuthors) || !Array.isArray(candidateAuthors)) {
+    return false;
+  }
+
+  return bookAuthors.some((author) => {
+    if (!author) {
+      return false;
+    }
+    const authorCompact = compactForComparison(author);
+    return candidateAuthors.some((candidate) => {
+      if (!candidate) {
+        return false;
+      }
+
+      if (candidate === author) {
+        return true;
+      }
+
+      const candidateCompact = compactForComparison(candidate);
+      if (!candidateCompact || !authorCompact) {
+        return false;
+      }
+
+      return (
+        candidateCompact === authorCompact ||
+        candidateCompact.includes(authorCompact) ||
+        authorCompact.includes(candidateCompact)
+      );
+    });
+  });
+}
+
+async function autoPopulateCoverIfNeeded(book) {
+  if (!book?.id || hasCover(book.cover)) {
+    return null;
+  }
+
+  const title = normalizeForMatch(book.title);
+  const authorList = extractAuthorCandidates(book.author);
+
+  if (!title || authorList.length === 0) {
+    return false;
+  }
+
+  const queryParts = [book.title, book.author].filter(Boolean);
+  if (queryParts.length === 0) {
+    return false;
+  }
+
+  try {
+    const results = await searchOpenLibrary(queryParts.join(" "), { limit: 10 });
+    const match = results.find((result) => {
+      if (!result?.cover) {
+        return false;
+      }
+
+      const resultTitle = normalizeForMatch(result.title);
+      if (!resultTitle || resultTitle !== title) {
+        return false;
+      }
+
+      const candidateAuthors = extractAuthorCandidates(result.author);
+      if (candidateAuthors.length === 0) {
+        return false;
+      }
+
+      return authorsIntersect(authorList, candidateAuthors);
+    });
+
+    if (!match) {
+      return null;
+    }
+
+    const updatedBook = {
+      ...book,
+      cover: match.cover ? { ...match.cover } : book.cover,
+      openLibraryUrl: book.openLibraryUrl ?? match.openLibraryUrl ?? null,
+      openLibraryIdentifiers: book.openLibraryIdentifiers ?? match.identifiers ?? null,
+      availability: book.availability ?? match.availability ?? null,
+      titleLower: book.title ? book.title.toLowerCase() : null,
+      authorLower: book.author ? book.author.toLowerCase() : null,
+      updatedAt: new Date().toISOString()
+    };
+
+    await updateBook(updatedBook);
+    return updatedBook;
+  } catch (error) {
+    console.error("Failed to auto-populate cover from Open Library", error);
+    return null;
+  }
+}
+
+const DEFAULT_STATUS = "finished";
+
 const emptyBookForm = {
   title: "",
   author: "",
-  status: "finished",
+  status: DEFAULT_STATUS,
   cover: null,
   openLibraryUrl: "",
   openLibraryIdentifiers: null,
   availability: null
 };
+
+function createReviewDraft(status = DEFAULT_STATUS) {
+  return {
+    rating: "",
+    text: "",
+    autoCorrect: true,
+    status
+  };
+}
+
 const emptyReviewForm = {
   bookId: "",
   rating: "",
   text: "",
-  autoCorrect: true
+  autoCorrect: true,
+  status: DEFAULT_STATUS
 };
 const DISCORD_STORAGE_KEY = "brtDiscordWebhook";
 const DISCORD_SHARE_MODE_KEY = "brtDiscordShareFull";
-const emptyReviewDraft = { rating: "", text: "", autoCorrect: true };
+const emptyReviewDraft = createReviewDraft();
+
+function applyBookUpdateToList(list, updatedBook) {
+  if (!updatedBook?.id) {
+    return list;
+  }
+
+  let changed = false;
+  const next = list.map((entry) => {
+    if (entry.id === updatedBook.id) {
+      changed = true;
+      return { ...entry, ...updatedBook };
+    }
+    return entry;
+  });
+
+  return changed ? next : list;
+}
+
+function Logo() {
+  return (
+    <div style={styles.logoWrapper}>
+      <div style={styles.logoIcon} aria-hidden="true">
+        <svg
+          width="72"
+          height="64"
+          viewBox="0 0 72 64"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient id="book-spine" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#F2C199" />
+              <stop offset="100%" stopColor="#D9822B" />
+            </linearGradient>
+            <linearGradient id="book-cover" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#FFF5EC" />
+              <stop offset="100%" stopColor="#F9DFC6" />
+            </linearGradient>
+            <linearGradient id="bookmark" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#A73636" />
+              <stop offset="100%" stopColor="#6e2121" />
+            </linearGradient>
+          </defs>
+          <rect x="6" y="10" width="18" height="46" rx="4" fill="url(#book-cover)" />
+          <rect x="26" y="8" width="20" height="48" rx="4" fill="url(#book-spine)" />
+          <rect x="48" y="14" width="18" height="42" rx="4" fill="#F4E2CF" />
+          <rect x="9" y="16" width="12" height="2.4" rx="1.2" fill="#D9822B" opacity="0.8" />
+          <rect x="9" y="24" width="12" height="2.4" rx="1.2" fill="#D9822B" opacity="0.65" />
+          <rect x="9" y="32" width="12" height="2.4" rx="1.2" fill="#D9822B" opacity="0.5" />
+          <rect x="30" y="18" width="12" height="2.4" rx="1.2" fill="#FDF2E6" opacity="0.9" />
+          <rect x="30" y="28" width="12" height="2.4" rx="1.2" fill="#FDF2E6" opacity="0.8" />
+          <rect x="30" y="38" width="12" height="2.4" rx="1.2" fill="#FDF2E6" opacity="0.7" />
+          <rect x="52" y="20" width="10" height="2.2" rx="1.1" fill="#D9822B" opacity="0.7" />
+          <rect x="52" y="28" width="10" height="2.2" rx="1.1" fill="#D9822B" opacity="0.55" />
+          <rect x="52" y="36" width="10" height="2.2" rx="1.1" fill="#D9822B" opacity="0.4" />
+          <path
+            d="M44 8 L44 0 L52 6"
+            fill="url(#bookmark)"
+            stroke="#6e2121"
+            strokeWidth="1"
+            strokeLinejoin="round"
+          />
+          <ellipse cx="36" cy="54" rx="28" ry="5" fill="rgba(60, 47, 47, 0.18)" />
+        </svg>
+      </div>
+      <div style={styles.logoTextGroup}>
+        <span style={styles.logoTitle}>Book Review Tracker</span>
+        <span style={styles.logoSubtitle}>a cozy corner for every chapter</span>
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   const [initialized, setInitialized] = useState(false);
@@ -383,14 +969,27 @@ export default function App() {
   const [addReviewWithBook, setAddReviewWithBook] = useState(
     !REVIEW_DISABLED_STATUSES.has(emptyBookForm.status)
   );
-  const [bookReviewDraft, setBookReviewDraft] = useState(() => ({ ...emptyReviewDraft }));
+  const [bookReviewDraft, setBookReviewDraft] = useState(() =>
+    createReviewDraft(emptyBookForm.status)
+  );
   const [reviewModal, setReviewModal] = useState({
     isOpen: false,
     bookId: null,
     book: null,
     existingReview: null
   });
-  const [modalReviewForm, setModalReviewForm] = useState(() => ({ ...emptyReviewDraft }));
+  const [modalReviewForm, setModalReviewForm] = useState(() =>
+    createReviewDraft(emptyBookForm.status)
+  );
+  const [coverRefreshing, setCoverRefreshing] = useState(false);
+  const isEditingBook = Boolean(editingBookFormId);
+
+  const applyBookPatch = useCallback((updatedBook) => {
+    if (!updatedBook?.id) {
+      return;
+    }
+    setBooks((prev) => applyBookUpdateToList(prev, updatedBook));
+  }, []);
 
   const showToast = useCallback((text, tone = "info") => {
     setToast({ id: Date.now(), text, tone });
@@ -404,6 +1003,8 @@ export default function App() {
     async function bootstrap() {
       try {
         await initDB();
+        await mergeSampleLibrary();
+        await mergeDuplicateBooks({ maxReviewsPerBook: 5 });
         await refreshData();
         setInitialized(true);
       } catch (error) {
@@ -491,6 +1092,356 @@ export default function App() {
     setReviews(reviewList);
   }
 
+  async function mergeDuplicateBooks({ maxReviewsPerBook = 5 } = {}) {
+    const latestBooks = await getBooks();
+    const latestReviews = await getReviews();
+
+    if (!Array.isArray(latestBooks) || latestBooks.length === 0) {
+      return {
+        mergedBooks: 0,
+        reassignedReviews: 0,
+        removedDuplicateReviews: 0,
+        trimmedOverflowReviews: 0
+      };
+    }
+
+    const booksById = new Map(latestBooks.map((book) => [book.id, { ...book }]));
+    const reviewsByBookId = new Map();
+    latestReviews.forEach((review) => {
+      if (!review?.bookId) {
+        return;
+      }
+      const list = reviewsByBookId.get(review.bookId) ?? [];
+      list.push({ ...review });
+      reviewsByBookId.set(review.bookId, list);
+    });
+
+    const groups = new Map();
+    booksById.forEach((book) => {
+      const normalizedTitle =
+        normalizeForMatch(book.title) || (book.title ?? "").trim().toLowerCase();
+      const normalizedAuthor =
+        normalizeForMatch(book.author) || (book.author ?? "").trim().toLowerCase();
+
+      const keyCandidates = new Set();
+      if (book.openLibraryUrl) {
+        keyCandidates.add(book.openLibraryUrl.trim().toLowerCase());
+      }
+
+      if (normalizedTitle) {
+        keyCandidates.add(`${normalizedTitle}::${normalizedAuthor || "unknown"}`);
+        if (!normalizedAuthor) {
+          keyCandidates.add(`title-only::${normalizedTitle}`);
+        }
+      }
+
+      if (keyCandidates.size === 0) {
+        keyCandidates.add(`book-id::${book.id}`);
+      }
+
+      keyCandidates.forEach((key) => {
+        const list = groups.get(key) ?? [];
+        list.push(book);
+        groups.set(key, list);
+      });
+    });
+
+    let mergedBooks = 0;
+    let reassignedReviews = 0;
+    let removedDuplicateReviews = 0;
+    let trimmedOverflowReviews = 0;
+    const processedBooks = new Set();
+
+    function dedupeReviewList(reviewList) {
+      if (!Array.isArray(reviewList) || reviewList.length === 0) {
+        return { keep: [], duplicates: [], overflow: [] };
+      }
+
+      const sorted = [...reviewList].sort((a, b) => {
+        const timeA = new Date(a.updatedAt ?? a.createdAt ?? 0).getTime();
+        const timeB = new Date(b.updatedAt ?? b.createdAt ?? 0).getTime();
+        return timeB - timeA;
+      });
+
+      const seen = new Set();
+      const unique = [];
+      const duplicates = [];
+
+      for (const review of sorted) {
+        const key = `${review.rating ?? "?"}::${normalizeForMatch(review.text)}`;
+        if (seen.has(key)) {
+          duplicates.push(review);
+        } else {
+          seen.add(key);
+          unique.push(review);
+        }
+      }
+
+      const overflow = unique.slice(maxReviewsPerBook);
+      const keep = unique.slice(0, maxReviewsPerBook);
+      return { keep, duplicates, overflow };
+    }
+
+    async function cleanupBook(book) {
+      if (!book || processedBooks.has(book.id)) {
+        return;
+      }
+
+      const reviewList = reviewsByBookId.get(book.id) ?? [];
+      const { keep, duplicates, overflow } = dedupeReviewList(reviewList);
+
+      for (const review of duplicates) {
+        await deleteReviewById(review.id);
+        removedDuplicateReviews += 1;
+      }
+
+      for (const review of overflow) {
+        await deleteReviewById(review.id);
+        trimmedOverflowReviews += 1;
+      }
+
+      const keptReviews = keep.map((review) => ({ ...review }));
+      reviewsByBookId.set(book.id, keptReviews);
+
+      let changed = false;
+      if (keptReviews.length > 0) {
+        const leadReview = keptReviews[0];
+        if (leadReview?.status && leadReview.status !== book.status) {
+          book.status = leadReview.status;
+          changed = true;
+        }
+        const hasUnreadReview = keptReviews.some((review) => isUnreadStatus(review.status));
+        if (book.unread !== hasUnreadReview) {
+          book.unread = hasUnreadReview;
+          changed = true;
+        }
+      } else {
+        const unreadFlag = isUnreadStatus(book.status);
+        if (book.unread !== unreadFlag) {
+          book.unread = unreadFlag;
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        book.titleLower = book.title ? book.title.toLowerCase() : null;
+        book.authorLower = book.author ? book.author.toLowerCase() : null;
+        book.updatedAt = new Date().toISOString();
+        await updateBook(book);
+        booksById.set(book.id, book);
+      }
+
+      processedBooks.add(book.id);
+    }
+
+    for (const group of groups.values()) {
+      if (!Array.isArray(group) || group.length === 0) {
+        continue;
+      }
+
+      const activeGroup = group.filter((candidate) => booksById.has(candidate.id));
+      if (activeGroup.length === 0) {
+        continue;
+      }
+
+      activeGroup.sort((a, b) => {
+        const urlScore = Number(Boolean(b.openLibraryUrl)) - Number(Boolean(a.openLibraryUrl));
+        if (urlScore !== 0) {
+          return urlScore;
+        }
+        const coverScore = Number(hasCover(b.cover)) - Number(hasCover(a.cover));
+        if (coverScore !== 0) {
+          return coverScore;
+        }
+        const dateA = new Date(a.createdAt ?? a.updatedAt ?? 0).getTime();
+        const dateB = new Date(b.createdAt ?? b.updatedAt ?? 0).getTime();
+        if (dateA !== dateB) {
+          return dateA - dateB;
+        }
+        return (a.id ?? 0) - (b.id ?? 0);
+      });
+
+      const primary = activeGroup[0];
+      const duplicates = activeGroup.slice(1);
+
+      if (duplicates.length > 0) {
+        for (const duplicate of duplicates) {
+          if (!booksById.has(duplicate.id)) {
+            continue;
+          }
+
+          const duplicateReviews = reviewsByBookId.get(duplicate.id) ?? [];
+          for (const review of duplicateReviews) {
+            const updatedReview = await saveReview({
+              ...review,
+              id: review.id,
+              bookId: primary.id
+            });
+            reassignedReviews += 1;
+
+            const existingList = reviewsByBookId.get(primary.id) ?? [];
+            const filteredList = existingList.filter((item) => item.id !== updatedReview.id);
+            filteredList.push(updatedReview);
+            reviewsByBookId.set(primary.id, filteredList);
+          }
+
+          reviewsByBookId.delete(duplicate.id);
+
+          if (!hasCover(primary.cover) && hasCover(duplicate.cover)) {
+            primary.cover = duplicate.cover;
+          }
+
+          if (!primary.openLibraryUrl && duplicate.openLibraryUrl) {
+            primary.openLibraryUrl = duplicate.openLibraryUrl;
+          }
+
+          if (!primary.openLibraryIdentifiers && duplicate.openLibraryIdentifiers) {
+            primary.openLibraryIdentifiers = duplicate.openLibraryIdentifiers;
+          }
+
+          if (!primary.availability && duplicate.availability) {
+            primary.availability = duplicate.availability;
+          }
+
+          await deleteBook(duplicate.id);
+          booksById.delete(duplicate.id);
+          mergedBooks += 1;
+        }
+
+        primary.titleLower = primary.title ? primary.title.toLowerCase() : null;
+        primary.authorLower = primary.author ? primary.author.toLowerCase() : null;
+        primary.updatedAt = new Date().toISOString();
+        await updateBook(primary);
+        booksById.set(primary.id, primary);
+      }
+
+      await cleanupBook(primary);
+    }
+
+    for (const book of booksById.values()) {
+      await cleanupBook(book);
+    }
+
+    return {
+      mergedBooks,
+      reassignedReviews,
+      removedDuplicateReviews,
+      trimmedOverflowReviews
+    };
+  }
+
+  function formatCleanupSummary(result) {
+    if (!result) {
+      return "";
+    }
+
+    const segments = [];
+
+    if (result.mergedBooks > 0) {
+      segments.push(
+        `${result.mergedBooks} duplicate book${result.mergedBooks === 1 ? "" : "s"} merged`
+      );
+    }
+
+    if (result.reassignedReviews > 0) {
+      segments.push(
+        `${result.reassignedReviews} review${result.reassignedReviews === 1 ? "" : "s"} reassigned`
+      );
+    }
+
+    if (result.removedDuplicateReviews > 0) {
+      segments.push(
+        `${result.removedDuplicateReviews} duplicate review${
+          result.removedDuplicateReviews === 1 ? "" : "s"
+        } removed`
+      );
+    }
+
+    if (result.trimmedOverflowReviews > 0) {
+      segments.push(
+        `${result.trimmedOverflowReviews} extra review${
+          result.trimmedOverflowReviews === 1 ? "" : "s"
+        } trimmed (max 5 per book)`
+      );
+    }
+
+    if (segments.length === 0) {
+      return "";
+    }
+
+    return ` Cleanup: ${segments.join(", ")}.`;
+  }
+
+  async function handleRefreshCovers() {
+    if (coverRefreshing) {
+      return;
+    }
+
+    const missingCovers = books.filter((book) => book && !hasCover(book.cover));
+    setCoverRefreshing(true);
+    try {
+      let updatedCount = 0;
+      const stagedUpdates = new Map();
+
+      if (missingCovers.length > 0) {
+        for (const book of missingCovers) {
+          // Process sequentially to stay within rate limits and avoid duplicate lookups.
+          // eslint-disable-next-line no-await-in-loop
+          const updatedBook = await autoPopulateCoverIfNeeded(book);
+          if (updatedBook) {
+            updatedCount += 1;
+            stagedUpdates.set(updatedBook.id, updatedBook);
+          }
+        }
+      }
+
+      if (stagedUpdates.size > 0) {
+        setBooks((prev) => prev.map((entry) => stagedUpdates.get(entry.id) ?? entry));
+      }
+
+      const dedupeResult = await mergeDuplicateBooks();
+      if (
+        updatedCount > 0 ||
+        dedupeResult.mergedBooks > 0 ||
+        dedupeResult.reassignedReviews > 0 ||
+        dedupeResult.removedDuplicateReviews > 0 ||
+        dedupeResult.trimmedOverflowReviews > 0
+      ) {
+        await refreshData();
+      }
+
+      const messageParts = [];
+      let tone = "info";
+
+      if (updatedCount > 0) {
+        messageParts.push(
+          `Added covers for ${updatedCount} book${updatedCount === 1 ? "" : "s"} via Open Library.`
+        );
+        tone = "success";
+      } else if (missingCovers.length === 0) {
+        messageParts.push("Covers already up to date.");
+      } else {
+        messageParts.push("No matching covers found via Open Library.");
+        tone = "warning";
+      }
+
+      const cleanupSummary = formatCleanupSummary(dedupeResult);
+      if (cleanupSummary) {
+        messageParts.push(cleanupSummary.trim());
+        tone = "success";
+      } else {
+        messageParts.push("No duplicate books or reviews detected.");
+      }
+
+      showToast(messageParts.join(" "), tone);
+    } catch (error) {
+      console.error("Cover refresh failed", error);
+      showToast("Cover refresh failed. See console for details.", "error");
+    } finally {
+      setCoverRefreshing(false);
+    }
+  }
+
   function handleBookStatusChange(event) {
     const nextStatus = event.target.value;
     const previousStatus = bookForm.status;
@@ -499,7 +1450,7 @@ export default function App() {
 
     if (REVIEW_DISABLED_STATUSES.has(nextStatus)) {
       setAddReviewWithBook(false);
-      setBookReviewDraft({ ...emptyReviewDraft });
+      setBookReviewDraft(createReviewDraft(nextStatus));
     } else {
       setAddReviewWithBook((prevValue) => {
         if (REVIEW_DISABLED_STATUSES.has(previousStatus)) {
@@ -507,6 +1458,10 @@ export default function App() {
         }
         return prevValue;
       });
+      setBookReviewDraft((prev) => ({
+        ...prev,
+        status: nextStatus
+      }));
     }
   }
 
@@ -517,15 +1472,17 @@ export default function App() {
       book: book,
       existingReview: existingReview
     });
-    
+
     if (existingReview) {
+      const baseDraft = createReviewDraft(existingReview.status ?? book?.status ?? DEFAULT_STATUS);
       setModalReviewForm({
+        ...baseDraft,
         rating: toFiveScale(existingReview.rating ?? null),
         text: existingReview.text ?? "",
         autoCorrect: true
       });
     } else {
-      setModalReviewForm({ ...emptyReviewDraft });
+      setModalReviewForm(createReviewDraft(book?.status ?? DEFAULT_STATUS));
     }
   }
 
@@ -536,13 +1493,18 @@ export default function App() {
       book: null,
       existingReview: null
     });
-    setModalReviewForm({ ...emptyReviewDraft });
+    setModalReviewForm(createReviewDraft());
   }
 
   async function handleModalReviewSubmit(event) {
     event.preventDefault();
     if (!reviewModal.bookId) {
       showToast("No book selected for review.", "error");
+      return;
+    }
+
+    if (!modalReviewForm.status) {
+      showToast("Select a reading status before saving your review.", "error");
       return;
     }
 
@@ -562,11 +1524,14 @@ export default function App() {
       : modalReviewForm.text;
 
     try {
+      const reviewStatus = modalReviewForm.status;
       const storedReview = await saveReview({
+        id: reviewModal.existingReview?.id ?? null,
         bookId: reviewModal.bookId,
         rating: fromFiveScale(ratingValueFive),
         text: cleanText,
-        unread: false
+        status: reviewStatus,
+        unread: isUnreadStatus(reviewStatus)
       });
 
       let discordResult = null;
@@ -582,16 +1547,48 @@ export default function App() {
         });
       }
 
+      let coverAdded = false;
+      if (reviewModal.book) {
+        const updatedBook = await autoPopulateCoverIfNeeded(reviewModal.book);
+        if (updatedBook) {
+          coverAdded = true;
+          applyBookPatch(updatedBook);
+        }
+
+        const latestBook = books.find((item) => item.id === reviewModal.book.id) ?? {
+          ...reviewModal.book,
+          ...updatedBook
+        };
+        const syncedBook = {
+          ...latestBook,
+          status: reviewStatus,
+          unread: isUnreadStatus(reviewStatus),
+          updatedAt: new Date().toISOString()
+        };
+        await updateBook(syncedBook);
+        applyBookPatch(syncedBook);
+      }
+
+      const cleanupResult = await mergeDuplicateBooks({ maxReviewsPerBook: 5 });
       await refreshData();
       closeReviewModal();
 
       const action = reviewModal.existingReview ? "updated" : "added";
+      const coverNote = coverAdded ? " Cover art auto-added from Open Library." : "";
+      const cleanupSummary = formatCleanupSummary(cleanupResult);
+      const extraNotes = `${coverNote}${cleanupSummary}`;
       if (discordResult?.status === "error") {
-        showToast(`Review ${action} locally; Discord webhook failed. Check console.`, "warning");
+        showToast(
+          `Review ${action} locally; Discord webhook failed. Check console.${extraNotes}`,
+          "warning"
+        );
       } else if (discordResult?.status === "sent") {
-        showToast(`Review ${action} locally and shared to Discord.`, "success");
+        showToast(
+          `Review ${action} locally and shared to Discord.${extraNotes}`,
+          "success"
+        );
       } else {
-        showToast(`Review ${action} locally.`, "success");
+        showToast(`Review ${action} locally.${extraNotes}`, "success");
       }
     } catch (error) {
       console.error("Failed to save review", error);
@@ -643,6 +1640,9 @@ export default function App() {
 
     const wantsReview =
       addReviewWithBook && !REVIEW_DISABLED_STATUSES.has(bookForm.status);
+    const reviewStatusSelection =
+      bookReviewDraft.status || bookForm.status || DEFAULT_STATUS;
+    const effectiveStatus = wantsReview ? reviewStatusSelection : bookForm.status || DEFAULT_STATUS;
 
     if (wantsReview) {
       const ratingValueFive = Number.parseFloat(bookReviewDraft.rating);
@@ -668,8 +1668,8 @@ export default function App() {
     const newBookBase = {
       title: bookForm.title.trim(),
       author: bookForm.author.trim(),
-      status: bookForm.status,
-      unread: bookForm.status === "library",
+      status: effectiveStatus,
+      unread: isUnreadStatus(effectiveStatus),
       cover: coverData,
       openLibraryUrl: bookForm.openLibraryUrl ? bookForm.openLibraryUrl : null,
       openLibraryIdentifiers: bookForm.openLibraryIdentifiers,
@@ -697,13 +1697,60 @@ export default function App() {
         finalMessage = "Book details updated.";
         finalMessageTone = "success";
       } else {
-        const createdBook = {
-          ...newBookBase,
-          createdAt: now
-        };
-        targetBookId = await addBook(createdBook);
-        finalMessage = "Book saved locally.";
-        finalMessageTone = "success";
+        const normalizedTitle = newBookBase.titleLower;
+        const normalizedAuthor = newBookBase.authorLower ?? "";
+        const matchingBook = books.find((existing) => {
+          const existingTitle =
+            existing.titleLower ?? (existing.title ? existing.title.toLowerCase() : "");
+          if (!normalizedTitle || existingTitle !== normalizedTitle) {
+            return false;
+          }
+
+          const existingAuthor =
+            existing.authorLower ?? (existing.author ? existing.author.toLowerCase() : "");
+          if (normalizedAuthor && existingAuthor !== normalizedAuthor) {
+            return false;
+          }
+
+          const existingUrl = existing.openLibraryUrl ?? null;
+          if (existingUrl && newBookBase.openLibraryUrl && existingUrl !== newBookBase.openLibraryUrl) {
+            return false;
+          }
+
+          const existingHasCover = hasCover(existing.cover);
+          const newHasCover = hasCover(coverData);
+          if (
+            existingHasCover &&
+            newHasCover &&
+            (existing.cover.type !== coverData.type ||
+              String(existing.cover.value) !== String(coverData.value))
+          ) {
+            return false;
+          }
+
+          return true;
+        });
+
+        if (matchingBook) {
+          const updatedBook = {
+            ...matchingBook,
+            ...newBookBase,
+            id: matchingBook.id,
+            createdAt: matchingBook.createdAt ?? now
+          };
+          await updateBook(updatedBook);
+          targetBookId = matchingBook.id;
+          finalMessage = "Book details updated.";
+          finalMessageTone = "success";
+        } else {
+          const createdBook = {
+            ...newBookBase,
+            createdAt: now
+          };
+          targetBookId = await addBook(createdBook);
+          finalMessage = "Book saved locally.";
+          finalMessageTone = "success";
+        }
       }
 
       if (wantsReview) {
@@ -714,11 +1761,13 @@ export default function App() {
             ? spellcheckText(bookReviewDraft.text)
             : bookReviewDraft.text;
 
+          const reviewStatus = reviewStatusSelection;
           const reviewPayload = {
             bookId: targetBookId,
             rating: ratingTenScale,
             text: cleanText,
-            unread: false
+            status: reviewStatus,
+            unread: isUnreadStatus(reviewStatus)
           };
           const storedReview = await saveReview(reviewPayload);
 
@@ -764,9 +1813,17 @@ export default function App() {
         }
       }
 
+      const cleanupResult = await mergeDuplicateBooks({ maxReviewsPerBook: 5 });
       await refreshData();
+      const cleanupSummary = formatCleanupSummary(cleanupResult);
+      if (cleanupSummary) {
+        finalMessage = `${finalMessage}${cleanupSummary}`;
+        if (finalMessageTone !== "warning") {
+          finalMessageTone = "success";
+        }
+      }
       setBookForm({ ...emptyBookForm });
-      setBookReviewDraft({ ...emptyReviewDraft });
+      setBookReviewDraft(createReviewDraft(emptyBookForm.status));
       setAddReviewWithBook(!REVIEW_DISABLED_STATUSES.has(emptyBookForm.status));
       setSearchQuery("");
       setSearchResults([]);
@@ -824,16 +1881,35 @@ export default function App() {
         });
       }
 
+      let coverAdded = false;
+      if (targetBook) {
+        const updatedBook = await autoPopulateCoverIfNeeded(targetBook);
+        if (updatedBook) {
+          coverAdded = true;
+          applyBookPatch(updatedBook);
+        }
+      }
+
+      const cleanupResult = await mergeDuplicateBooks({ maxReviewsPerBook: 5 });
       await refreshData();
       setReviewForm({ ...emptyReviewForm });
       setEditingBookId(null);
 
+      const coverNote = coverAdded ? " Cover art auto-added from Open Library." : "";
+      const cleanupSummary = formatCleanupSummary(cleanupResult);
+      const extraNotes = `${coverNote}${cleanupSummary}`;
       if (discordResult?.status === "error") {
-        showToast("Review saved locally; Discord webhook failed. Check console.", "warning");
+        showToast(
+          `Review saved locally; Discord webhook failed. Check console.${extraNotes}`,
+          "warning"
+        );
       } else if (discordResult?.status === "sent") {
-        showToast("Review saved locally and shared to Discord.", "success");
+        showToast(
+          `Review saved locally and shared to Discord.${extraNotes}`,
+          "success"
+        );
       } else {
-        showToast("Review saved locally.", "success");
+        showToast(`Review saved locally.${extraNotes}`, "success");
       }
     } catch (error) {
       console.error("Failed to save review", error);
@@ -843,18 +1919,58 @@ export default function App() {
 
 
 
-  async function handleDeleteReview(bookId) {
-    const targetBook = books.find((book) => book.id === bookId);
-    if (!window.confirm(`Delete the review for "${targetBook?.title ?? "this book"}"?`)) {
+  async function handleDeleteReview(targetBook, targetReview) {
+    if (!targetReview?.id) {
+      showToast("Unable to locate this review.", "error");
+      return;
+    }
+
+    const bookTitle = targetBook?.title ?? "this book";
+    if (!window.confirm(`Delete this review for "${bookTitle}"?`)) {
       return;
     }
 
     try {
-      await deleteReviewByBookId(bookId);
-      await refreshData();
-      if (reviewModal.bookId === bookId) {
+      await deleteReviewById(targetReview.id);
+
+      const remainingReviews =
+        (reviewsByBook[targetBook?.id] ?? []).filter((item) => item.id !== targetReview.id) ?? [];
+
+      if (targetBook?.id) {
+        const updatedBook = {
+          ...targetBook,
+          updatedAt: new Date().toISOString()
+        };
+
+        if (remainingReviews.length > 0) {
+          const sorted = [...remainingReviews].sort((a, b) => {
+            const timeA = new Date(a.updatedAt ?? a.createdAt ?? 0).getTime();
+            const timeB = new Date(b.updatedAt ?? b.createdAt ?? 0).getTime();
+            return timeB - timeA;
+          });
+          const lead = sorted[0];
+          if (lead?.status) {
+            updatedBook.status = lead.status;
+          }
+          updatedBook.unread = remainingReviews.some((review) => isUnreadStatus(review.status));
+        } else {
+          updatedBook.unread = isUnreadStatus(updatedBook.status);
+        }
+
+        updatedBook.titleLower = updatedBook.title ? updatedBook.title.toLowerCase() : null;
+        updatedBook.authorLower = updatedBook.author ? updatedBook.author.toLowerCase() : null;
+        await updateBook(updatedBook);
+      }
+
+      const shouldCloseModal =
+        reviewModal.isOpen &&
+        reviewModal.bookId === targetBook?.id &&
+        reviewModal.existingReview?.id === targetReview.id;
+      if (shouldCloseModal) {
         closeReviewModal();
       }
+
+      await refreshData();
       showToast("Review removed.", "danger");
     } catch (error) {
       console.error("Failed to delete review", error);
@@ -940,8 +2056,8 @@ export default function App() {
       openLibraryIdentifiers: book.openLibraryIdentifiers ?? null,
       availability: book.availability ?? null
     });
-    setBookReviewDraft({ ...emptyReviewDraft });
-    setAddReviewWithBook(!REVIEW_DISABLED_STATUSES.has(book.status));
+    setBookReviewDraft(createReviewDraft(book.status ?? emptyBookForm.status));
+    setAddReviewWithBook(false);
     setEditingBookFormId(book.id ?? null);
     setEditingBookOriginal(book);
     showToast(`Editing "${book.title}" details.`, "success");
@@ -968,7 +2084,7 @@ export default function App() {
       await refreshData();
       if (editingBookFormId === book.id) {
         setBookForm({ ...emptyBookForm });
-        setBookReviewDraft({ ...emptyReviewDraft });
+        setBookReviewDraft(createReviewDraft(emptyBookForm.status));
         setEditingBookFormId(null);
         setEditingBookOriginal(null);
       }
@@ -1038,8 +2154,21 @@ export default function App() {
         </div>
       )}
       <header style={styles.header}>
-        <h1>Book Review Tracker</h1>
+        <Logo />
         <p>Local-first proof of concept. Data persists in your browser via IndexedDB.</p>
+        <div style={styles.headerActions}>
+          <button
+            type="button"
+            style={{
+              ...styles.coverRefreshButton,
+              ...(coverRefreshing ? styles.coverRefreshButtonDisabled : null)
+            }}
+            onClick={handleRefreshCovers}
+            disabled={coverRefreshing}
+          >
+            {coverRefreshing ? "Refreshing covers…" : "Refresh library covers"}
+          </button>
+        </div>
         {!initialized && <p style={styles.warning}>Initializing storage&hellip;</p>}
       </header>
 
@@ -1170,29 +2299,31 @@ export default function App() {
               />
             </label>
             <div style={styles.inlineRow}>
-              <label style={{ ...styles.label, ...styles.inlineField }}>
-                Status
-                <div style={styles.selectContainer}>
-                  <select
-                    style={{ ...styles.input, ...styles.select }}
-                    value={bookForm.status}
-                    onChange={handleBookStatusChange}
-                  >
-                    {BOOK_STATUS_SECTIONS.map((section) => (
-                      <optgroup key={section.label} label={section.label}>
-                        {section.options.map((status) => (
-                          <option key={status.value} value={status.value}>
-                            {status.label}
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
-                  <span style={styles.selectArrow} aria-hidden="true">
-                    ▾
-                  </span>
-                </div>
-              </label>
+              {!isEditingBook && (
+                <label style={{ ...styles.label, ...styles.inlineField }}>
+                  Status
+                  <div style={styles.selectContainer}>
+                    <select
+                      style={{ ...styles.input, ...styles.select }}
+                      value={bookForm.status}
+                      onChange={handleBookStatusChange}
+                    >
+                      {BOOK_STATUS_SECTIONS.map((section) => (
+                        <optgroup key={section.label} label={section.label}>
+                          {section.options.map((status) => (
+                            <option key={status.value} value={status.value}>
+                              {status.label}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                    <span style={styles.selectArrow} aria-hidden="true">
+                      ▾
+                    </span>
+                  </div>
+                </label>
+              )}
               <div style={{ ...styles.inlineField, ...styles.inlineFieldCompact }}>
                 <label style={styles.label}>
                   Cover Source (optional)
@@ -1260,100 +2391,144 @@ export default function App() {
                 </div>
               </div>
             )}
-            <label style={styles.toggleRow}>
-              <input
-                type="checkbox"
-                checked={addReviewWithBook}
-                onChange={(event) => {
-                  const checked = event.target.checked;
-                  setAddReviewWithBook(checked);
-                  if (!checked) {
-                    setBookReviewDraft({ ...emptyReviewDraft });
-                  }
-                }}
-                disabled={REVIEW_DISABLED_STATUSES.has(bookForm.status)}
-              />
-              <span>
-                {REVIEW_DISABLED_STATUSES.has(bookForm.status)
-                  ? "Reviews are disabled for unread or wishlist books."
-                  : "Add a review at the same time"}
-              </span>
-            </label>
-            {addReviewWithBook && !REVIEW_DISABLED_STATUSES.has(bookForm.status) && (
-              <div style={styles.inlineReview}>
-                <label style={styles.label}>
-                  Rating (0-5 stars, decimals allowed)
-                  <div style={styles.ratingGroup}>
-                    <StarRatingInput
-                      value={bookReviewDraft.rating}
-                      onChange={(nextValue) =>
-                        setBookReviewDraft({
-                          ...bookReviewDraft,
-                          rating: nextValue
-                        })
-                      }
-                      ariaLabel="Set rating for new book"
-                    />
-                    <div style={styles.ratingInputs}>
-                      <div style={{ ...styles.ratingDisplay, ...styles.ratingDisplayInput }}>
-                        <input
-                          style={styles.ratingDisplayInputField}
-                          type="number"
-                          min="0"
-                          max="5"
-                          step="0.1"
-                          placeholder="0"
-                          inputMode="decimal"
-                          value={bookReviewDraft.rating}
-                          onChange={(event) =>
-                            setBookReviewDraft({
-                              ...bookReviewDraft,
-                              rating: event.target.value
-                            })
-                          }
-                          onBlur={(event) =>
-                            setBookReviewDraft({
-                              ...bookReviewDraft,
-                              rating: normalizeFiveValue(
-                                Number.parseFloat(event.target.value || "0")
-                              )
-                            })
-                          }
-                          aria-label="Manually enter rating out of five"
-                        />
-                        <span style={styles.ratingDisplaySuffix}>/5</span>
-                      </div>
-                    </div>
-                  </div>
-                </label>
-                <label style={styles.label}>
-                  Review Text
-                  <textarea
-                    style={{ ...styles.input, ...styles.textarea }}
-                    value={bookReviewDraft.text}
-                    onChange={(event) =>
-                      setBookReviewDraft({
-                        ...bookReviewDraft,
-                        text: event.target.value
-                      })
-                    }
-                    placeholder="Share your thoughts while it's fresh."
-                  />
-                </label>
-                <label style={styles.inlineToggle}>
+            {!isEditingBook && (
+              <>
+                <label style={styles.toggleRow}>
                   <input
                     type="checkbox"
-                    checked={bookReviewDraft.autoCorrect}
-                    onChange={(event) =>
-                      setBookReviewDraft({
-                        ...bookReviewDraft,
-                        autoCorrect: event.target.checked
-                      })
-                    }
+                    checked={addReviewWithBook}
+                    onChange={(event) => {
+                      const checked = event.target.checked;
+                      setAddReviewWithBook(checked);
+                      if (!checked) {
+                        setBookReviewDraft(createReviewDraft(bookForm.status));
+                      }
+                    }}
+                    disabled={REVIEW_DISABLED_STATUSES.has(bookForm.status)}
                   />
-                  Auto-correct obvious typos
+                  <span>
+                    {REVIEW_DISABLED_STATUSES.has(bookForm.status)
+                      ? "Reviews are disabled for unread or wishlist books."
+                      : "Add a review at the same time"}
+                  </span>
                 </label>
-              </div>
+                {addReviewWithBook && !REVIEW_DISABLED_STATUSES.has(bookForm.status) && (
+                  <div style={styles.inlineReview}>
+                    <label style={styles.label}>
+                      Reading Status
+                      <div style={styles.selectContainer}>
+                        <select
+                          style={{ ...styles.input, ...styles.select }}
+                          value={bookReviewDraft.status}
+                          onChange={(event) => {
+                            const nextStatus = event.target.value;
+                            setBookForm((prev) => ({
+                              ...prev,
+                              status: nextStatus
+                            }));
+
+                            if (REVIEW_DISABLED_STATUSES.has(nextStatus)) {
+                              setAddReviewWithBook(false);
+                              setBookReviewDraft(createReviewDraft(nextStatus));
+                              return;
+                            }
+
+                            setBookReviewDraft({
+                              ...bookReviewDraft,
+                              status: nextStatus
+                            });
+                          }}
+                        >
+                          {BOOK_STATUS_SECTIONS.map((section) => (
+                            <optgroup key={section.label} label={section.label}>
+                              {section.options.map((statusOption) => (
+                                <option key={statusOption.value} value={statusOption.value}>
+                                  {statusOption.label}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ))}
+                        </select>
+                        <span style={styles.selectArrow} aria-hidden="true">
+                          ▾
+                        </span>
+                      </div>
+                    </label>
+                    <label style={styles.label}>
+                      Rating (0-5 stars, decimals allowed)
+                      <div style={styles.ratingGroup}>
+                        <StarRatingInput
+                          value={bookReviewDraft.rating}
+                          onChange={(nextValue) =>
+                            setBookReviewDraft({
+                              ...bookReviewDraft,
+                              rating: nextValue
+                            })
+                          }
+                          ariaLabel="Set rating for new book"
+                        />
+                        <div style={styles.ratingInputs}>
+                          <div style={{ ...styles.ratingDisplay, ...styles.ratingDisplayInput }}>
+                            <input
+                              style={styles.ratingDisplayInputField}
+                              type="number"
+                              min="0"
+                              max="5"
+                              step="0.1"
+                              placeholder="0"
+                              inputMode="decimal"
+                              value={bookReviewDraft.rating}
+                              onChange={(event) =>
+                                setBookReviewDraft({
+                                  ...bookReviewDraft,
+                                  rating: event.target.value
+                                })
+                              }
+                              onBlur={(event) =>
+                                setBookReviewDraft({
+                                  ...bookReviewDraft,
+                                  rating: normalizeFiveValue(
+                                    Number.parseFloat(event.target.value || "0")
+                                  )
+                                })
+                              }
+                              aria-label="Manually enter rating out of five"
+                            />
+                            <span style={styles.ratingDisplaySuffix}>/5</span>
+                          </div>
+                        </div>
+                      </div>
+                    </label>
+                    <label style={styles.label}>
+                      Review Text
+                      <textarea
+                        style={{ ...styles.input, ...styles.textarea }}
+                        value={bookReviewDraft.text}
+                        onChange={(event) =>
+                          setBookReviewDraft({
+                            ...bookReviewDraft,
+                            text: event.target.value
+                          })
+                        }
+                        placeholder="Share your thoughts while it's fresh."
+                      />
+                    </label>
+                    <label style={styles.inlineToggle}>
+                      <input
+                        type="checkbox"
+                        checked={bookReviewDraft.autoCorrect}
+                        onChange={(event) =>
+                          setBookReviewDraft({
+                            ...bookReviewDraft,
+                            autoCorrect: event.target.checked
+                          })
+                        }
+                      />
+                      Auto-correct obvious typos
+                    </label>
+                  </div>
+                )}
+              </>
             )}
             <button style={styles.primaryButton} type="submit">
               Save Book
@@ -1377,6 +2552,11 @@ export default function App() {
               availabilityActions
             );
             const showDownloadTag = Boolean(book.availability?.hasDownload);
+            const reviewList = reviewsByBook[book.id] ?? [];
+            const latestReview = reviewList[0] ?? null;
+            const statusSource = latestReview?.status ?? book.status ?? null;
+            const statusLabel = statusSource ? STATUS_LABELS[statusSource] ?? statusSource : "—";
+            const unreadBadge = isUnreadStatus(statusSource) || Boolean(book.unread);
             return (
               <li key={book.id} style={styles.listItem}>
                 {bookCoverUrl ? (
@@ -1393,10 +2573,8 @@ export default function App() {
                     <strong>{book.title}</strong>
                     {book.author && <span> &middot; {book.author}</span>}
                     <div style={styles.meta}>
-                      Status: {STATUS_LABELS[book.status] ?? book.status}
-                      {(book.status === "library" || book.unread) && (
-                        <span style={styles.badgeSecondary}>Unread</span>
-                      )}
+                      Status: {statusLabel}
+                      {unreadBadge && <span style={styles.badgeSecondary}>Unread</span>}
                     </div>
                     {showOpenLibraryLink && (
                       <a
@@ -1478,12 +2656,19 @@ export default function App() {
                               : "—";
                           const ratingFiveDisplay = formatFiveScaleDisplay(review.rating);
                           const starNodes = renderStarRating(Number(review.rating ?? 0));
+                          const reviewStatusLabel =
+                            review.status && STATUS_LABELS[review.status]
+                              ? STATUS_LABELS[review.status]
+                              : review.status ?? null;
                           return (
                             <li key={review.id}>
                               <div style={styles.reviewHeader}>
                                 <div style={styles.starRow}>{starNodes}</div>
                                 <span style={styles.reviewScore}>{ratingFiveDisplay}</span>
                                 <span style={styles.reviewScoreSmall}>{ratingTenDisplay}/10</span>
+                                {reviewStatusLabel && (
+                                  <span style={styles.reviewStatusBadge}>{reviewStatusLabel}</span>
+                                )}
                                 {timestamp && (
                                   <span style={styles.reviewTimestamp}>{timestamp}</span>
                                 )}
@@ -1500,7 +2685,7 @@ export default function App() {
                                 <button
                                   type="button"
                                   style={styles.dangerButton}
-                                  onClick={() => handleDeleteReview(book.id)}
+                                  onClick={() => handleDeleteReview(book, review)}
                                 >
                                   Delete
                                 </button>
@@ -1536,7 +2721,7 @@ export default function App() {
               style={{
                 ...styles.switchTrack,
                 background: discordShareFull
-                  ? "rgba(255, 122, 42, 0.55)"
+                  ? "rgba(217, 130, 43, 0.6)"
                   : "rgba(0, 0, 0, 0.18)"
               }}
               aria-hidden="true"
@@ -1592,13 +2777,17 @@ export default function App() {
           <div style={styles.libraryToolIdeas}>
             {FUTURE_LIBRARY_TOOLS.map((tool) => (
               <button
-                key={tool}
+                key={tool.label}
                 type="button"
                 style={styles.fakeToolButton}
                 disabled
                 aria-disabled="true"
+                title={tool.helper ?? undefined}
               >
-                {tool}
+                <span>{tool.label}</span>
+                {tool.helper ? (
+                  <span style={styles.fakeToolHelper}>{tool.helper}</span>
+                ) : null}
               </button>
             ))}
           </div>
@@ -1631,6 +2820,32 @@ export default function App() {
               </button>
             </div>
             <form onSubmit={handleModalReviewSubmit} style={styles.modalBody}>
+              <label style={styles.label}>
+                Reading Status
+                <div style={styles.selectContainer}>
+                  <select
+                    style={{ ...styles.input, ...styles.select }}
+                    value={modalReviewForm.status}
+                    onChange={(event) =>
+                      setModalReviewForm({ ...modalReviewForm, status: event.target.value })
+                    }
+                    required
+                  >
+                    {BOOK_STATUS_SECTIONS.map((section) => (
+                      <optgroup key={section.label} label={section.label}>
+                        {section.options.map((statusOption) => (
+                          <option key={statusOption.value} value={statusOption.value}>
+                            {statusOption.label}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                  <span style={styles.selectArrow} aria-hidden="true">
+                    ▾
+                  </span>
+                </div>
+              </label>
               <label style={styles.label}>
                 Rating (0-5 stars, decimals allowed)
                 <div style={styles.ratingGroup}>
@@ -1720,9 +2935,9 @@ const styles = {
     padding: "3.2rem 2.6rem 4.2rem",
     maxWidth: "1240px",
     color: THEME.textPrimary,
-    background: "rgba(255, 255, 255, 0.3)",
+    background: "rgba(249, 223, 198, 0.72)",
     borderRadius: "2rem",
-    boxShadow: "0 28px 55px rgba(57, 30, 18, 0.32)",
+    boxShadow: "0 38px 72px rgba(44, 30, 30, 0.32)",
     backdropFilter: "blur(28px)",
     minHeight: "92vh",
     transition: "color 0.3s ease, background 0.3s ease"
@@ -1734,12 +2949,75 @@ const styles = {
     marginLeft: "auto",
     marginRight: "auto"
   },
+  logoWrapper: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "1.2rem",
+    marginBottom: "1.1rem",
+    flexWrap: "wrap"
+  },
+  logoIcon: {
+    width: "78px",
+    height: "68px",
+    borderRadius: "20px",
+    background:
+      "radial-gradient(circle at 30% 20%, rgba(255,245,236,0.9), rgba(242,193,153,0.35) 70%)",
+    boxShadow: "0 18px 32px rgba(44, 30, 30, 0.18)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "0.45rem"
+  },
+  logoTextGroup: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: "0.2rem"
+  },
+  logoTitle: {
+    fontFamily:
+      '"Lucida Handwriting","Brush Script MT","Segoe Script","Snell Roundhand","cursive"',
+    fontSize: "2.1rem",
+    color: THEME.burntOrange,
+    textShadow: "0 2px 6px rgba(217, 130, 43, 0.25)",
+    letterSpacing: "0.04em"
+  },
+  logoSubtitle: {
+    fontSize: "0.95rem",
+    color: THEME.textMuted,
+    fontWeight: 500,
+    fontStyle: "italic"
+  },
+  headerActions: {
+    marginTop: "1.4rem",
+    display: "flex",
+    justifyContent: "center",
+    gap: "0.75rem",
+    flexWrap: "wrap"
+  },
+  coverRefreshButton: {
+    background: "rgba(249, 223, 198, 0.28)",
+    border: `1px solid ${THEME.accent}`,
+    color: THEME.accent,
+    padding: "0.65rem 1.4rem",
+    borderRadius: "999px",
+    fontSize: "0.92rem",
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "background 0.2s ease, color 0.2s ease, opacity 0.2s ease"
+  },
+  coverRefreshButtonDisabled: {
+    opacity: 0.6,
+    cursor: "not-allowed"
+  },
   warning: {
     color: THEME.warning
   },
   toast: {
     position: "fixed",
     top: "1.1rem",
+    right: "1.4rem",
     left: "50%",
     transform: "translateX(-50%)",
     pointerEvents: "auto",
@@ -1747,12 +3025,12 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "0.7rem",
-    padding: "0.95rem 1.65rem",
+    padding: "0.9rem 1.4rem",
     borderRadius: "1.4rem",
-    border: "2px solid rgba(255, 145, 77, 0.65)",
-    boxShadow: "0 28px 58px rgba(57, 30, 18, 0.38)",
-    background: "rgba(255, 248, 240, 0.88)",
-    backdropFilter: "blur(18px)",
+    border: "2px solid rgba(217, 130, 43, 0.55)",
+    boxShadow: "0 26px 48px rgba(44, 30, 30, 0.32)",
+    background: "rgba(249, 223, 198, 0.78)",
+    backdropFilter: "blur(22px)",
     color: THEME.textPrimary,
     fontSize: "0.95rem",
     lineHeight: 1.25,
@@ -1761,26 +3039,26 @@ const styles = {
     transition: "transform 0.2s ease, opacity 0.2s ease"
   },
   toastInfo: {
-    borderColor: "rgba(255, 145, 77, 0.45)",
-    boxShadow: "0 22px 44px rgba(120, 67, 30, 0.28)"
+    borderColor: "rgba(217, 130, 43, 0.45)",
+    boxShadow: "0 22px 44px rgba(95, 64, 40, 0.28)"
   },
   toastSuccess: {
     background: "rgba(47, 159, 99, 0.86)",
-    color: "#082a1a",
+    color: "#0c2f1e",
     borderColor: "rgba(47, 159, 99, 0.9)",
-    boxShadow: "0 28px 58px rgba(42, 120, 80, 0.42)"
+    boxShadow: "0 28px 58px rgba(21, 83, 52, 0.45)"
   },
   toastWarning: {
-    background: "rgba(255, 193, 83, 0.86)",
-    color: "#3b2618",
-    borderColor: "rgba(255, 193, 83, 0.88)",
-    boxShadow: "0 28px 58px rgba(160, 98, 35, 0.42)"
+    background: "rgba(229, 182, 89, 0.88)",
+    color: "#422f12",
+    borderColor: "rgba(229, 182, 89, 0.92)",
+    boxShadow: "0 28px 58px rgba(140, 101, 38, 0.44)"
   },
   toastDanger: {
-    background: "rgba(226, 70, 82, 0.86)",
-    color: "#fff8f8",
-    borderColor: "rgba(226, 70, 82, 0.9)",
-    boxShadow: "0 28px 58px rgba(150, 32, 42, 0.45)"
+    background: "rgba(167, 54, 54, 0.88)",
+    color: "#fff4f2",
+    borderColor: "rgba(167, 54, 54, 0.92)",
+    boxShadow: "0 28px 58px rgba(88, 26, 26, 0.45)"
   },
   toastDismiss: {
     background: "transparent",
@@ -1810,10 +3088,10 @@ const styles = {
     border: "1px solid transparent",
     backgroundImage:
       `linear-gradient(${THEME.surface}, ${THEME.surface}), ` +
-      "linear-gradient(120deg, rgba(255,122,42,0.6), rgba(255,214,153,0.5))",
+      "linear-gradient(135deg, rgba(217,130,43,0.35), rgba(249,223,198,0.6))",
     backgroundClip: "padding-box, border-box",
     backgroundOrigin: "padding-box, border-box",
-    boxShadow: "0 18px 40px rgba(244, 134, 64, 0.35)",
+    boxShadow: "0 26px 52px rgba(44, 30, 30, 0.22)",
     backdropFilter: "blur(24px)",
     transition: "transform 0.2s ease, box-shadow 0.2s ease",
     position: "relative",
@@ -1845,13 +3123,13 @@ const styles = {
   },
   input: {
     borderRadius: "0.85rem",
-    border: `1px solid rgba(255, 122, 42, 0.42)`,
+    border: `1px solid rgba(217, 130, 43, 0.38)`,
     padding: "0.95rem 1.05rem",
     fontSize: "1.02rem",
     background: THEME.surfaceAlt,
     color: THEME.textPrimary,
     transition: "border 0.2s ease, box-shadow 0.2s ease",
-    boxShadow: "0 6px 18px rgba(255, 122, 42, 0.2)",
+    boxShadow: "0 6px 18px rgba(67, 38, 22, 0.18)",
     width: "100%",
     boxSizing: "border-box",
     outline: "none"
@@ -1871,7 +3149,7 @@ const styles = {
     MozAppearance: "none",
     paddingRight: "3rem",
     backgroundImage:
-      "linear-gradient(160deg, rgba(255,122,42,0.2), rgba(255,255,255,0.08))",
+      "linear-gradient(160deg, rgba(217,130,43,0.18), rgba(249,223,198,0.08))",
     cursor: "pointer"
   },
   selectArrow: {
@@ -1897,15 +3175,15 @@ const styles = {
     textAlign: "center"
   },
   primaryButton: {
-    background: "linear-gradient(135deg, #ffb47a, #ff8a3d)",
-    color: "#2d1a13",
-    border: `1px solid rgba(255, 122, 42, 0.5)`,
+    background: "linear-gradient(135deg, #F2C199, #D9822B)",
+    color: "#2C1E1E",
+    border: `1px solid rgba(217, 130, 43, 0.5)`,
     borderRadius: "1rem",
     padding: "0.85rem 1.4rem",
     cursor: "pointer",
     fontWeight: 600,
     transition: "transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease",
-    boxShadow: "0 12px 24px rgba(255, 122, 42, 0.22)",
+    boxShadow: "0 12px 24px rgba(144, 82, 23, 0.28)",
     alignSelf: "flex-start"
   },
   secondaryButtonMuted: {
@@ -1945,7 +3223,7 @@ const styles = {
     flexDirection: "column",
     gap: "0.75rem",
     padding: "1rem",
-    border: `1px dashed rgba(255, 145, 77, 0.35)`,
+    border: `1px dashed rgba(217, 130, 43, 0.32)`,
     borderRadius: "1rem",
     background: THEME.surfaceAlt
   },
@@ -1953,7 +3231,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: "0.5rem",
-    background: "rgba(255, 255, 255, 0.35)",
+    background: "rgba(249, 223, 198, 0.42)",
     borderRadius: "0.85rem",
     padding: "0.75rem"
   },
@@ -1971,13 +3249,13 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     borderRadius: "0.75rem",
-    border: `1px solid rgba(255, 122, 42, 0.4)`,
-    background: "rgba(255, 122, 42, 0.18)",
+    border: `1px solid rgba(217, 130, 43, 0.38)`,
+    background: "rgba(242, 193, 153, 0.2)",
     padding: "0.45rem 1.1rem",
     minWidth: "120px",
     fontWeight: 600,
     textAlign: "center",
-    boxShadow: "0 6px 14px rgba(255, 122, 42, 0.18)",
+    boxShadow: "0 6px 14px rgba(144, 82, 23, 0.2)",
     minHeight: "48px"
   },
   ratingDisplayInput: {
@@ -2021,8 +3299,8 @@ const styles = {
     height: "144px",
     objectFit: "cover",
     borderRadius: "0.75rem",
-    border: `1px solid rgba(255, 255, 255, 0.28)`,
-    background: "rgba(255, 255, 255, 0.3)"
+    border: `1px solid rgba(217, 130, 43, 0.25)`,
+    background: "rgba(249, 223, 198, 0.42)"
   },
   coverPreviewMeta: {
     display: "flex",
@@ -2031,7 +3309,7 @@ const styles = {
   },
   smallButton: {
     background: THEME.accentSoft,
-    border: `1px solid rgba(255, 122, 42, 0.55)`,
+    border: `1px solid rgba(217, 130, 43, 0.52)`,
     borderRadius: "0.9rem",
     padding: "0.4rem 0.95rem",
     fontSize: "0.82rem",
@@ -2087,10 +3365,10 @@ const styles = {
     backgroundColor: THEME.surface,
     backgroundImage:
       `linear-gradient(${THEME.surface}, ${THEME.surface}), ` +
-      "linear-gradient(120deg, rgba(255,122,42,0.6), rgba(255,214,153,0.5))",
+      "linear-gradient(120deg, rgba(217,130,43,0.54), rgba(242,193,153,0.48))",
     backgroundClip: "padding-box, border-box",
     backgroundOrigin: "padding-box, border-box",
-    boxShadow: "0 20px 40px rgba(244, 134, 64, 0.28)",
+    boxShadow: "0 20px 40px rgba(67, 38, 22, 0.3)",
     backdropFilter: "blur(18px)",
     display: "flex",
     flexDirection: "column",
@@ -2161,7 +3439,7 @@ const styles = {
     display: "flex",
     gap: "1.1rem",
     alignItems: "flex-start",
-    boxShadow: "0 24px 42px rgba(241, 137, 77, 0.22)"
+    boxShadow: "0 22px 46px rgba(44, 30, 30, 0.18)"
   },
   meta: {
     fontSize: "0.85rem",
@@ -2209,24 +3487,24 @@ const styles = {
   },
   starFull: {
     color: THEME.accent,
-    WebkitTextStroke: "1px rgba(45, 26, 19, 0.4)",
-    textShadow: "0 0 2px rgba(45, 26, 19, 0.28)"
+    WebkitTextStroke: "1px rgba(44, 30, 30, 0.4)",
+    textShadow: "0 0 2px rgba(44, 30, 30, 0.28)"
   },
   starHalf: {
     display: "inline-block",
-    backgroundImage: "repeating-linear-gradient(135deg, #ff8a3d 0 3px, #fff7ed 3px 6px)",
+    backgroundImage: "repeating-linear-gradient(135deg, #D9822B 0 3px, #FFF5EC 3px 6px)",
     color: "transparent",
     backgroundClip: "text",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",
-    WebkitTextStroke: "1px rgba(45, 26, 19, 0.4)",
-    textShadow: "0 0 2px rgba(45, 26, 19, 0.28)"
+    WebkitTextStroke: "1px rgba(44, 30, 30, 0.4)",
+    textShadow: "0 0 2px rgba(44, 30, 30, 0.28)"
   },
   starEmpty: {
-    color: "rgba(47, 27, 19, 0.25)",
+    color: "rgba(60, 47, 47, 0.25)",
     display: "inline-block",
-    WebkitTextStroke: "1px rgba(45, 26, 19, 0.4)",
-    textShadow: "0 0 2px rgba(45, 26, 19, 0.28)"
+    WebkitTextStroke: "1px rgba(44, 30, 30, 0.3)",
+    textShadow: "0 0 2px rgba(44, 30, 30, 0.22)"
   },
   reviewScore: {
     fontSize: "0.85rem",
@@ -2236,6 +3514,14 @@ const styles = {
   reviewScoreSmall: {
     fontSize: "0.75rem",
     color: THEME.textMuted
+  },
+  reviewStatusBadge: {
+    fontSize: "0.72rem",
+    color: THEME.accent,
+    background: "rgba(217, 130, 43, 0.18)",
+    borderRadius: "999px",
+    padding: "0.18rem 0.55rem",
+    fontWeight: 600
   },
   reviewTimestamp: {
     fontSize: "0.7rem",
@@ -2258,8 +3544,8 @@ const styles = {
   badgeSecondary: {
     display: "inline-block",
     marginLeft: "0.5rem",
-    background: "rgba(255, 179, 71, 0.18)",
-    color: "#c66b2c",
+    background: "rgba(229, 182, 89, 0.22)",
+    color: "#8f5a1f",
     padding: "0.15rem 0.55rem",
     borderRadius: "999px",
     fontSize: "0.74rem"
@@ -2272,13 +3558,13 @@ const styles = {
     backgroundColor: THEME.surface,
     backgroundImage:
       `linear-gradient(${THEME.surface}, ${THEME.surface}), ` +
-      "linear-gradient(120deg, rgba(255,122,42,0.6), rgba(255,214,153,0.5))",
+      "linear-gradient(120deg, rgba(217,130,43,0.32), rgba(249,223,198,0.5))",
     backgroundClip: "padding-box, border-box",
     backgroundOrigin: "padding-box, border-box",
     display: "flex",
     flexDirection: "column",
     gap: "0.9rem",
-    boxShadow: "0 26px 48px rgba(58, 28, 16, 0.32)",
+    boxShadow: "0 24px 48px rgba(44, 30, 30, 0.22)",
     flex: "1 1 220px",
     maxWidth: "360px",
     position: "relative",
@@ -2321,14 +3607,14 @@ const styles = {
     height: "72px",
     objectFit: "cover",
     borderRadius: "0.55rem",
-    border: `1px solid rgba(255, 255, 255, 0.28)`,
-    background: "rgba(255,255,255,0.35)"
+    border: `1px solid rgba(217, 130, 43, 0.25)`,
+    background: "rgba(249, 223, 198, 0.42)"
   },
   searchResultCoverPlaceholder: {
     width: "48px",
     height: "72px",
     borderRadius: "0.55rem",
-    border: `1px dashed rgba(255,145,77,0.5)`,
+    border: `1px dashed rgba(217,130,43,0.45)`,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -2354,7 +3640,7 @@ const styles = {
     padding: "0.2rem 0.5rem",
     borderRadius: "999px",
     fontSize: "0.75rem",
-    background: "rgba(255, 145, 77, 0.18)",
+    background: "rgba(242, 193, 153, 0.24)",
     color: THEME.accent,
     fontWeight: 500
   },
@@ -2402,14 +3688,14 @@ const styles = {
     height: "144px",
     objectFit: "cover",
     borderRadius: "0.8rem",
-    border: `1px solid rgba(255, 255, 255, 0.28)`,
-    background: "rgba(255,255,255,0.35)"
+    border: `1px solid rgba(217, 130, 43, 0.25)`,
+    background: "rgba(249, 223, 198, 0.4)"
   },
   libraryCoverPlaceholder: {
     width: "96px",
     height: "144px",
     borderRadius: "0.8rem",
-    border: `1px dashed rgba(255,145,77,0.5)`,
+    border: `1px dashed rgba(217,130,43,0.45)`,
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -2431,15 +3717,28 @@ const styles = {
     justifyContent: "center"
   },
   fakeToolButton: {
-    background: "rgba(255, 122, 42, 0.12)",
-    border: `1px dashed rgba(255, 122, 42, 0.5)`,
+    background: "rgba(242, 193, 153, 0.18)",
+    border: `1px dashed rgba(217, 130, 43, 0.5)`,
     borderRadius: "0.9rem",
-    padding: "0.55rem 1rem",
+    padding: "0.6rem 1.1rem",
     fontSize: "0.82rem",
     color: THEME.accent,
     fontWeight: 600,
     cursor: "not-allowed",
-    opacity: 0.7
+    opacity: 0.8,
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.3rem",
+    alignItems: "center",
+    textAlign: "center",
+    minWidth: "180px"
+  },
+  fakeToolHelper: {
+    fontSize: "0.72rem",
+    color: THEME.textMuted,
+    fontWeight: 500,
+    maxWidth: "160px",
+    lineHeight: 1.2
   },
   footer: {
     marginTop: "3rem",
@@ -2466,10 +3765,10 @@ const styles = {
     border: "1px solid transparent",
     backgroundImage:
       `linear-gradient(${THEME.surface}, ${THEME.surface}), ` +
-      "linear-gradient(120deg, rgba(255,122,42,0.6), rgba(255,214,153,0.5))",
+      "linear-gradient(120deg, rgba(217,130,43,0.32), rgba(249,223,198,0.52))",
     backgroundClip: "padding-box, border-box",
     backgroundOrigin: "padding-box, border-box",
-    boxShadow: "0 28px 55px rgba(57, 30, 18, 0.45)",
+    boxShadow: "0 30px 62px rgba(44, 30, 30, 0.32)",
     backdropFilter: "blur(24px)",
     maxWidth: "600px",
     width: "100%",
