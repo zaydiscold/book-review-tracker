@@ -325,6 +325,49 @@ const SAMPLE_LIBRARY = [
     }
   }
 ];
+
+function ToastOverlay({ toast, clearToast }) {
+  if (!toast) {
+    return null;
+  }
+
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const toneStyle =
+    toast.tone === "success"
+      ? styles.toastSuccess
+      : toast.tone === "error" || toast.tone === "danger"
+      ? styles.toastDanger
+      : toast.tone === "warning"
+      ? styles.toastWarning
+      : styles.toastInfo;
+
+  const role =
+    toast.tone === "error" || toast.tone === "danger" ? "alert" : "status";
+  const ariaLive =
+    toast.tone === "error" || toast.tone === "danger"
+      ? "assertive"
+      : "polite";
+
+  return createPortal(
+    (
+      <div style={{ ...styles.toast, ...toneStyle }} role={role} aria-live={ariaLive}>
+        <span>{toast.text}</span>
+        <button
+          type="button"
+          onClick={clearToast}
+          style={styles.toastDismiss}
+          aria-label="Dismiss notification"
+        >
+          ×
+        </button>
+      </div>
+    ),
+    document.body
+  );
+}
 const BOOK_STATUS_SECTIONS = [
   {
     label: "Plan & Collect",
