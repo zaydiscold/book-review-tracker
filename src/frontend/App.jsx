@@ -995,6 +995,47 @@ function Logo() {
   );
 }
 
+function ToastOverlay({ toast, onDismiss }) {
+  if (!toast) {
+    return null;
+  }
+
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const toneStyle =
+    toast.tone === "success"
+      ? styles.toastSuccess
+      : toast.tone === "error" || toast.tone === "danger"
+      ? styles.toastDanger
+      : toast.tone === "warning"
+      ? styles.toastWarning
+      : styles.toastInfo;
+
+  return createPortal(
+    <div
+      style={{
+        ...styles.toast,
+        ...toneStyle
+      }}
+      role={toast.tone === "error" || toast.tone === "danger" ? "alert" : "status"}
+      aria-live={toast.tone === "error" || toast.tone === "danger" ? "assertive" : "polite"}
+    >
+      <span>{toast.text}</span>
+      <button
+        type="button"
+        onClick={onDismiss}
+        style={styles.toastDismiss}
+        aria-label="Dismiss notification"
+      >
+        ×
+      </button>
+    </div>,
+    document.body
+  );
+}
+
 export default function App() {
   const [initialized, setInitialized] = useState(false);
   const [books, setBooks] = useState([]);
@@ -2171,7 +2212,7 @@ export default function App() {
 
   return (
     <div className="App" style={styles.wrapper}>
-      <ToastOverlay toast={toast} clearToast={clearToast} />
+      <ToastOverlay toast={toast} onDismiss={clearToast} />
       <header style={styles.header}>
         <Logo />
         <p>Local-first proof of concept. Data persists in your browser via IndexedDB.</p>
@@ -3074,7 +3115,7 @@ const styles = {
     boxShadow: "0 28px 58px rgba(140, 101, 38, 0.44)"
   },
   toastDanger: {
-    backgroundColor: "rgba(167, 54, 54, 0.55)",
+    backgroundColor: "rgba(167, 54, 54, 0.54)",
     color: "#fff4f2",
     borderColor: "rgba(167, 54, 54, 0.92)",
     boxShadow: "0 28px 58px rgba(88, 26, 26, 0.45)"
