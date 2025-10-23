@@ -6,6 +6,187 @@ const REVIEW_STORE = "reviews";
 
 let dbPromise = null;
 
+function isPromise(value) {
+  return Boolean(value && typeof value === "object" && typeof value.then === "function");
+}
+
+function isIDBRequest(value) {
+  return Boolean(value && typeof value === "object" && "onsuccess" in value && "onerror" in value);
+}
+
+function requestToPromise(request) {
+  return new Promise((resolve, reject) => {
+    request.onsuccess = (event) => {
+      resolve(event.target?.result ?? request.result ?? null);
+    };
+    request.onerror = () => {
+      reject(request.error ?? new Error("IndexedDB request failed"));
+    };
+  });
+}
+
+function ensureIndex(store, name, keyPath) {
+  if (store && !store.indexNames.contains(name)) {
+    store.createIndex(name, keyPath, { unique: false });
+  }
+}
+
+function toLowerOrNull(value) {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  return String(value).toLowerCase();
+}
+
+function normalizeExistingBookRecord(value) {
+  const record = { ...value };
+  let mutated = false;
+
+  if (record.title && !record.titleLower) {
+    record.titleLower = toLowerOrNull(record.title);
+    mutated = true;
+  }
+
+  if (record.author && !record.authorLower) {
+    record.authorLower = toLowerOrNull(record.author);
+    mutated = true;
+  }
+
+  let timestamp;
+  const getTimestamp = () => {
+    if (!timestamp) {
+      timestamp = new Date().toISOString();
+    }
+    return timestamp;
+  };
+
+  if (!record.createdAt) {
+    record.createdAt = getTimestamp();
+    mutated = true;
+  }
+
+  if (!record.updatedAt) {
+    record.updatedAt = record.createdAt ?? getTimestamp();
+    mutated = true;
+  }
+
+  return { record, mutated };
+}
+
+function normalizeExistingReviewRecord(value) {
+  const record = { ...value };
+  let mutated = false;
+
+  let timestamp;
+  const getTimestamp = () => {
+    if (!timestamp) {
+      timestamp = new Date().toISOString();
+    }
+    return timestamp;
+  };
+
+  if (!record.createdAt) {
+    record.createdAt = getTimestamp();
+    mutated = true;
+  }
+
+  if (!record.updatedAt) {
+    record.updatedAt = record.createdAt ?? getTimestamp();
+    mutated = true;
+  }
+
+  return { record, mutated };
+}
+
+function upgradeBookStore(database, transaction) {
+  let bookStore;
+  if (!database.objectStoreNames.contains(BOOK_STORE)) {
+    bookStore = database.createObjectStore(BOOK_STORE, { keyPath: "id", autoIncrement: true });
+  } else {
+    bookStore = transaction.objectStore(BOOK_STORE);
+  }
+
+  ensureIndex(bookStore, "status", "status");
+  ensureIndex(bookStore, "titleLower", "titleLower");
+  ensureIndex(bookStore, "authorLower", "authorLower");
+  ensureIndex(bookStore, "createdAt", "createdAt");
+
+  if (bookStore) {
+    const cursorRequest = bookStore.openCursor();
+    cursorRequest.onsuccess = (cursorEvent) => {
+      const cursor = cursorEvent.target.result;
+      if (!cursor) {
+        return;
+      }
+
+      const { record, mutated } = normalizeExistingBookRecord(cursor.value ?? {});
+      if (mutated) {
+        cursor.update(record);
+      }
+
+      cursor.continue();
+    };
+  }
+}
+
+function upgradeReviewStore(database, transaction) {
+  let reviewStore;
+  if (!database.objectStoreNames.contains(REVIEW_STORE)) {
+    reviewStore = database.createObjectStore(REVIEW_STORE, { keyPath: "id", autoIncrement: true });
+  } else {
+    reviewStore = transaction.objectStore(REVIEW_STORE);
+  }
+
+  ensureIndex(reviewStore, "bookId", "bookId");
+  ensureIndex(reviewStore, "updatedAt", "updatedAt");
+
+  if (reviewStore) {
+    const reviewCursor = reviewStore.openCursor();
+    reviewCursor.onsuccess = (cursorEvent) => {
+      const cursor = cursorEvent.target.result;
+      if (!cursor) {
+        return;
+      }
+
+      const { record, mutated } = normalizeExistingReviewRecord(cursor.value ?? {});
+      if (mutated) {
+        cursor.update(record);
+      }
+
+      cursor.continue();
+    };
+  }
+}
+
+function prepareBookForWrite(input, existing, now = new Date().toISOString()) {
+  const merged = existing ? { ...existing, ...input } : { ...input };
+  const resolvedTitle = merged.title ?? existing?.title ?? null;
+  const resolvedAuthor = merged.author ?? existing?.author ?? null;
+
+  return {
+    ...merged,
+    titleLower: toLowerOrNull(resolvedTitle),
+    authorLower: toLowerOrNull(resolvedAuthor),
+    createdAt: existing?.createdAt ?? merged.createdAt ?? now,
+    updatedAt: merged.updatedAt ?? now
+  };
+}
+
+function prepareReviewForWrite(input, existing, now = new Date().toISOString()) {
+  const merged = existing ? { ...existing, ...input } : { ...input };
+
+  if (!merged.bookId && existing?.bookId) {
+    merged.bookId = existing.bookId;
+  }
+
+  return {
+    ...merged,
+    createdAt: existing?.createdAt ?? merged.createdAt ?? now,
+    updatedAt: merged.updatedAt ?? now
+  };
+}
+
 export async function initDB() {
   if (typeof indexedDB === "undefined") {
     throw new Error("IndexedDB is not available in this environment");
@@ -22,117 +203,8 @@ export async function initDB() {
       const database = event.target.result;
       const transaction = event.target.transaction;
 
-      let bookStore;
-      if (!database.objectStoreNames.contains(BOOK_STORE)) {
-        bookStore = database.createObjectStore(BOOK_STORE, {
-          keyPath: "id",
-          autoIncrement: true
-        });
-      } else {
-        bookStore = transaction.objectStore(BOOK_STORE);
-      }
-
-      if (bookStore && !bookStore.indexNames.contains("status")) {
-        bookStore.createIndex("status", "status", { unique: false });
-      }
-
-      if (bookStore && !bookStore.indexNames.contains("titleLower")) {
-        bookStore.createIndex("titleLower", "titleLower", { unique: false });
-      }
-
-      if (bookStore && !bookStore.indexNames.contains("authorLower")) {
-        bookStore.createIndex("authorLower", "authorLower", { unique: false });
-      }
-
-      if (bookStore && !bookStore.indexNames.contains("createdAt")) {
-        bookStore.createIndex("createdAt", "createdAt", { unique: false });
-      }
-
-      if (bookStore) {
-        const cursorRequest = bookStore.openCursor();
-        cursorRequest.onsuccess = (cursorEvent) => {
-          const cursor = cursorEvent.target.result;
-          if (!cursor) {
-            return;
-          }
-
-          const value = cursor.value ?? {};
-          let mutated = false;
-
-          if (value.title && !value.titleLower) {
-            value.titleLower = String(value.title).toLowerCase();
-            mutated = true;
-          }
-
-          if (value.author && !value.authorLower) {
-            value.authorLower = String(value.author).toLowerCase();
-            mutated = true;
-          }
-
-          if (!value.createdAt) {
-            value.createdAt = new Date().toISOString();
-            mutated = true;
-          }
-
-          if (!value.updatedAt) {
-            value.updatedAt = value.createdAt ?? new Date().toISOString();
-            mutated = true;
-          }
-
-          if (mutated) {
-            cursor.update(value);
-          }
-
-          cursor.continue();
-        };
-      }
-
-      let reviewStore;
-      if (!database.objectStoreNames.contains(REVIEW_STORE)) {
-        reviewStore = database.createObjectStore(REVIEW_STORE, {
-          keyPath: "id",
-          autoIncrement: true
-        });
-      } else {
-        reviewStore = transaction.objectStore(REVIEW_STORE);
-      }
-
-      if (reviewStore && !reviewStore.indexNames.contains("bookId")) {
-        reviewStore.createIndex("bookId", "bookId", { unique: false });
-      }
-
-      if (reviewStore && !reviewStore.indexNames.contains("updatedAt")) {
-        reviewStore.createIndex("updatedAt", "updatedAt", { unique: false });
-      }
-
-      if (reviewStore) {
-        const reviewCursor = reviewStore.openCursor();
-        reviewCursor.onsuccess = (cursorEvent) => {
-          const cursor = cursorEvent.target.result;
-          if (!cursor) {
-            return;
-          }
-
-          const value = cursor.value ?? {};
-          let mutated = false;
-
-          if (!value.createdAt) {
-            value.createdAt = new Date().toISOString();
-            mutated = true;
-          }
-
-          if (!value.updatedAt) {
-            value.updatedAt = value.createdAt ?? new Date().toISOString();
-            mutated = true;
-          }
-
-          if (mutated) {
-            cursor.update(value);
-          }
-
-          cursor.continue();
-        };
-      }
+      upgradeBookStore(database, transaction);
+      upgradeReviewStore(database, transaction);
     };
 
     request.onsuccess = () => {
@@ -153,28 +225,100 @@ async function withStore(storeName, mode, callback) {
   return new Promise((resolve, reject) => {
     const transaction = database.transaction(storeName, mode);
     const store = transaction.objectStore(storeName);
-    const result = callback(store);
+
+    let finalValue = null;
+    let settled = false;
+
+    const resolveWith = (value) => {
+      finalValue = value ?? null;
+    };
+
+    const rejectOnce = (error) => {
+      if (!settled) {
+        settled = true;
+        reject(error);
+      }
+    };
 
     transaction.oncomplete = () => {
-      if (result && typeof result === "object" && "result" in result) {
-        resolve(result.result);
-      } else {
-        resolve(result ?? null);
+      if (!settled) {
+        settled = true;
+        resolve(finalValue);
       }
     };
 
     transaction.onerror = () => {
-      reject(transaction.error ?? new Error("IndexedDB transaction failed"));
+      rejectOnce(transaction.error ?? new Error("IndexedDB transaction failed"));
     };
 
     transaction.onabort = () => {
-      reject(transaction.error ?? new Error("IndexedDB transaction aborted"));
+      rejectOnce(transaction.error ?? new Error("IndexedDB transaction aborted"));
     };
+
+    let callbackResult;
+
+    try {
+      callbackResult = callback(store, transaction);
+    } catch (error) {
+      rejectOnce(error);
+      try {
+        transaction.abort();
+      } catch {
+        // ignore abort failures
+      }
+      return;
+    }
+
+    const handleResult = (result) => {
+      if (result === undefined) {
+        return;
+      }
+
+      if (isPromise(result)) {
+        result
+          .then((value) => {
+            resolveWith(value);
+          })
+          .catch((error) => {
+            rejectOnce(error);
+            try {
+              transaction.abort();
+            } catch {
+              // ignore abort failures
+            }
+          });
+        return;
+      }
+
+      if (isIDBRequest(result)) {
+        requestToPromise(result)
+          .then((value) => {
+            resolveWith(value);
+          })
+          .catch((error) => {
+            rejectOnce(error);
+            try {
+              transaction.abort();
+            } catch {
+              // ignore abort failures
+            }
+          });
+        return;
+      }
+
+      resolveWith(result);
+    };
+
+    handleResult(callbackResult);
   });
 }
 
 export async function addBook(book) {
-  return withStore(BOOK_STORE, "readwrite", (store) => store.add(book));
+  const now = new Date().toISOString();
+  return withStore(BOOK_STORE, "readwrite", (store) => {
+    const record = prepareBookForWrite(book, null, now);
+    return requestToPromise(store.add(record));
+  });
 }
 
 export async function updateBook(book) {
@@ -182,11 +326,20 @@ export async function updateBook(book) {
     throw new Error("updateBook requires an id");
   }
 
-  return withStore(BOOK_STORE, "readwrite", (store) => store.put(book));
+  const now = new Date().toISOString();
+  return withStore(BOOK_STORE, "readwrite", async (store) => {
+    const existing = await requestToPromise(store.get(book.id));
+    const normalized = prepareBookForWrite(book, existing ?? null, now);
+    await requestToPromise(store.put(normalized));
+    return { ...normalized };
+  });
 }
 
 export async function deleteBook(bookId) {
-  return withStore(BOOK_STORE, "readwrite", (store) => store.delete(bookId));
+  return withStore(BOOK_STORE, "readwrite", (store) => {
+    const request = store.delete(bookId);
+    return requestToPromise(request).then(() => true);
+  });
 }
 
 export async function getBooks() {
@@ -198,64 +351,39 @@ export async function saveReview(review) {
     throw new Error("saveReview requires a review with a bookId");
   }
 
-  const database = await initDB();
+  const now = new Date().toISOString();
 
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction(REVIEW_STORE, "readwrite");
-    const store = transaction.objectStore(REVIEW_STORE);
-    const now = new Date().toISOString();
+  return withStore(REVIEW_STORE, "readwrite", async (store) => {
+    if (review.id !== undefined && review.id !== null) {
+      const existing = await requestToPromise(store.get(review.id));
+      if (!existing) {
+        const normalized = prepareReviewForWrite(review, null, now);
+        normalized.id = review.id;
+        await requestToPromise(store.put(normalized));
+        return { ...normalized };
+      }
 
-    if (review.id) {
-      const existingRequest = store.get(review.id);
-      existingRequest.onsuccess = () => {
-        const existing = existingRequest.result ?? {};
-        const updatedReview = {
-          ...existing,
-          ...review,
-          id: review.id,
-          bookId: review.bookId,
-          createdAt: existing.createdAt ?? review.createdAt ?? now,
-          updatedAt: now
-        };
-        const updateRequest = store.put(updatedReview);
-        updateRequest.onsuccess = () => {
-          resolve({ ...updatedReview });
-        };
-        updateRequest.onerror = () => {
-          reject(updateRequest.error ?? new Error("Failed to update review"));
-        };
-      };
-      existingRequest.onerror = () => {
-        reject(existingRequest.error ?? new Error("Failed to fetch review for update"));
-      };
-      return;
+      const normalized = prepareReviewForWrite(review, existing, now);
+      await requestToPromise(store.put(normalized));
+      return { ...normalized };
     }
 
-    const newReview = {
-      ...review,
-      createdAt: review.createdAt ?? now,
-      updatedAt: now
-    };
-    const addRequest = store.add(newReview);
-    addRequest.onsuccess = (event) => {
-      resolve({ ...newReview, id: event.target.result });
-    };
-    addRequest.onerror = () => {
-      reject(addRequest.error ?? new Error("Failed to add review"));
-    };
-
-    transaction.onerror = () => {
-      reject(transaction.error ?? new Error("IndexedDB transaction failed"));
-    };
-
-    transaction.onabort = () => {
-      reject(transaction.error ?? new Error("IndexedDB transaction aborted"));
-    };
+    const normalized = prepareReviewForWrite(review, null, now);
+    const newId = await requestToPromise(store.add(normalized));
+    return { ...normalized, id: newId };
   });
 }
 
 export async function addReview(review) {
-  return withStore(REVIEW_STORE, "readwrite", (store) => store.add(review));
+  if (!review || !review.bookId) {
+    throw new Error("addReview requires a review with a bookId");
+  }
+
+  const now = new Date().toISOString();
+  return withStore(REVIEW_STORE, "readwrite", (store) => {
+    const normalized = prepareReviewForWrite(review, null, now);
+    return requestToPromise(store.add(normalized));
+  });
 }
 
 export async function getReviews() {
@@ -263,64 +391,54 @@ export async function getReviews() {
 }
 
 export async function getReviewByBookId(bookId) {
-  const database = await initDB();
-
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction(REVIEW_STORE, "readonly");
-    const store = transaction.objectStore(REVIEW_STORE);
+  return withStore(REVIEW_STORE, "readonly", (store) => {
     const index = store.index("bookId");
-    const request = index.getAll(bookId);
-
-    request.onsuccess = () => {
-      const results = request.result ?? [];
-      resolve(results[0] ?? null);
-    };
-
-    request.onerror = () => {
-      reject(request.error ?? new Error("Failed to fetch review by book"));
-    };
-
-    transaction.onerror = () => {
-      reject(transaction.error ?? new Error("IndexedDB transaction failed"));
-    };
-
-    transaction.onabort = () => {
-      reject(transaction.error ?? new Error("IndexedDB transaction aborted"));
-    };
+    return requestToPromise(index.getAll(bookId)).then((results) => {
+      const list = results ?? [];
+      return list[0] ?? null;
+    });
   });
 }
 
 export async function deleteReviewByBookId(bookId) {
-  const database = await initDB();
+  if (bookId === undefined || bookId === null) {
+    return false;
+  }
 
-  return new Promise((resolve, reject) => {
-    const transaction = database.transaction(REVIEW_STORE, "readwrite");
-    const store = transaction.objectStore(REVIEW_STORE);
+  return withStore(REVIEW_STORE, "readwrite", (store) => {
     const index = store.index("bookId");
-    const lookup = index.getAllKeys(bookId);
+    const keyRange = typeof IDBKeyRange !== "undefined" ? IDBKeyRange.only(bookId) : bookId;
 
-    lookup.onsuccess = () => {
-      const keys = lookup.result ?? [];
-      keys.forEach((key) => store.delete(key));
-    };
+    return new Promise((resolve, reject) => {
+      const cursorRequest = index.openCursor(keyRange);
 
-    lookup.onerror = () => {
-      reject(lookup.error ?? new Error("Failed to lookup review keys for deletion"));
-    };
+      cursorRequest.onsuccess = (event) => {
+        const cursor = event.target.result;
+        if (!cursor) {
+          resolve(true);
+          return;
+        }
 
-    transaction.oncomplete = () => resolve(true);
-    transaction.onerror = () => {
-      reject(transaction.error ?? new Error("IndexedDB transaction failed"));
-    };
-    transaction.onabort = () => {
-      reject(transaction.error ?? new Error("IndexedDB transaction aborted"));
-    };
+        store.delete(cursor.primaryKey);
+        cursor.continue();
+      };
+
+      cursorRequest.onerror = () => {
+        reject(cursorRequest.error ?? new Error("Failed to lookup review keys for deletion"));
+      };
+    });
   });
 }
 
 export async function clearAll() {
-  await withStore(BOOK_STORE, "readwrite", (store) => store.clear());
-  await withStore(REVIEW_STORE, "readwrite", (store) => store.clear());
+  await withStore(BOOK_STORE, "readwrite", (store) => {
+    const request = store.clear();
+    return requestToPromise(request).then(() => true);
+  });
+  await withStore(REVIEW_STORE, "readwrite", (store) => {
+    const request = store.clear();
+    return requestToPromise(request).then(() => true);
+  });
 }
 
 export async function deleteReviewById(reviewId) {
@@ -328,5 +446,8 @@ export async function deleteReviewById(reviewId) {
     return false;
   }
 
-  return withStore(REVIEW_STORE, "readwrite", (store) => store.delete(reviewId));
+  return withStore(REVIEW_STORE, "readwrite", (store) => {
+    const request = store.delete(reviewId);
+    return requestToPromise(request).then(() => true);
+  });
 }
