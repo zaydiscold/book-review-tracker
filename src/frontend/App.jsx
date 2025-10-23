@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   initDB,
   addBook,
@@ -324,6 +325,49 @@ const SAMPLE_LIBRARY = [
     }
   }
 ];
+
+function ToastOverlay({ toast, clearToast }) {
+  if (!toast) {
+    return null;
+  }
+
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const toneStyle =
+    toast.tone === "success"
+      ? styles.toastSuccess
+      : toast.tone === "error" || toast.tone === "danger"
+      ? styles.toastDanger
+      : toast.tone === "warning"
+      ? styles.toastWarning
+      : styles.toastInfo;
+
+  const role =
+    toast.tone === "error" || toast.tone === "danger" ? "alert" : "status";
+  const ariaLive =
+    toast.tone === "error" || toast.tone === "danger"
+      ? "assertive"
+      : "polite";
+
+  return createPortal(
+    (
+      <div style={{ ...styles.toast, ...toneStyle }} role={role} aria-live={ariaLive}>
+        <span>{toast.text}</span>
+        <button
+          type="button"
+          onClick={clearToast}
+          style={styles.toastDismiss}
+          aria-label="Dismiss notification"
+        >
+          ×
+        </button>
+      </div>
+    ),
+    document.body
+  );
+}
 const BOOK_STATUS_SECTIONS = [
   {
     label: "Plan & Collect",
@@ -2127,32 +2171,7 @@ export default function App() {
 
   return (
     <div className="App" style={styles.wrapper}>
-      {toast && (
-        <div
-          style={{
-            ...styles.toast,
-            ...(toast.tone === "success"
-              ? styles.toastSuccess
-              : toast.tone === "error" || toast.tone === "danger"
-              ? styles.toastDanger
-              : toast.tone === "warning"
-              ? styles.toastWarning
-              : styles.toastInfo)
-          }}
-          role={toast.tone === "error" || toast.tone === "danger" ? "alert" : "status"}
-          aria-live={toast.tone === "error" || toast.tone === "danger" ? "assertive" : "polite"}
-        >
-          <span>{toast.text}</span>
-          <button
-            type="button"
-            onClick={clearToast}
-            style={styles.toastDismiss}
-            aria-label="Dismiss notification"
-          >
-            ×
-          </button>
-        </div>
-      )}
+      <ToastOverlay toast={toast} clearToast={clearToast} />
       <header style={styles.header}>
         <Logo />
         <p>Local-first proof of concept. Data persists in your browser via IndexedDB.</p>
@@ -3029,7 +3048,7 @@ const styles = {
     borderRadius: "1.4rem",
     border: "2px solid rgba(217, 130, 43, 0.55)",
     boxShadow: "0 26px 48px rgba(44, 30, 30, 0.32)",
-    background: "rgba(249, 223, 198, 0.78)",
+    backgroundColor: "rgba(249, 223, 198, 0.52)",
     backdropFilter: "blur(22px)",
     color: THEME.textPrimary,
     fontSize: "0.95rem",
@@ -3043,19 +3062,19 @@ const styles = {
     boxShadow: "0 22px 44px rgba(95, 64, 40, 0.28)"
   },
   toastSuccess: {
-    background: "rgba(47, 159, 99, 0.86)",
+    backgroundColor: "rgba(47, 159, 99, 0.52)",
     color: "#0c2f1e",
     borderColor: "rgba(47, 159, 99, 0.9)",
     boxShadow: "0 28px 58px rgba(21, 83, 52, 0.45)"
   },
   toastWarning: {
-    background: "rgba(229, 182, 89, 0.88)",
+    backgroundColor: "rgba(229, 182, 89, 0.56)",
     color: "#422f12",
     borderColor: "rgba(229, 182, 89, 0.92)",
     boxShadow: "0 28px 58px rgba(140, 101, 38, 0.44)"
   },
   toastDanger: {
-    background: "rgba(167, 54, 54, 0.88)",
+    backgroundColor: "rgba(167, 54, 54, 0.55)",
     color: "#fff4f2",
     borderColor: "rgba(167, 54, 54, 0.92)",
     boxShadow: "0 28px 58px rgba(88, 26, 26, 0.45)"
