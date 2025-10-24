@@ -1,26 +1,76 @@
 :root {
-  --autumn-light: #fff5ec;
-  --autumn-peach: #f9dfc6;
-  --autumn-orange: #f2c199;
-  --burnt-orange: #d9822b;
-  --cranberry: #a73636;
-  --goldenrod: #e5b659;
+  /* Warm Autumn Base Colors */
+  --autumn-cream: #fef8f3;
+  --autumn-light: #ffe8d6;
+  --autumn-peach: #ffd4b3;
+  --autumn-orange: #ffb88c;
+  --burnt-orange: #e8925b;
+  --deep-amber: #d4764d;
+
+  /* Rich Accent Colors */
+  --cranberry: #c44536;
+  --burgundy: #8b3a3a;
+  --goldenrod: #f4c245;
+  --warm-gold: #d4a942;
+  --maple-red: #d44e3c;
+  --pumpkin: #ff8552;
+
+  /* Earthy Tones */
   --bark: #3c2f2f;
   --espresso: #2c1e1e;
+  --chocolate: #4a3428;
+  --warm-brown: #6b4e3d;
 
+  /* Festive Accents */
+  --cinnamon: #b87156;
+  --copper: #c77f5d;
+  --harvest-gold: #daa520;
+
+  /* Gradients */
   --autumn-gradient: linear-gradient(
-    to bottom,
-    #fff5ec 0%,
-    #f9dfc6 30%,
-    #f2c199 65%,
-    rgba(217, 130, 43, 0.95) 100%
+    135deg,
+    #fef8f3 0%,
+    #ffe8d6 25%,
+    #ffd4b3 50%,
+    #ffb88c 75%,
+    #e8925b 100%
   );
+
+  --warm-gradient: radial-gradient(
+    ellipse at top,
+    rgba(254, 248, 243, 0.95) 0%,
+    rgba(255, 232, 214, 0.9) 40%,
+    rgba(255, 185, 140, 0.85) 100%
+  );
+
+  --glass-gradient: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.25) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 184, 140, 0.15) 100%
+  );
+
+  --button-gradient: linear-gradient(
+    135deg,
+    #ffb88c 0%,
+    #e8925b 50%,
+    #d4764d 100%
+  );
+
+  /* Shadow Variables */
+  --shadow-sm: 0 2px 8px rgba(60, 47, 47, 0.08);
+  --shadow-md: 0 4px 16px rgba(60, 47, 47, 0.12);
+  --shadow-lg: 0 8px 32px rgba(60, 47, 47, 0.16);
+  --shadow-xl: 0 16px 48px rgba(60, 47, 47, 0.2);
+  --glow-warm: 0 0 20px rgba(232, 146, 91, 0.3);
 }
 
 body {
-  background: var(--autumn-gradient);
+  background: var(--warm-gradient);
+  background-attachment: fixed;
   color: var(--bark);
   transition: background 0.3s ease, color 0.3s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 #root {

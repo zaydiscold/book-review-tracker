@@ -19,19 +19,23 @@ import { getCoverUrl, hasCover } from "../utils/covers";
 
 // Placeholder: future UI modules (filters, charts, sync indicators) will mount here.
 const THEME = {
-  background: "linear-gradient(155deg, var(--autumn-light) 0%, var(--autumn-peach) 28%, rgba(242, 193, 153, 0.88) 60%, rgba(217, 130, 43, 0.92) 100%)",
+  background: "var(--warm-gradient)",
   backgroundSolid: "var(--espresso)",
-  surface: "rgba(249, 223, 198, 0.85)",
-  surfaceAlt: "rgba(242, 193, 153, 0.68)",
-  border: "rgba(217, 130, 43, 0.42)",
+  surface: "rgba(255, 232, 214, 0.45)",
+  surfaceGlass: "rgba(255, 255, 255, 0.35)",
+  surfaceAlt: "rgba(255, 212, 179, 0.5)",
+  surfaceHover: "rgba(255, 232, 214, 0.65)",
+  border: "rgba(232, 146, 91, 0.35)",
+  borderLight: "rgba(255, 255, 255, 0.4)",
   textPrimary: "var(--bark)",
-  textMuted: "rgba(60, 47, 47, 0.72)",
+  textMuted: "rgba(60, 47, 47, 0.65)",
   accent: "var(--burnt-orange)",
-  accentHover: "var(--goldenrod)",
-  accentSoft: "rgba(242, 193, 153, 0.28)",
+  accentHover: "var(--deep-amber)",
+  accentSoft: "rgba(255, 185, 140, 0.25)",
   success: "#2F9F63",
   warning: "var(--goldenrod)",
-  danger: "var(--cranberry)"
+  danger: "var(--cranberry)",
+  glow: "var(--glow-warm)"
 };
 
 const SAMPLE_LIBRARY = [
@@ -2990,17 +2994,21 @@ export default function App() {
 
 const styles = {
   wrapper: {
-    fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
     margin: "0 auto",
     padding: "3.2rem 2.6rem 4.2rem",
     maxWidth: "1240px",
     color: THEME.textPrimary,
-    background: "rgba(249, 223, 198, 0.72)",
-    borderRadius: "2rem",
-    boxShadow: "0 38px 72px rgba(44, 30, 30, 0.32)",
-    backdropFilter: "blur(28px)",
+    background: "rgba(255, 255, 255, 0.28)",
+    border: "1px solid rgba(255, 255, 255, 0.45)",
+    borderRadius: "2.5rem",
+    boxShadow: "0 20px 60px rgba(60, 47, 47, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.5) inset, var(--shadow-xl)",
+    backdropFilter: "blur(40px) saturate(180%)",
+    WebkitBackdropFilter: "blur(40px) saturate(180%)",
     minHeight: "92vh",
-    transition: "color 0.3s ease, background 0.3s ease"
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    position: "relative",
+    overflow: "hidden"
   },
   header: {
     marginBottom: "2.6rem",
@@ -3020,14 +3028,17 @@ const styles = {
   logoIcon: {
     width: "78px",
     height: "68px",
-    borderRadius: "20px",
-    background:
-      "radial-gradient(circle at 30% 20%, rgba(255,245,236,0.9), rgba(242,193,153,0.35) 70%)",
-    boxShadow: "0 18px 32px rgba(44, 30, 30, 0.18)",
+    borderRadius: "22px",
+    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 212, 179, 0.35) 100%)",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
+    boxShadow: "0 8px 24px rgba(60, 47, 47, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
+    backdropFilter: "blur(20px)",
+    WebkitBackdropFilter: "blur(20px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "0.45rem"
+    padding: "0.45rem",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
   },
   logoTextGroup: {
     display: "flex",
@@ -3057,15 +3068,19 @@ const styles = {
     flexWrap: "wrap"
   },
   coverRefreshButton: {
-    background: "rgba(249, 223, 198, 0.28)",
-    border: `1px solid ${THEME.accent}`,
+    background: "rgba(255, 185, 140, 0.3)",
+    border: "1px solid rgba(255, 255, 255, 0.45)",
     color: THEME.accent,
-    padding: "0.65rem 1.4rem",
+    padding: "0.7rem 1.5rem",
     borderRadius: "999px",
     fontSize: "0.92rem",
     fontWeight: 600,
     cursor: "pointer",
-    transition: "background 0.2s ease, color 0.2s ease, opacity 0.2s ease"
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.08)",
+    fontFamily: "inherit"
   },
   coverRefreshButtonDisabled: {
     opacity: 0.6,
@@ -3076,7 +3091,7 @@ const styles = {
   },
   toast: {
     position: "fixed",
-    top: "1.1rem",
+    top: "1.5rem",
     right: "1.4rem",
     left: "50%",
     transform: "translateX(-50%)",
@@ -3085,18 +3100,19 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "0.7rem",
-    padding: "0.9rem 1.4rem",
-    borderRadius: "1.4rem",
-    border: "2px solid rgba(217, 130, 43, 0.55)",
-    boxShadow: "0 26px 48px rgba(44, 30, 30, 0.32)",
-    backgroundColor: "rgba(249, 223, 198, 0.52)",
-    backdropFilter: "blur(22px)",
+    padding: "1rem 1.5rem",
+    borderRadius: "1.5rem",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
+    boxShadow: "0 12px 32px rgba(60, 47, 47, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
+    background: "rgba(255, 232, 214, 0.85)",
+    backdropFilter: "blur(30px) saturate(160%)",
+    WebkitBackdropFilter: "blur(30px) saturate(160%)",
     color: THEME.textPrimary,
     fontSize: "0.95rem",
     lineHeight: 1.25,
     maxWidth: "min(520px, 90vw)",
     textAlign: "center",
-    transition: "transform 0.2s ease, opacity 0.2s ease"
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
   },
   toastInfo: {
     borderColor: "rgba(217, 130, 43, 0.45)",
@@ -3142,18 +3158,14 @@ const styles = {
     boxSizing: "border-box"
   },
   card: {
-    borderRadius: "1.5rem",
-    padding: "1.85rem",
-    backgroundColor: THEME.surface,
-    border: "1px solid transparent",
-    backgroundImage:
-      `linear-gradient(${THEME.surface}, ${THEME.surface}), ` +
-      "linear-gradient(135deg, rgba(217,130,43,0.35), rgba(249,223,198,0.6))",
-    backgroundClip: "padding-box, border-box",
-    backgroundOrigin: "padding-box, border-box",
-    boxShadow: "0 26px 52px rgba(44, 30, 30, 0.22)",
-    backdropFilter: "blur(24px)",
-    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+    borderRadius: "2rem",
+    padding: "2rem",
+    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 232, 214, 0.35) 100%)",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
+    boxShadow: "0 16px 40px rgba(60, 47, 47, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.4) inset",
+    backdropFilter: "blur(30px) saturate(160%)",
+    WebkitBackdropFilter: "blur(30px) saturate(160%)",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
     position: "relative",
     overflow: "hidden",
     width: "100%",
@@ -3182,17 +3194,20 @@ const styles = {
     color: THEME.textPrimary
   },
   input: {
-    borderRadius: "0.85rem",
-    border: `1px solid rgba(217, 130, 43, 0.38)`,
-    padding: "0.95rem 1.05rem",
+    borderRadius: "1rem",
+    border: "1px solid rgba(255, 255, 255, 0.4)",
+    padding: "1rem 1.15rem",
     fontSize: "1.02rem",
-    background: THEME.surfaceAlt,
+    background: "rgba(255, 255, 255, 0.5)",
     color: THEME.textPrimary,
-    transition: "border 0.2s ease, box-shadow 0.2s ease",
-    boxShadow: "0 6px 18px rgba(67, 38, 22, 0.18)",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
     width: "100%",
     boxSizing: "border-box",
-    outline: "none"
+    outline: "none",
+    fontFamily: "inherit"
   },
   textarea: {
     resize: "vertical",
@@ -3208,8 +3223,7 @@ const styles = {
     WebkitAppearance: "none",
     MozAppearance: "none",
     paddingRight: "3rem",
-    backgroundImage:
-      "linear-gradient(160deg, rgba(217,130,43,0.18), rgba(249,223,198,0.08))",
+    background: "rgba(255, 255, 255, 0.5)",
     cursor: "pointer"
   },
   selectArrow: {
@@ -3222,29 +3236,35 @@ const styles = {
     color: THEME.accent
   },
   searchButton: {
-    background: THEME.accentSoft,
+    background: "rgba(255, 185, 140, 0.35)",
     color: THEME.accent,
-    border: `1px solid ${THEME.accent}`,
-    borderRadius: "0.9rem",
-    padding: "0.75rem 1.1rem",
+    border: "1px solid rgba(255, 255, 255, 0.45)",
+    borderRadius: "1rem",
+    padding: "0.85rem 1.2rem",
     cursor: "pointer",
     fontWeight: 600,
     alignSelf: "stretch",
-    transition: "border 0.2s ease, background 0.2s ease",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
     minWidth: "120px",
-    textAlign: "center"
+    textAlign: "center",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.1)",
+    fontFamily: "inherit"
   },
   primaryButton: {
-    background: "linear-gradient(135deg, #F2C199, #D9822B)",
-    color: "#2C1E1E",
-    border: `1px solid rgba(217, 130, 43, 0.5)`,
-    borderRadius: "1rem",
-    padding: "0.85rem 1.4rem",
+    background: "linear-gradient(135deg, #ffb88c 0%, #e8925b 50%, #d4764d 100%)",
+    color: "#2c1e1e",
+    border: "1px solid rgba(255, 255, 255, 0.4)",
+    borderRadius: "1.1rem",
+    padding: "0.95rem 1.6rem",
     cursor: "pointer",
     fontWeight: 600,
-    transition: "transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease",
-    boxShadow: "0 12px 24px rgba(144, 82, 23, 0.28)",
-    alignSelf: "flex-start"
+    fontSize: "1rem",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    boxShadow: "0 8px 20px rgba(212, 118, 77, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset",
+    alignSelf: "flex-start",
+    fontFamily: "inherit"
   },
   secondaryButtonMuted: {
     background: "transparent",
@@ -3282,18 +3302,25 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     gap: "0.75rem",
-    padding: "1rem",
-    border: `1px dashed rgba(217, 130, 43, 0.32)`,
-    borderRadius: "1rem",
-    background: THEME.surfaceAlt
+    padding: "1.2rem",
+    border: "1px solid rgba(255, 255, 255, 0.4)",
+    borderRadius: "1.3rem",
+    background: "rgba(255, 232, 214, 0.4)",
+    backdropFilter: "blur(15px)",
+    WebkitBackdropFilter: "blur(15px)",
+    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.08)"
   },
   ratingGroup: {
     display: "flex",
     flexDirection: "column",
     gap: "0.5rem",
-    background: "rgba(249, 223, 198, 0.42)",
-    borderRadius: "0.85rem",
-    padding: "0.75rem"
+    background: "rgba(255, 255, 255, 0.4)",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
+    borderRadius: "1.2rem",
+    padding: "1rem",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.08)"
   },
   ratingInputs: {
     display: "flex",
@@ -3308,14 +3335,16 @@ const styles = {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: "0.75rem",
-    border: `1px solid rgba(217, 130, 43, 0.38)`,
-    background: "rgba(242, 193, 153, 0.2)",
-    padding: "0.45rem 1.1rem",
+    borderRadius: "0.9rem",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
+    background: "rgba(255, 255, 255, 0.45)",
+    padding: "0.6rem 1.2rem",
     minWidth: "120px",
     fontWeight: 600,
     textAlign: "center",
-    boxShadow: "0 6px 14px rgba(144, 82, 23, 0.2)",
+    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
     minHeight: "48px"
   },
   ratingDisplayInput: {
@@ -3368,15 +3397,19 @@ const styles = {
     gap: "0.35rem"
   },
   smallButton: {
-    background: THEME.accentSoft,
-    border: `1px solid rgba(217, 130, 43, 0.52)`,
+    background: "rgba(255, 185, 140, 0.3)",
+    border: "1px solid rgba(255, 255, 255, 0.45)",
     borderRadius: "0.9rem",
-    padding: "0.4rem 0.95rem",
+    padding: "0.5rem 1rem",
     fontSize: "0.82rem",
     cursor: "pointer",
     color: THEME.accent,
     fontWeight: 600,
-    transition: "border 0.2s ease, background 0.2s ease, color 0.2s ease"
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    boxShadow: "0 2px 8px rgba(60, 47, 47, 0.08)",
+    fontFamily: "inherit"
   },
   dangerButton: {
     background: "rgba(226, 70, 82, 0.12)",
@@ -3419,26 +3452,23 @@ const styles = {
   },
   discordSection: {
     marginTop: 0,
-    padding: "1.4rem 1.6rem",
-    border: "1px solid transparent",
-    borderRadius: "1.4rem",
-    backgroundColor: THEME.surface,
-    backgroundImage:
-      `linear-gradient(${THEME.surface}, ${THEME.surface}), ` +
-      "linear-gradient(120deg, rgba(217,130,43,0.54), rgba(242,193,153,0.48))",
-    backgroundClip: "padding-box, border-box",
-    backgroundOrigin: "padding-box, border-box",
-    boxShadow: "0 20px 40px rgba(67, 38, 22, 0.3)",
-    backdropFilter: "blur(18px)",
+    padding: "1.6rem 1.8rem",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
+    borderRadius: "2rem",
+    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 232, 214, 0.35) 100%)",
+    boxShadow: "0 12px 32px rgba(60, 47, 47, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.4) inset",
+    backdropFilter: "blur(30px) saturate(160%)",
+    WebkitBackdropFilter: "blur(30px) saturate(160%)",
     display: "flex",
     flexDirection: "column",
-    gap: "0.75rem",
+    gap: "0.85rem",
     maxWidth: "600px",
     marginLeft: "auto",
     marginRight: "auto",
     flex: "1 1 320px",
     position: "relative",
-    overflow: "hidden"
+    overflow: "hidden",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
   },
   switchLabel: {
     display: "flex",
@@ -3492,14 +3522,17 @@ const styles = {
     gap: "1.1rem"
   },
   listItem: {
-    border: `1px solid ${THEME.border}`,
-    borderRadius: "1.2rem",
-    padding: "1.1rem",
-    background: THEME.surface,
+    border: "1px solid rgba(255, 255, 255, 0.45)",
+    borderRadius: "1.5rem",
+    padding: "1.3rem",
+    background: "rgba(255, 255, 255, 0.35)",
     display: "flex",
     gap: "1.1rem",
     alignItems: "flex-start",
-    boxShadow: "0 22px 46px rgba(44, 30, 30, 0.18)"
+    boxShadow: "0 8px 24px rgba(60, 47, 47, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
+    backdropFilter: "blur(20px) saturate(150%)",
+    WebkitBackdropFilter: "blur(20px) saturate(150%)",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
   },
   meta: {
     fontSize: "0.85rem",
@@ -3546,25 +3579,26 @@ const styles = {
     justifyContent: "center"
   },
   starFull: {
-    color: THEME.accent,
-    WebkitTextStroke: "1px rgba(44, 30, 30, 0.4)",
-    textShadow: "0 0 2px rgba(44, 30, 30, 0.28)"
+    color: "#f4c245",
+    filter: "drop-shadow(0 2px 4px rgba(212, 118, 77, 0.4))",
+    WebkitTextStroke: "0.5px rgba(212, 118, 77, 0.5)",
+    textShadow: "0 0 8px rgba(244, 194, 69, 0.5)"
   },
   starHalf: {
     display: "inline-block",
-    backgroundImage: "repeating-linear-gradient(135deg, #D9822B 0 3px, #FFF5EC 3px 6px)",
+    backgroundImage: "linear-gradient(90deg, #f4c245 0%, #f4c245 50%, rgba(60, 47, 47, 0.2) 50%)",
     color: "transparent",
     backgroundClip: "text",
     WebkitBackgroundClip: "text",
     WebkitTextFillColor: "transparent",
-    WebkitTextStroke: "1px rgba(44, 30, 30, 0.4)",
-    textShadow: "0 0 2px rgba(44, 30, 30, 0.28)"
+    filter: "drop-shadow(0 2px 4px rgba(212, 118, 77, 0.3))",
+    WebkitTextStroke: "0.5px rgba(212, 118, 77, 0.4)"
   },
   starEmpty: {
-    color: "rgba(60, 47, 47, 0.25)",
+    color: "rgba(60, 47, 47, 0.2)",
     display: "inline-block",
-    WebkitTextStroke: "1px rgba(44, 30, 30, 0.3)",
-    textShadow: "0 0 2px rgba(44, 30, 30, 0.22)"
+    filter: "drop-shadow(0 1px 2px rgba(60, 47, 47, 0.1))",
+    WebkitTextStroke: "0.5px rgba(60, 47, 47, 0.15)"
   },
   reviewScore: {
     fontSize: "0.85rem",
@@ -3612,23 +3646,21 @@ const styles = {
   },
   utilitySection: {
     marginTop: 0,
-    padding: "1.25rem",
-    border: "1px solid transparent",
-    borderRadius: "1.2rem",
-    backgroundColor: THEME.surface,
-    backgroundImage:
-      `linear-gradient(${THEME.surface}, ${THEME.surface}), ` +
-      "linear-gradient(120deg, rgba(217,130,43,0.32), rgba(249,223,198,0.5))",
-    backgroundClip: "padding-box, border-box",
-    backgroundOrigin: "padding-box, border-box",
+    padding: "1.5rem",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
+    borderRadius: "2rem",
+    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 232, 214, 0.35) 100%)",
+    boxShadow: "0 12px 32px rgba(60, 47, 47, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.4) inset",
+    backdropFilter: "blur(30px) saturate(160%)",
+    WebkitBackdropFilter: "blur(30px) saturate(160%)",
     display: "flex",
     flexDirection: "column",
-    gap: "0.9rem",
-    boxShadow: "0 24px 48px rgba(44, 30, 30, 0.22)",
+    gap: "1rem",
     flex: "1 1 220px",
     maxWidth: "360px",
     position: "relative",
-    overflow: "hidden"
+    overflow: "hidden",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
   },
   error: {
     color: THEME.danger,
@@ -3647,11 +3679,14 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     gap: "0.9rem",
-    padding: "0.75rem 0.85rem",
-    border: `1px solid ${THEME.border}`,
-    borderRadius: "1rem",
-    background: THEME.surface,
-    boxShadow: "0 18px 38px rgba(58,28,16,0.28)"
+    padding: "0.85rem 1rem",
+    border: "1px solid rgba(255, 255, 255, 0.45)",
+    borderRadius: "1.2rem",
+    background: "rgba(255, 255, 255, 0.4)",
+    boxShadow: "0 6px 16px rgba(60, 47, 47, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
+    backdropFilter: "blur(15px)",
+    WebkitBackdropFilter: "blur(15px)",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
   },
   coverLink: {
     color: THEME.accent,
@@ -3812,30 +3847,30 @@ const styles = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backgroundColor: "rgba(60, 47, 47, 0.4)",
+    backdropFilter: "blur(8px)",
+    WebkitBackdropFilter: "blur(8px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 10000,
-    padding: "1rem"
+    padding: "1rem",
+    transition: "all 0.3s ease"
   },
   modalContainer: {
-    backgroundColor: THEME.surface,
-    borderRadius: "1.5rem",
-    border: "1px solid transparent",
-    backgroundImage:
-      `linear-gradient(${THEME.surface}, ${THEME.surface}), ` +
-      "linear-gradient(120deg, rgba(217,130,43,0.32), rgba(249,223,198,0.52))",
-    backgroundClip: "padding-box, border-box",
-    backgroundOrigin: "padding-box, border-box",
-    boxShadow: "0 30px 62px rgba(44, 30, 30, 0.32)",
-    backdropFilter: "blur(24px)",
+    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 232, 214, 0.45) 100%)",
+    borderRadius: "2rem",
+    border: "1px solid rgba(255, 255, 255, 0.6)",
+    boxShadow: "0 20px 60px rgba(60, 47, 47, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.5) inset",
+    backdropFilter: "blur(40px) saturate(180%)",
+    WebkitBackdropFilter: "blur(40px) saturate(180%)",
     maxWidth: "600px",
     width: "100%",
     maxHeight: "90vh",
     overflow: "hidden",
     display: "flex",
-    flexDirection: "column"
+    flexDirection: "column",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
   },
   modalHeader: {
     padding: "1.5rem 1.5rem 0",
