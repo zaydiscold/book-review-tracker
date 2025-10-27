@@ -18,7 +18,7 @@ import { searchOpenLibrary } from "../data/openLibrary";
 import { getCoverUrl, hasCover } from "../utils/covers";
 
 // Placeholder: future UI modules (filters, charts, sync indicators) will mount here.
-const THEME = {
+const LIGHT_THEME = {
   background: "var(--warm-gradient)",
   backgroundSolid: "var(--espresso)",
   surface: "rgba(255, 232, 214, 0.45)",
@@ -35,8 +35,33 @@ const THEME = {
   success: "#2F9F63",
   warning: "var(--goldenrod)",
   danger: "var(--cranberry)",
-  glow: "var(--glow-warm)"
+  glow: "var(--glow-warm)",
+  burntOrange: "var(--burnt-orange)"
 };
+
+const DARK_THEME = {
+  background: "radial-gradient(ellipse at top, #1a1412 0%, #120d0a 50%, #0a0605 100%)",
+  backgroundSolid: "#0a0605",
+  surface: "rgba(60, 47, 47, 0.4)",
+  surfaceGlass: "rgba(80, 60, 50, 0.35)",
+  surfaceAlt: "rgba(90, 65, 50, 0.45)",
+  surfaceHover: "rgba(100, 75, 60, 0.5)",
+  border: "rgba(232, 146, 91, 0.25)",
+  borderLight: "rgba(255, 185, 140, 0.2)",
+  textPrimary: "#ffe8d6",
+  textMuted: "rgba(255, 232, 214, 0.65)",
+  accent: "#ffb88c",
+  accentHover: "#ffd4b3",
+  accentSoft: "rgba(255, 185, 140, 0.15)",
+  success: "#4db380",
+  warning: "#f4c245",
+  danger: "#ff8552",
+  glow: "0 0 30px rgba(255, 185, 140, 0.4)",
+  burntOrange: "#ffb88c"
+};
+
+// For backward compatibility with static styles
+const THEME = LIGHT_THEME;
 
 const SAMPLE_LIBRARY = [
   {
@@ -330,48 +355,6 @@ const SAMPLE_LIBRARY = [
   }
 ];
 
-function ToastOverlay({ toast, clearToast }) {
-  if (!toast) {
-    return null;
-  }
-
-  if (typeof document === "undefined") {
-    return null;
-  }
-
-  const toneStyle =
-    toast.tone === "success"
-      ? styles.toastSuccess
-      : toast.tone === "error" || toast.tone === "danger"
-      ? styles.toastDanger
-      : toast.tone === "warning"
-      ? styles.toastWarning
-      : styles.toastInfo;
-
-  const role =
-    toast.tone === "error" || toast.tone === "danger" ? "alert" : "status";
-  const ariaLive =
-    toast.tone === "error" || toast.tone === "danger"
-      ? "assertive"
-      : "polite";
-
-  return createPortal(
-    (
-      <div style={{ ...styles.toast, ...toneStyle }} role={role} aria-live={ariaLive}>
-        <span>{toast.text}</span>
-        <button
-          type="button"
-          onClick={clearToast}
-          style={styles.toastDismiss}
-          aria-label="Dismiss notification"
-        >
-          ×
-        </button>
-      </div>
-    ),
-    document.body
-  );
-}
 const BOOK_STATUS_SECTIONS = [
   {
     label: "Plan & Collect",
@@ -944,7 +927,70 @@ function applyBookUpdateToList(list, updatedBook) {
   return changed ? next : list;
 }
 
-function Logo() {
+function LampToggle({ isDark, onToggle }) {
+  return (
+    <button
+      onClick={onToggle}
+      style={styles.lampToggle}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+    >
+      <div style={isDark ? styles.lampContainerLit : styles.lampContainer}>
+        {/* Glow effect when lamp is lit */}
+        {isDark && <div style={styles.lampGlow} />}
+
+        <svg
+          width="48"
+          height="56"
+          viewBox="0 0 48 56"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Lamp base */}
+          <ellipse cx="24" cy="52" rx="8" ry="3" fill={isDark ? "#3c2f2f" : "#2c1e1e"} opacity="0.5" />
+
+          {/* Lamp stand */}
+          <rect x="22" y="38" width="4" height="14" rx="2" fill={isDark ? "#6b4e3d" : "#4a3428"} />
+
+          {/* Lamp body */}
+          <path
+            d="M14 38 L14 28 C14 24 16 20 24 20 C32 20 34 24 34 28 L34 38 L14 38 Z"
+            fill={isDark ? "#b87156" : "#6b4e3d"}
+            opacity={isDark ? "0.9" : "0.7"}
+          />
+
+          {/* Lamp shade */}
+          <path
+            d="M10 28 L10 22 C10 18 14 14 24 14 C34 14 38 18 38 22 L38 28 Z"
+            fill={isDark ? "#ffb88c" : "#d4764d"}
+            opacity={isDark ? "1" : "0.6"}
+          />
+
+          {/* Light bulb inside (visible when lit) */}
+          {isDark && (
+            <>
+              <ellipse cx="24" cy="24" rx="4" ry="5" fill="#ffd4b3" opacity="0.9" />
+              <ellipse cx="24" cy="24" rx="3" ry="4" fill="#ffe8d6" />
+              {/* Light rays */}
+              <circle cx="24" cy="24" r="6" fill="#ffb88c" opacity="0.3" />
+              <circle cx="24" cy="24" r="8" fill="#ffb88c" opacity="0.15" />
+            </>
+          )}
+
+          {/* Shade details */}
+          <ellipse cx="24" cy="28" rx="14" ry="1.5" fill="#000" opacity="0.1" />
+          <path
+            d="M10 28 L38 28 L34 32 L14 32 Z"
+            fill={isDark ? "#e8925b" : "#b87156"}
+            opacity={isDark ? "0.8" : "0.5"}
+          />
+        </svg>
+      </div>
+    </button>
+  );
+}
+
+function Logo({ theme }) {
   return (
     <div style={styles.logoWrapper}>
       <div style={styles.logoIcon} aria-hidden="true">
@@ -992,14 +1038,14 @@ function Logo() {
         </svg>
       </div>
       <div style={styles.logoTextGroup}>
-        <span style={styles.logoTitle}>Book Review Tracker</span>
-        <span style={styles.logoSubtitle}>a cozy corner for every chapter</span>
+        <span style={{...styles.logoTitle, color: theme.burntOrange}}>Book Review Tracker</span>
+        <span style={{...styles.logoSubtitle, color: theme.textMuted}}>a cozy corner for every chapter</span>
       </div>
     </div>
   );
 }
 
-function ToastOverlay({ toast, onDismiss }) {
+function ToastOverlay({ toast, onDismiss, theme }) {
   if (!toast) {
     return null;
   }
@@ -1021,7 +1067,8 @@ function ToastOverlay({ toast, onDismiss }) {
     <div
       style={{
         ...styles.toast,
-        ...toneStyle
+        ...toneStyle,
+        color: theme.textPrimary
       }}
       role={toast.tone === "error" || toast.tone === "danger" ? "alert" : "status"}
       aria-live={toast.tone === "error" || toast.tone === "danger" ? "assertive" : "polite"}
@@ -1071,7 +1118,20 @@ export default function App() {
     createReviewDraft(emptyBookForm.status)
   );
   const [coverRefreshing, setCoverRefreshing] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof localStorage === "undefined") {
+      return false;
+    }
+    const stored = localStorage.getItem("darkMode");
+    return stored === "true";
+  });
   const isEditingBook = Boolean(editingBookFormId);
+
+  const theme = isDarkMode ? DARK_THEME : LIGHT_THEME;
+
+  const toggleTheme = useCallback(() => {
+    setIsDarkMode((prev) => !prev);
+  }, []);
 
   const applyBookPatch = useCallback((updatedBook) => {
     if (!updatedBook?.id) {
@@ -1142,16 +1202,24 @@ export default function App() {
   }, [discordShareFull]);
 
   useEffect(() => {
+    if (typeof localStorage === "undefined") {
+      return;
+    }
+
+    localStorage.setItem("darkMode", String(isDarkMode));
+  }, [isDarkMode]);
+
+  useEffect(() => {
     const originalBackground = document.body.style.background;
     const originalBackgroundColor = document.body.style.backgroundColor;
     const originalBackgroundAttachment = document.body.style.backgroundAttachment;
     const originalColor = document.body.style.color;
 
-    document.body.style.background = THEME.background;
-    document.body.style.backgroundColor = THEME.backgroundSolid;
+    document.body.style.background = theme.background;
+    document.body.style.backgroundColor = theme.backgroundSolid;
     document.body.style.backgroundAttachment = "fixed";
-    document.body.style.color = THEME.textPrimary;
-    document.body.style.transition = "background 0.3s ease";
+    document.body.style.color = theme.textPrimary;
+    document.body.style.transition = "background 0.5s ease, color 0.5s ease, background-color 0.5s ease";
 
     return () => {
       document.body.style.background = originalBackground;
@@ -1159,7 +1227,7 @@ export default function App() {
       document.body.style.backgroundAttachment = originalBackgroundAttachment;
       document.body.style.color = originalColor;
     };
-  }, []);
+  }, [theme]);
 
   const reviewsByBook = useMemo(() => {
     return reviews.reduce((acc, review) => {
@@ -2215,17 +2283,21 @@ export default function App() {
   }
 
   return (
-    <div className="App" style={styles.wrapper}>
-      <ToastOverlay toast={toast} onDismiss={clearToast} />
+    <div className="App" style={{...styles.wrapper, color: theme.textPrimary}}>
+      <ToastOverlay toast={toast} onDismiss={clearToast} theme={theme} />
+      <div style={styles.lampToggleContainer}>
+        <LampToggle isDark={isDarkMode} onToggle={toggleTheme} />
+      </div>
       <header style={styles.header}>
-        <Logo />
-        <p>Local-first proof of concept. Data persists in your browser via IndexedDB.</p>
+        <Logo theme={theme} />
+        <p style={{color: theme.textMuted}}>Local-first proof of concept. Data persists in your browser via IndexedDB.</p>
         <div style={styles.headerActions}>
           <button
             type="button"
             style={{
               ...styles.coverRefreshButton,
-              ...(coverRefreshing ? styles.coverRefreshButtonDisabled : null)
+              ...(coverRefreshing ? styles.coverRefreshButtonDisabled : null),
+              color: theme.accent
             }}
             onClick={handleRefreshCovers}
             disabled={coverRefreshing}
@@ -2233,7 +2305,7 @@ export default function App() {
             {coverRefreshing ? "Refreshing covers…" : "Refresh library covers"}
           </button>
         </div>
-        {!initialized && <p style={styles.warning}>Initializing storage&hellip;</p>}
+        {!initialized && <p style={{...styles.warning, color: theme.warning}}>Initializing storage&hellip;</p>}
       </header>
 
       <main style={styles.main}>
@@ -3912,5 +3984,46 @@ const styles = {
     display: "flex",
     gap: "0.75rem",
     justifyContent: "flex-end"
+  },
+  lampToggleContainer: {
+    position: "absolute",
+    top: "2rem",
+    right: "2.5rem",
+    zIndex: 1000
+  },
+  lampToggle: {
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    padding: "0.5rem",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "transform 0.2s ease",
+    position: "relative",
+    outline: "none"
+  },
+  lampContainer: {
+    position: "relative",
+    filter: "drop-shadow(0 4px 8px rgba(60, 47, 47, 0.2))",
+    transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  lampContainerLit: {
+    position: "relative",
+    filter: "drop-shadow(0 8px 24px rgba(255, 185, 140, 0.6)) drop-shadow(0 0 40px rgba(255, 185, 140, 0.4))",
+    transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  lampGlow: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "180px",
+    height: "180px",
+    background: "radial-gradient(circle, rgba(255, 185, 140, 0.25) 0%, rgba(255, 185, 140, 0.15) 30%, rgba(255, 185, 140, 0.05) 60%, transparent 100%)",
+    borderRadius: "50%",
+    pointerEvents: "none",
+    animation: "lampPulse 3s ease-in-out infinite",
+    zIndex: -1
   }
 };
