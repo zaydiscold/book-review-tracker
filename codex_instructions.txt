@@ -12,7 +12,7 @@ The scaffold now includes a React + Vite frontend, Express backend, IndexedDB da
 6. Implement import flows and alternative export formats (CSV, Markdown summaries).
 7. Extend the OpenLibrary availability prototype into a full borrow/download workflow with account linking and offline reader handoffs.
 
-8. Promote the Discord webhook into a full bot (store message IDs, sync reactions, and update embeds live).
+8. Promote the Discord webhook into a full bot (store message IDs, sync reactions, and update embeds live). A standalone `/pushbook` bot now lives in `discord-bot/`; extend it rather than rebuilding from scratch.
 9. Finish the Discord sharing controls (full vs summary toggle) with richer reaction UX and secure opt-in per review.
 10. Flesh out the new library tools placeholders with real flows (imports, stats dashboards, device sync) and align the Discord panel polish with final UX.
 11. Add comprehensive OpenLibrary search testing: verify search results, cover fetching, availability data, and error handling with various ISBNs and titles.

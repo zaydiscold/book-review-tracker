@@ -1,6 +1,6 @@
 # Supabase setup guide
 
-Follow these steps to let the Book Review Tracker sync its IndexedDB data with Supabase.
+Follow these steps to let the Book Review Tracker sync its IndexedDB data with Supabase. If you are also experimenting with the new standalone Discord bot (`discord-bot/`), note that it currently manages its own configuration—the Supabase pieces below remain focused on the web app.
 
 ## 1. Create a project
 
