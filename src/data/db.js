@@ -1,10 +1,33 @@
-// Placeholder: expand to sync IndexedDB data with secure cloud replica once phase 2 begins.
+import {
+  syncBookUpsert,
+  syncBookDelete,
+  syncReviewUpsert,
+  syncReviewDelete,
+  syncReviewsDeleteForBook,
+  syncDeleteAllBooks,
+  syncDeleteAllReviews
+} from "./cloudSync";
+
+// Local IndexedDB implementation with optional Supabase replication.
 const DB_NAME = "book-review-tracker";
 const DB_VERSION = 2;
 const BOOK_STORE = "books";
 const REVIEW_STORE = "reviews";
 
 let dbPromise = null;
+
+function queueCloudSync(label, task) {
+  try {
+    const result = task?.();
+    if (isPromise(result)) {
+      result.catch((error) => {
+        console.warn(`[cloud-sync] ${label} failed`, error);
+      });
+    }
+  } catch (error) {
+    console.warn(`[cloud-sync] ${label} failed`, error);
+  }
+}
 
 function isPromise(value) {
   return Boolean(value && typeof value === "object" && typeof value.then === "function");
@@ -317,7 +340,11 @@ export async function addBook(book) {
   const now = new Date().toISOString();
   return withStore(BOOK_STORE, "readwrite", (store) => {
     const record = prepareBookForWrite(book, null, now);
-    return requestToPromise(store.add(record));
+    return requestToPromise(store.add(record)).then((id) => {
+      const storedRecord = { ...record, id };
+      queueCloudSync("book upsert", () => syncBookUpsert(storedRecord));
+      return id;
+    });
   });
 }
 
@@ -331,6 +358,7 @@ export async function updateBook(book) {
     const existing = await requestToPromise(store.get(book.id));
     const normalized = prepareBookForWrite(book, existing ?? null, now);
     await requestToPromise(store.put(normalized));
+    queueCloudSync("book upsert", () => syncBookUpsert({ ...normalized }));
     return { ...normalized };
   });
 }
@@ -338,7 +366,13 @@ export async function updateBook(book) {
 export async function deleteBook(bookId) {
   return withStore(BOOK_STORE, "readwrite", (store) => {
     const request = store.delete(bookId);
-    return requestToPromise(request).then(() => true);
+    return requestToPromise(request).then(() => {
+      if (bookId !== undefined && bookId !== null) {
+        queueCloudSync("book delete", () => syncBookDelete(bookId));
+        queueCloudSync("review delete by book", () => syncReviewsDeleteForBook(bookId));
+      }
+      return true;
+    });
   });
 }
 
@@ -360,17 +394,21 @@ export async function saveReview(review) {
         const normalized = prepareReviewForWrite(review, null, now);
         normalized.id = review.id;
         await requestToPromise(store.put(normalized));
+        queueCloudSync("review upsert", () => syncReviewUpsert({ ...normalized }));
         return { ...normalized };
       }
 
       const normalized = prepareReviewForWrite(review, existing, now);
       await requestToPromise(store.put(normalized));
+      queueCloudSync("review upsert", () => syncReviewUpsert({ ...normalized }));
       return { ...normalized };
     }
 
     const normalized = prepareReviewForWrite(review, null, now);
     const newId = await requestToPromise(store.add(normalized));
-    return { ...normalized, id: newId };
+    const storedReview = { ...normalized, id: newId };
+    queueCloudSync("review upsert", () => syncReviewUpsert(storedReview));
+    return storedReview;
   });
 }
 
@@ -382,7 +420,11 @@ export async function addReview(review) {
   const now = new Date().toISOString();
   return withStore(REVIEW_STORE, "readwrite", (store) => {
     const normalized = prepareReviewForWrite(review, null, now);
-    return requestToPromise(store.add(normalized));
+    return requestToPromise(store.add(normalized)).then((id) => {
+      const storedReview = { ...normalized, id };
+      queueCloudSync("review upsert", () => syncReviewUpsert(storedReview));
+      return id;
+    });
   });
 }
 
@@ -427,17 +469,28 @@ export async function deleteReviewByBookId(bookId) {
         reject(cursorRequest.error ?? new Error("Failed to lookup review keys for deletion"));
       };
     });
+  }).then((result) => {
+    if (bookId !== undefined && bookId !== null) {
+      queueCloudSync("review delete by book", () => syncReviewsDeleteForBook(bookId));
+    }
+    return result;
   });
 }
 
 export async function clearAll() {
   await withStore(BOOK_STORE, "readwrite", (store) => {
     const request = store.clear();
-    return requestToPromise(request).then(() => true);
+    return requestToPromise(request).then(() => {
+      queueCloudSync("book clear", () => syncDeleteAllBooks());
+      return true;
+    });
   });
   await withStore(REVIEW_STORE, "readwrite", (store) => {
     const request = store.clear();
-    return requestToPromise(request).then(() => true);
+    return requestToPromise(request).then(() => {
+      queueCloudSync("review clear", () => syncDeleteAllReviews());
+      return true;
+    });
   });
 }
 
@@ -448,6 +501,52 @@ export async function deleteReviewById(reviewId) {
 
   return withStore(REVIEW_STORE, "readwrite", (store) => {
     const request = store.delete(reviewId);
-    return requestToPromise(request).then(() => true);
+    return requestToPromise(request).then(() => {
+      queueCloudSync("review delete", () => syncReviewDelete(reviewId));
+      return true;
+    });
   });
+}
+
+export async function applyRemoteSnapshot(snapshot) {
+  if (!snapshot) {
+    return { books: 0, reviews: 0 };
+  }
+
+  const { books = [], reviews = [] } = snapshot;
+  const result = { books: 0, reviews: 0 };
+
+  await withStore(BOOK_STORE, "readwrite", async (store) => {
+    for (const entry of books) {
+      if (!entry || entry.id === undefined || entry.id === null) {
+        continue;
+      }
+
+      const normalized = prepareBookForWrite(entry, null, entry.updatedAt ?? entry.createdAt ?? new Date().toISOString());
+      normalized.id = entry.id;
+      await requestToPromise(store.put(normalized));
+      result.books += 1;
+    }
+    return result.books;
+  });
+
+  await withStore(REVIEW_STORE, "readwrite", async (store) => {
+    for (const entry of reviews) {
+      if (!entry || entry.id === undefined || entry.id === null) {
+        continue;
+      }
+
+      const normalized = prepareReviewForWrite(
+        entry,
+        null,
+        entry.updatedAt ?? entry.createdAt ?? new Date().toISOString()
+      );
+      normalized.id = entry.id;
+      await requestToPromise(store.put(normalized));
+      result.reviews += 1;
+    }
+    return result.reviews;
+  });
+
+  return result;
 }

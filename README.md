@@ -38,6 +38,26 @@ Run `./scripts/start-dev.sh` from the repo root to boot the frontend Vite dev se
    ```
    This starts a stub Express API on http://localhost:4000 with the `/api/scan` placeholder route.
 
+### Optional: Enable Supabase-backed sync
+
+The UI now mirrors every IndexedDB change to Supabase when credentials are present. To enable it:
+
+1. [Create a Supabase project](https://supabase.com/) (the free tier is sufficient) and note the project URL and anon key.
+2. Create two tables with Row Level Security enabled:
+   - `books` (columns: `id` bigint primary key, `title` text, `titleLower` text, `author` text, `authorLower` text, `status` text, `cover` jsonb, `openLibraryUrl` text, `openLibraryIdentifiers` jsonb, `availability` jsonb, `createdAt` timestamptz, `updatedAt` timestamptz).
+   - `reviews` (columns: `id` bigint primary key, `bookId` bigint with a foreign key to `books.id`, `rating` numeric, `text` text, `status` text, `unread` boolean, `createdAt` timestamptz, `updatedAt` timestamptz).
+3. Grant insert/update/delete/select permissions to the `anon` role for both tables (or add policies that scope access per user if you later add auth).
+4. Add the connection details to the frontend build:
+   ```bash
+   # src/frontend/.env.local
+   VITE_SUPABASE_URL="https://your-project-id.supabase.co"
+   VITE_SUPABASE_ANON_KEY="public-anon-key"
+   ```
+5. Restart `npm run dev`. The app will pull the latest snapshot on load (skipping sample data when remote rows exist) and push future edits to Supabase in the background.
+6. Need the exact SQL for tables and policies? See [`docs/supabase-setup.md`](docs/supabase-setup.md) for a ready-to-run script and environment checklist.
+
+If Supabase is unreachable, the UI falls back to local-only mode and surfaces a warning toast.
+
 ## Current Behavior
 
 - Books include categories inspired by Goodreads/Bookwyrm (Wishlist, Library/Owned-Unread, Reading, Finished, Re-reading, On Hold, Did Not Finish), and library entries display an unread badge.
@@ -51,7 +71,7 @@ Run `./scripts/start-dev.sh` from the repo root to boot the frontend Vite dev se
 - When a Discord webhook is configured, new reviews post to the specified channel.
 - Toggle Discord sharing between quick summary posts (title + rating for group reactions) and full review embeds without leaving the app.
 - Ratings use a 5-star slider UI with timestamps so you can see exactly when each take was logged.
-- All sync, cloud storage, and external API integrations are no-ops for now.
+- Optional Supabase replication keeps IndexedDB changes mirrored in the cloud when `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are provided.
 
 ## Update Log
 

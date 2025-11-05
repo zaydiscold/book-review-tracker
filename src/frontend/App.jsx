@@ -9,13 +9,15 @@ import {
   saveReview,
   deleteReviewByBookId,
   deleteReviewById,
-  deleteBook
+  deleteBook,
+  applyRemoteSnapshot
 } from "../data/db";
 import { spellcheckText } from "../utils/spellcheck";
 import { postReviewToDiscord } from "../utils/discord";
 import { downloadLibraryJson } from "../utils/export";
 import { searchOpenLibrary } from "../data/openLibrary";
 import { getCoverUrl, hasCover } from "../utils/covers";
+import { isCloudSyncEnabled, pullCloudSnapshot } from "../data/cloudSync";
 
 // Placeholder: future UI modules (filters, charts, sync indicators) will mount here.
 const THEME = {
@@ -330,48 +332,6 @@ const SAMPLE_LIBRARY = [
   }
 ];
 
-function ToastOverlay({ toast, clearToast }) {
-  if (!toast) {
-    return null;
-  }
-
-  if (typeof document === "undefined") {
-    return null;
-  }
-
-  const toneStyle =
-    toast.tone === "success"
-      ? styles.toastSuccess
-      : toast.tone === "error" || toast.tone === "danger"
-      ? styles.toastDanger
-      : toast.tone === "warning"
-      ? styles.toastWarning
-      : styles.toastInfo;
-
-  const role =
-    toast.tone === "error" || toast.tone === "danger" ? "alert" : "status";
-  const ariaLive =
-    toast.tone === "error" || toast.tone === "danger"
-      ? "assertive"
-      : "polite";
-
-  return createPortal(
-    (
-      <div style={{ ...styles.toast, ...toneStyle }} role={role} aria-live={ariaLive}>
-        <span>{toast.text}</span>
-        <button
-          type="button"
-          onClick={clearToast}
-          style={styles.toastDismiss}
-          aria-label="Dismiss notification"
-        >
-          ×
-        </button>
-      </div>
-    ),
-    document.body
-  );
-}
 const BOOK_STATUS_SECTIONS = [
   {
     label: "Plan & Collect",
@@ -1092,7 +1052,26 @@ export default function App() {
     async function bootstrap() {
       try {
         await initDB();
-        await mergeSampleLibrary();
+        let skipSampleLibrary = false;
+
+        if (isCloudSyncEnabled()) {
+          try {
+            const snapshot = await pullCloudSnapshot();
+            if (snapshot.status === "ok") {
+              const applied = await applyRemoteSnapshot(snapshot);
+              if ((applied.books ?? 0) > 0 || (applied.reviews ?? 0) > 0) {
+                skipSampleLibrary = true;
+              }
+            }
+          } catch (cloudError) {
+            console.warn("Failed to sync remote snapshot", cloudError);
+            showToast("Cloud sync unavailable. Using local data only.", "warning");
+          }
+        }
+
+        if (!skipSampleLibrary) {
+          await mergeSampleLibrary();
+        }
         await mergeDuplicateBooks({ maxReviewsPerBook: 5 });
         await refreshData();
         setInitialized(true);
