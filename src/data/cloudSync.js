@@ -160,42 +160,64 @@ export function isCloudSyncEnabled() {
   return isSupabaseConfigured();
 }
 
+async function fetchAllFromSupabase(client, table, { normalizer, validator }) {
+  const PAGE_SIZE = 1000;
+  const results = [];
+  let offset = 0;
+
+  while (true) {
+    const { data, error } = await client
+      .from(table)
+      .select("*")
+      .order("updatedAt", { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+
+    if (error) {
+      const wrapped = new Error(`Failed to fetch ${table} from Supabase: ${error.message ?? error}`);
+      wrapped.cause = error;
+      throw wrapped;
+    }
+
+    const batch = data ?? [];
+    if (batch.length === 0) {
+      break;
+    }
+
+    const normalized = batch.map((entry) => normalizer(entry)).filter((entry) => validator(entry));
+    results.push(...normalized);
+
+    if (batch.length < PAGE_SIZE) {
+      break;
+    }
+
+    offset += PAGE_SIZE;
+  }
+
+  return results;
+}
+
 export async function pullCloudSnapshot() {
   const client = getSupabaseClient();
   if (!client) {
-    return { status: "disabled", books: [], reviews: [] };
+    return { status: "disabled", books: [], reviews: [], isComplete: false };
   }
 
-  const [{ data: bookData, error: bookError }, { data: reviewData, error: reviewError }] =
-    await Promise.all([
-      client.from(BOOK_TABLE).select("*").order("updatedAt", { ascending: true }),
-      client.from(REVIEW_TABLE).select("*").order("updatedAt", { ascending: true })
-    ]);
-
-  if (bookError) {
-    const error = new Error(`Failed to fetch books from Supabase: ${bookError.message ?? bookError}`);
-    error.cause = bookError;
-    throw error;
-  }
-
-  if (reviewError) {
-    const error = new Error(`Failed to fetch reviews from Supabase: ${reviewError.message ?? reviewError}`);
-    error.cause = reviewError;
-    throw error;
-  }
-
-  const books = (bookData ?? [])
-    .map((entry) => normalizeBookFromCloud(entry))
-    .filter((entry) => entry && entry.id !== null);
-
-  const reviews = (reviewData ?? [])
-    .map((entry) => normalizeReviewFromCloud(entry))
-    .filter((entry) => entry && entry.id !== null && entry.bookId !== null);
+  const [books, reviews] = await Promise.all([
+    fetchAllFromSupabase(client, BOOK_TABLE, {
+      normalizer: (entry) => normalizeBookFromCloud(entry),
+      validator: (entry) => entry && entry.id !== null
+    }),
+    fetchAllFromSupabase(client, REVIEW_TABLE, {
+      normalizer: (entry) => normalizeReviewFromCloud(entry),
+      validator: (entry) => entry && entry.id !== null && entry.bookId !== null
+    })
+  ]);
 
   return {
     status: "ok",
     books,
-    reviews
+    reviews,
+    isComplete: true
   };
 }
 

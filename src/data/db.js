@@ -48,6 +48,45 @@ function requestToPromise(request) {
   });
 }
 
+async function collectStoreKeys(store) {
+  if (store && typeof store.getAllKeys === "function") {
+    const keys = await requestToPromise(store.getAllKeys());
+    return Array.isArray(keys) ? keys : [];
+  }
+
+  return new Promise((resolve, reject) => {
+    if (!store) {
+      resolve([]);
+      return;
+    }
+
+    const request = typeof store.openKeyCursor === "function" ? store.openKeyCursor() : store.openCursor();
+
+    if (!request || !isIDBRequest(request)) {
+      resolve([]);
+      return;
+    }
+
+    const keys = [];
+
+    request.onsuccess = (event) => {
+      const cursor = event.target?.result ?? request.result ?? null;
+
+      if (!cursor) {
+        resolve(keys);
+        return;
+      }
+
+      keys.push(cursor.primaryKey);
+      cursor.continue();
+    };
+
+    request.onerror = () => {
+      reject(request.error ?? new Error("IndexedDB cursor failed"));
+    };
+  });
+}
+
 function ensureIndex(store, name, keyPath) {
   if (store && !store.indexNames.contains(name)) {
     store.createIndex(name, keyPath, { unique: false });
@@ -513,10 +552,13 @@ export async function applyRemoteSnapshot(snapshot) {
     return { books: 0, reviews: 0 };
   }
 
-  const { books = [], reviews = [] } = snapshot;
+  const { books = [], reviews = [], isComplete = false } = snapshot;
   const result = { books: 0, reviews: 0 };
 
   await withStore(BOOK_STORE, "readwrite", async (store) => {
+    const existingKeys = isComplete ? new Set(await collectStoreKeys(store)) : null;
+    const remoteKeys = new Set();
+
     for (const entry of books) {
       if (!entry || entry.id === undefined || entry.id === null) {
         continue;
@@ -526,11 +568,24 @@ export async function applyRemoteSnapshot(snapshot) {
       normalized.id = entry.id;
       await requestToPromise(store.put(normalized));
       result.books += 1;
+      remoteKeys.add(normalized.id);
     }
+
+    if (existingKeys) {
+      for (const key of existingKeys) {
+        if (!remoteKeys.has(key)) {
+          await requestToPromise(store.delete(key));
+        }
+      }
+    }
+
     return result.books;
   });
 
   await withStore(REVIEW_STORE, "readwrite", async (store) => {
+    const existingKeys = isComplete ? new Set(await collectStoreKeys(store)) : null;
+    const remoteKeys = new Set();
+
     for (const entry of reviews) {
       if (!entry || entry.id === undefined || entry.id === null) {
         continue;
@@ -544,7 +599,17 @@ export async function applyRemoteSnapshot(snapshot) {
       normalized.id = entry.id;
       await requestToPromise(store.put(normalized));
       result.reviews += 1;
+      remoteKeys.add(normalized.id);
     }
+
+    if (existingKeys) {
+      for (const key of existingKeys) {
+        if (!remoteKeys.has(key)) {
+          await requestToPromise(store.delete(key));
+        }
+      }
+    }
+
     return result.reviews;
   });
 
