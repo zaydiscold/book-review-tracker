@@ -13,6 +13,7 @@ Made with love by ayd / cold.
 - `src/data/` — IndexedDB helpers, OpenLibrary search adapter, plus future cloud/API integration shims
 - `src/utils/` — Utility helpers like the spellcheck placeholder, cover URL builder, export helpers, and Discord webhook sender
 - `docs/plan.md` — High-level implementation plan and roadmap
+- `discord-bot/` — Standalone Discord bot that posts book announcements and spins up review threads
 
 ## Getting Started
 
@@ -37,6 +38,16 @@ Run `./scripts/start-dev.sh` from the repo root to boot the frontend Vite dev se
    npm start
    ```
    This starts a stub Express API on http://localhost:4000 with the `/api/scan` placeholder route.
+
+3. **Discord Bot (optional for now)**
+   ```bash
+   cd discord-bot
+   npm install
+   cp .env.example .env # fill in Discord credentials
+   npm run register     # optional: quick command registration for a dev server
+   npm start
+   ```
+   Use the `/pushbook` slash command in your Discord server to post a book announcement and automatically open a review thread. The bot currently runs independently from the web app while we prep deeper integrations.
 
 ### Optional: Enable Supabase-backed sync
 

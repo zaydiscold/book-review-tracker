@@ -7,6 +7,7 @@
 - Spellcheck shim corrects obvious word typos only; punctuation and casing are preserved when possible, and autocorrect stays enabled during edits by default.
 - OpenLibrary search helper seeds book details (including cover metadata and source links) directly into the add-book form.
 - Discord webhook support posts saved reviews to a shared channel when configured.
+- Standalone Discord bot exposes a `/pushbook` command that posts book announcements and spins up review threads for async discussions.
 - JSON export creates a local snapshot of books and reviews for safekeeping.
 - Express backend exposes `/health` and `/api/scan` placeholder routes. No database writes yet.
 
@@ -29,6 +30,7 @@
 - Introduce context providers for sync status and user preferences.
 - Package spellcheck into a worker during phase 2 for better responsiveness.
 - Build Discord collaboration features: shared leaderboards, emoji reaction tallies, clear-vote resets.
+- Bridge the standalone Discord bot with the web app so review saves can trigger `/pushbook` posts automatically and sync thread metadata.
 - Add additional export formats (CSV/Markdown) and import flows for the JSON snapshots.
 - Explore end-to-end borrowing UX: surface OpenLibrary availability, handle sign-in handoffs, and guide readers from preview to download/waitlist.
 - Tighten Discord webhook controls (summary vs full posting, opt-in toggles) ahead of migrating to a managed bot.
