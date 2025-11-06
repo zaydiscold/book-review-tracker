@@ -552,11 +552,11 @@ export async function applyRemoteSnapshot(snapshot) {
     return { books: 0, reviews: 0 };
   }
 
-  const { books = [], reviews = [] } = snapshot;
+  const { books = [], reviews = [], isComplete = false } = snapshot;
   const result = { books: 0, reviews: 0 };
 
   await withStore(BOOK_STORE, "readwrite", async (store) => {
-    const existingKeys = new Set(await collectStoreKeys(store));
+    const existingKeys = isComplete ? new Set(await collectStoreKeys(store)) : null;
     const remoteKeys = new Set();
 
     for (const entry of books) {
@@ -571,9 +571,11 @@ export async function applyRemoteSnapshot(snapshot) {
       remoteKeys.add(normalized.id);
     }
 
-    for (const key of existingKeys) {
-      if (!remoteKeys.has(key)) {
-        await requestToPromise(store.delete(key));
+    if (existingKeys) {
+      for (const key of existingKeys) {
+        if (!remoteKeys.has(key)) {
+          await requestToPromise(store.delete(key));
+        }
       }
     }
 
@@ -581,7 +583,7 @@ export async function applyRemoteSnapshot(snapshot) {
   });
 
   await withStore(REVIEW_STORE, "readwrite", async (store) => {
-    const existingKeys = new Set(await collectStoreKeys(store));
+    const existingKeys = isComplete ? new Set(await collectStoreKeys(store)) : null;
     const remoteKeys = new Set();
 
     for (const entry of reviews) {
@@ -600,9 +602,11 @@ export async function applyRemoteSnapshot(snapshot) {
       remoteKeys.add(normalized.id);
     }
 
-    for (const key of existingKeys) {
-      if (!remoteKeys.has(key)) {
-        await requestToPromise(store.delete(key));
+    if (existingKeys) {
+      for (const key of existingKeys) {
+        if (!remoteKeys.has(key)) {
+          await requestToPromise(store.delete(key));
+        }
       }
     }
 
