@@ -164,6 +164,7 @@ async function fetchAllFromSupabase(client, table, { normalizer, validator }) {
   const PAGE_SIZE = 1000;
   const results = [];
   let offset = 0;
+  let reachedEnd = false;
 
   while (true) {
     const { data, error } = await client
@@ -180,6 +181,7 @@ async function fetchAllFromSupabase(client, table, { normalizer, validator }) {
 
     const batch = data ?? [];
     if (batch.length === 0) {
+      reachedEnd = true;
       break;
     }
 
@@ -187,13 +189,20 @@ async function fetchAllFromSupabase(client, table, { normalizer, validator }) {
     results.push(...normalized);
 
     if (batch.length < PAGE_SIZE) {
+      reachedEnd = true;
       break;
     }
 
     offset += PAGE_SIZE;
+
+    if (offset > 1_000_000) {
+      // Bail out defensively if pagination appears to stall, avoiding accidental deletes.
+      reachedEnd = false;
+      break;
+    }
   }
 
-  return results;
+  return { rows: results, isComplete: reachedEnd };
 }
 
 export async function pullCloudSnapshot() {
@@ -202,7 +211,7 @@ export async function pullCloudSnapshot() {
     return { status: "disabled", books: [], reviews: [], isComplete: false };
   }
 
-  const [books, reviews] = await Promise.all([
+  const [booksResult, reviewsResult] = await Promise.all([
     fetchAllFromSupabase(client, BOOK_TABLE, {
       normalizer: (entry) => normalizeBookFromCloud(entry),
       validator: (entry) => entry && entry.id !== null
@@ -213,11 +222,16 @@ export async function pullCloudSnapshot() {
     })
   ]);
 
+  const booksComplete = booksResult.isComplete;
+  const reviewsComplete = reviewsResult.isComplete;
+
   return {
     status: "ok",
-    books,
-    reviews,
-    isComplete: true
+    books: booksResult.rows,
+    reviews: reviewsResult.rows,
+    isComplete: booksComplete && reviewsComplete,
+    booksComplete,
+    reviewsComplete
   };
 }
 

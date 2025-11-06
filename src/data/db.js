@@ -552,11 +552,17 @@ export async function applyRemoteSnapshot(snapshot) {
     return { books: 0, reviews: 0 };
   }
 
-  const { books = [], reviews = [], isComplete = false } = snapshot;
+  const {
+    books = [],
+    reviews = [],
+    isComplete = false,
+    booksComplete = isComplete,
+    reviewsComplete = isComplete
+  } = snapshot;
   const result = { books: 0, reviews: 0 };
 
   await withStore(BOOK_STORE, "readwrite", async (store) => {
-    const existingKeys = isComplete ? new Set(await collectStoreKeys(store)) : null;
+    const existingKeys = booksComplete ? new Set(await collectStoreKeys(store)) : null;
     const remoteKeys = new Set();
 
     for (const entry of books) {
@@ -583,7 +589,7 @@ export async function applyRemoteSnapshot(snapshot) {
   });
 
   await withStore(REVIEW_STORE, "readwrite", async (store) => {
-    const existingKeys = isComplete ? new Set(await collectStoreKeys(store)) : null;
+    const existingKeys = reviewsComplete ? new Set(await collectStoreKeys(store)) : null;
     const remoteKeys = new Set();
 
     for (const entry of reviews) {
