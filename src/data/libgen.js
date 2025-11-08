@@ -169,3 +169,117 @@ export async function searchByTitleAndAuthor(title, author, options = {}) {
   const query = author ? `${title} ${author}` : title;
   return searchLibgen(query, { count: 5, ...options });
 }
+
+/**
+ * Get alternative download mirrors for a book
+ * @param {string} md5 - MD5 hash of the book
+ * @returns {Array} Array of mirror URLs
+ */
+export function getAlternativeMirrors(md5) {
+  if (!md5) return [];
+
+  const lowerMd5 = md5.toLowerCase();
+  return [
+    {
+      name: "LibGen.is",
+      url: `http://libgen.is/book/index.php?md5=${lowerMd5}`,
+      type: "primary"
+    },
+    {
+      name: "Gen.lib.rus.ec",
+      url: `http://gen.lib.rus.ec/book/index.php?md5=${lowerMd5}`,
+      type: "primary"
+    },
+    {
+      name: "LibGen.li",
+      url: `http://libgen.li/ads.php?md5=${lowerMd5}`,
+      type: "alternative"
+    },
+    {
+      name: "Library.lol",
+      url: `http://library.lol/main/${lowerMd5}`,
+      type: "alternative"
+    }
+  ];
+}
+
+/**
+ * Search for multiple books in batch
+ * @param {Array} books - Array of book objects with title and author
+ * @returns {Promise<Object>} Map of book IDs to libgen results
+ */
+export async function batchSearchBooks(books) {
+  const results = {};
+
+  // Search books with a delay to avoid overwhelming the API
+  for (const book of books) {
+    if (!book.title) continue;
+
+    try {
+      const libgenResults = await searchByTitleAndAuthor(
+        book.title,
+        book.author || "",
+        { count: 3 }
+      );
+
+      if (libgenResults.length > 0) {
+        results[book.id] = libgenResults[0]; // Take the best match
+      }
+
+      // Small delay to be respectful to the API
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (error) {
+      console.error(`Failed to search for book ${book.id}:`, error);
+    }
+  }
+
+  return results;
+}
+
+/**
+ * Calculate library statistics for LibGen availability
+ * @param {Array} books - Array of books in the library
+ * @returns {Object} Statistics object
+ */
+export function calculateLibraryStats(books) {
+  if (!Array.isArray(books)) {
+    return {
+      total: 0,
+      withLibgen: 0,
+      percentage: 0,
+      totalSize: "0 MB",
+      formats: {}
+    };
+  }
+
+  const withLibgen = books.filter(book => book.libgenMetadata?.md5);
+  const totalSize = withLibgen.reduce((sum, book) => {
+    const size = book.libgenMetadata?.filesize || "";
+    const match = size.match(/(\d+\.?\d*)\s*(MB|KB|GB)/i);
+    if (match) {
+      const value = parseFloat(match[1]);
+      const unit = match[2].toUpperCase();
+      if (unit === "GB") return sum + (value * 1024);
+      if (unit === "KB") return sum + (value / 1024);
+      return sum + value;
+    }
+    return sum;
+  }, 0);
+
+  const formats = {};
+  withLibgen.forEach(book => {
+    const ext = book.libgenMetadata?.extension?.toUpperCase();
+    if (ext) {
+      formats[ext] = (formats[ext] || 0) + 1;
+    }
+  });
+
+  return {
+    total: books.length,
+    withLibgen: withLibgen.length,
+    percentage: books.length > 0 ? Math.round((withLibgen.length / books.length) * 100) : 0,
+    totalSize: totalSize > 1024 ? `${(totalSize / 1024).toFixed(2)} GB` : `${totalSize.toFixed(2)} MB`,
+    totalSizeMB: totalSize,
+    formats
+  };
+}
