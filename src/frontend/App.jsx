@@ -16,6 +16,7 @@ import { spellcheckText } from "../utils/spellcheck";
 import { postReviewToDiscord } from "../utils/discord";
 import { downloadLibraryJson } from "../utils/export";
 import { searchOpenLibrary } from "../data/openLibrary";
+import { searchLibgen } from "../data/libgen";
 import { getCoverUrl, hasCover } from "../utils/covers";
 import { isCloudSyncEnabled, pullCloudSnapshot } from "../data/cloudSync";
 
@@ -864,7 +865,8 @@ const emptyBookForm = {
   cover: null,
   openLibraryUrl: "",
   openLibraryIdentifiers: null,
-  availability: null
+  availability: null,
+  libgenMetadata: null
 };
 
 function createReviewDraft(status = DEFAULT_STATUS) {
@@ -1013,8 +1015,10 @@ export default function App() {
   const [exporting, setExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [libgenResults, setLibgenResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [searchTab, setSearchTab] = useState("openlibrary"); // "openlibrary" or "libgen" or "all"
   const [addReviewWithBook, setAddReviewWithBook] = useState(
     !REVIEW_DISABLED_STATUSES.has(emptyBookForm.status)
   );
@@ -2070,21 +2074,63 @@ export default function App() {
     if (!query) {
       setSearchError("Enter a search term first.");
       setSearchResults([]);
+      setLibgenResults([]);
       return;
     }
 
     try {
       setSearching(true);
       setSearchError("");
-      const results = await searchOpenLibrary(query);
-      setSearchResults(results);
-      if (results.length === 0) {
-        setSearchError("No matches found. Try another search term.");
+
+      // Search both OpenLibrary and Libgen in parallel
+      const [openLibraryResults, libgenSearchResults] = await Promise.allSettled([
+        searchOpenLibrary(query),
+        searchLibgen(query, { count: 10 })
+      ]);
+
+      // Handle OpenLibrary results
+      if (openLibraryResults.status === "fulfilled") {
+        setSearchResults(openLibraryResults.value);
+      } else {
+        console.error("OpenLibrary search failed:", openLibraryResults.reason);
+        setSearchResults([]);
+      }
+
+      // Handle Libgen results
+      if (libgenSearchResults.status === "fulfilled") {
+        setLibgenResults(libgenSearchResults.value);
+      } else {
+        console.error("Libgen search failed:", libgenSearchResults.reason);
+        setLibgenResults([]);
+      }
+
+      // Show error only if both searches failed or returned no results
+      const openLibraryCount = openLibraryResults.status === "fulfilled" ? openLibraryResults.value.length : 0;
+      const libgenCount = libgenSearchResults.status === "fulfilled" ? libgenSearchResults.value.length : 0;
+      const totalResults = openLibraryCount + libgenCount;
+
+      // Auto-switch to the tab that has results
+      if (openLibraryCount > 0 && libgenCount === 0) {
+        setSearchTab("openlibrary");
+      } else if (libgenCount > 0 && openLibraryCount === 0) {
+        setSearchTab("libgen");
+      } else if (libgenCount > 0) {
+        // If both have results, prefer libgen (or keep current tab)
+        setSearchTab("libgen");
+      }
+
+      if (totalResults === 0) {
+        if (openLibraryResults.status === "rejected" && libgenSearchResults.status === "rejected") {
+          setSearchError("Could not reach book databases. Please try again later.");
+        } else {
+          setSearchError("No matches found. Try another search term.");
+        }
       }
     } catch (error) {
-      console.error("OpenLibrary search failed", error);
-      setSearchError("Could not reach OpenLibrary. Please try again later.");
+      console.error("Search failed", error);
+      setSearchError("Search failed. Please try again later.");
       setSearchResults([]);
+      setLibgenResults([]);
     } finally {
       setSearching(false);
     }
@@ -2095,6 +2141,8 @@ export default function App() {
       ? { ...result.cover, value: String(result.cover.value ?? "") }
       : null;
 
+    const sourceName = result.source === "libgen" ? "Library Genesis" : "OpenLibrary";
+
     setBookForm((prev) => ({
       ...prev,
       title: result.title ?? prev.title ?? "",
@@ -2103,11 +2151,13 @@ export default function App() {
       openLibraryUrl: result.openLibraryUrl ?? prev.openLibraryUrl ?? "",
       openLibraryIdentifiers: result.identifiers ?? prev.openLibraryIdentifiers ?? null,
       availability: result.availability ?? prev.availability ?? null,
+      libgenMetadata: result.libgenMetadata ?? prev.libgenMetadata ?? null,
       status: prev.status
     }));
     setSearchQuery(result.title ?? "");
     setSearchResults([]);
-    showToast(`Loaded "${result.title ?? "Book"}" from OpenLibrary.`, "info");
+    setLibgenResults([]);
+    showToast(`Loaded "${result.title ?? "Book"}" from ${sourceName}.`, "info");
   }
 
   function beginEditBookFromLibrary(book) {
@@ -2223,14 +2273,46 @@ export default function App() {
               style={styles.input}
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search OpenLibrary (title, author, ISBN)"
+              placeholder="Search OpenLibrary & Library Genesis"
             />
             <button style={styles.searchButton} type="submit" disabled={searching}>
               {searching ? "Searching…" : "Search"}
             </button>
           </form>
           {searchError && <p style={styles.error}>{searchError}</p>}
-          {searchResults.length > 0 && (
+          {(searchResults.length > 0 || libgenResults.length > 0) && (
+            <>
+              <div style={styles.searchTabs}>
+                <button
+                  type="button"
+                  style={{
+                    ...styles.searchTab,
+                    ...(searchTab === "openlibrary" ? styles.searchTabActive : {})
+                  }}
+                  onClick={() => setSearchTab("openlibrary")}
+                >
+                  OpenLibrary
+                  {searchResults.length > 0 && (
+                    <span style={styles.searchTabCount}>{searchResults.length}</span>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    ...styles.searchTab,
+                    ...(searchTab === "libgen" ? styles.searchTabActive : {})
+                  }}
+                  onClick={() => setSearchTab("libgen")}
+                >
+                  Library Genesis
+                  {libgenResults.length > 0 && (
+                    <span style={styles.searchTabCount}>{libgenResults.length}</span>
+                  )}
+                </button>
+              </div>
+            </>
+          )}
+          {searchTab === "openlibrary" && searchResults.length > 0 && (
             <ul style={styles.searchResults}>
               {searchResults.map((result) => {
                 const coverUrl = getCoverUrl(result.cover, "S");
@@ -2302,6 +2384,95 @@ export default function App() {
                           }}
                         >
                           {action.label}
+                        </a>
+                      ))}
+                      <button
+                        type="button"
+                        style={styles.smallButton}
+                        onClick={() => handleApplySearchResult(result)}
+                      >
+                        Use
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+          {searchTab === "libgen" && libgenResults.length > 0 && (
+            <ul style={styles.searchResults}>
+              {libgenResults.map((result) => {
+                const coverUrl = getCoverUrl(result.cover, "S");
+                const hasMetadata = result.libgenMetadata;
+                return (
+                  <li key={result.key} style={styles.searchResultItem}>
+                    <div style={styles.searchResultContent}>
+                      {coverUrl ? (
+                        <img
+                          src={coverUrl}
+                          alt={`Cover preview for ${result.title}`}
+                          style={styles.searchResultCover}
+                        />
+                      ) : (
+                        <div style={styles.searchResultCoverPlaceholder}>No cover</div>
+                      )}
+                      <div>
+                        <strong>{result.title}</strong>
+                        {result.author && <span> &middot; {result.author}</span>}
+                        {result.year && <span style={styles.meta}> &middot; {result.year}</span>}
+                        <div>
+                          <span style={styles.libgenBadge}>Library Genesis</span>
+                          {hasMetadata?.extension && (
+                            <span style={{ ...styles.libgenMetadataItem, marginLeft: "0.5rem" }}>
+                              {hasMetadata.extension.toUpperCase()}
+                            </span>
+                          )}
+                          {hasMetadata?.filesize && (
+                            <span style={{ ...styles.libgenMetadataItem, marginLeft: "0.3rem" }}>
+                              {hasMetadata.filesize}
+                            </span>
+                          )}
+                        </div>
+                        {hasMetadata?.downloadUrl && (
+                          <div style={{ marginTop: "0.5rem" }}>
+                            <a
+                              href={hasMetadata.downloadUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ ...styles.coverLink, color: "#5f40c4" }}
+                            >
+                              Download
+                            </a>
+                            {hasMetadata.mirrors && hasMetadata.mirrors.length > 0 && (
+                              <span style={styles.meta}> &middot; {hasMetadata.mirrors.length} mirrors</span>
+                            )}
+                          </div>
+                        )}
+                        {hasMetadata && (
+                          <div style={styles.libgenMetadata}>
+                            {hasMetadata.pages && (
+                              <span style={styles.libgenMetadataItem}>{hasMetadata.pages} pages</span>
+                            )}
+                            {hasMetadata.language && (
+                              <span style={styles.libgenMetadataItem}>{hasMetadata.language}</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div style={styles.searchResultActions}>
+                      {hasMetadata?.mirrors?.map((mirror, idx) => (
+                        <a
+                          key={idx}
+                          href={mirror}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{
+                            ...styles.availabilityAction,
+                            ...styles.availabilityActionDownload
+                          }}
+                        >
+                          Mirror {idx + 1}
                         </a>
                       ))}
                       <button
@@ -2639,6 +2810,33 @@ export default function App() {
                         )}
                       </div>
                     )}
+                    {book.libgenMetadata && (
+                      <div style={{ marginTop: "0.5rem" }}>
+                        <span style={styles.libgenBadge}>Library Genesis</span>
+                        {book.libgenMetadata.extension && (
+                          <span style={{ ...styles.libgenMetadataItem, marginLeft: "0.5rem" }}>
+                            {book.libgenMetadata.extension.toUpperCase()}
+                          </span>
+                        )}
+                        {book.libgenMetadata.filesize && (
+                          <span style={{ ...styles.libgenMetadataItem, marginLeft: "0.3rem" }}>
+                            {book.libgenMetadata.filesize}
+                          </span>
+                        )}
+                        {book.libgenMetadata.downloadUrl && (
+                          <div style={{ marginTop: "0.3rem" }}>
+                            <a
+                              href={book.libgenMetadata.downloadUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ ...styles.coverLink, color: "#5f40c4" }}
+                            >
+                              Download from Library Genesis
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <div style={styles.bookActions}>
                       <button
                         type="button"
@@ -2655,7 +2853,7 @@ export default function App() {
                         Remove
                       </button>
                     </div>
-                    {availabilityActions.length > 0 && (
+                    {(availabilityActions.length > 0 || book.libgenMetadata?.mirrors) && (
                       <div style={styles.availabilityActionsList}>
                         {availabilityActions.map((action) => (
                           <a
@@ -2677,6 +2875,21 @@ export default function App() {
                           }}
                           >
                             {action.label}
+                          </a>
+                        ))}
+                        {book.libgenMetadata?.mirrors?.map((mirror, idx) => (
+                          <a
+                            key={`${book.id}-libgen-${idx}`}
+                            href={mirror}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{
+                              ...styles.availabilityAction,
+                              ...styles.availabilityActionDownload,
+                              color: "#5f40c4"
+                            }}
+                          >
+                            LibGen Mirror {idx + 1}
                           </a>
                         ))}
                       </div>
@@ -3750,6 +3963,68 @@ const styles = {
     flexWrap: "wrap",
     gap: "0.35rem",
     marginTop: "0.35rem"
+  },
+  searchTabs: {
+    display: "flex",
+    gap: "0.5rem",
+    marginBottom: "1rem",
+    borderBottom: "1px solid rgba(232, 146, 91, 0.2)",
+    paddingBottom: "0.5rem"
+  },
+  searchTab: {
+    background: "transparent",
+    border: "none",
+    color: THEME.textMuted,
+    padding: "0.5rem 1rem",
+    borderRadius: "0.5rem",
+    fontSize: "0.9rem",
+    fontWeight: 500,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    fontFamily: "inherit"
+  },
+  searchTabActive: {
+    background: "rgba(217, 130, 43, 0.15)",
+    color: THEME.accent,
+    fontWeight: 600
+  },
+  searchTabCount: {
+    display: "inline-block",
+    marginLeft: "0.4rem",
+    background: "rgba(217, 130, 43, 0.2)",
+    color: THEME.accent,
+    padding: "0.1rem 0.4rem",
+    borderRadius: "999px",
+    fontSize: "0.7rem",
+    fontWeight: 600
+  },
+  libgenBadge: {
+    display: "inline-block",
+    background: "rgba(95, 64, 196, 0.15)",
+    color: "#5f40c4",
+    padding: "0.2rem 0.5rem",
+    borderRadius: "999px",
+    fontSize: "0.75rem",
+    fontWeight: 500
+  },
+  libgenMirrorLink: {
+    fontSize: "0.75rem",
+    color: "#5f40c4",
+    textDecoration: "none",
+    marginLeft: "0.5rem"
+  },
+  libgenMetadata: {
+    display: "flex",
+    gap: "0.5rem",
+    marginTop: "0.3rem",
+    flexWrap: "wrap"
+  },
+  libgenMetadataItem: {
+    fontSize: "0.7rem",
+    color: THEME.textMuted,
+    background: "rgba(255, 255, 255, 0.3)",
+    padding: "0.15rem 0.4rem",
+    borderRadius: "0.3rem"
   },
   bookActions: {
     display: "flex",
