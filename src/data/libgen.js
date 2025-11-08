@@ -77,9 +77,11 @@ export async function getLatestUpload() {
 /**
  * Normalize a single libgen result to match our book schema
  * @param {Object} result - Raw libgen result
+ * @param {number} index - Index in search results
+ * @param {Array} allResults - All search results for this book
  * @returns {Object} Normalized book object
  */
-function normalizeLibgenResult(result) {
+function normalizeLibgenResult(result, index = 0, allResults = []) {
   if (!result) return null;
 
   return {
@@ -99,11 +101,26 @@ function normalizeLibgenResult(result) {
       id: result.id,
       md5: result.md5,
       downloadUrl: result.downloadUrl,
-      mirrors: result.mirrors || [],
       extension: result.extension,
       filesize: result.filesize,
       language: result.language,
-      pages: result.pages
+      pages: result.pages,
+      publisher: result.publisher,
+      currentIndex: index,
+      totalResults: allResults.length,
+      allResults: allResults.map(r => ({
+        id: r.id,
+        md5: r.md5,
+        title: r.title,
+        author: r.author,
+        year: r.year,
+        extension: r.extension,
+        filesize: r.filesize,
+        pages: r.pages,
+        language: r.language,
+        publisher: r.publisher,
+        downloadUrl: r.downloadUrl
+      }))
     },
     source: "libgen"
   };
@@ -116,7 +133,7 @@ function normalizeLibgenResult(result) {
  */
 function normalizeLibgenResults(results) {
   if (!Array.isArray(results)) return [];
-  return results.map(normalizeLibgenResult).filter(Boolean);
+  return results.map((result, index) => normalizeLibgenResult(result, index, results)).filter(Boolean);
 }
 
 /**
@@ -171,36 +188,45 @@ export async function searchByTitleAndAuthor(title, author, options = {}) {
 }
 
 /**
- * Get alternative download mirrors for a book
+ * Get the primary LibGen mirror URL for a book
  * @param {string} md5 - MD5 hash of the book
- * @returns {Array} Array of mirror URLs
+ * @returns {string} Mirror URL
  */
-export function getAlternativeMirrors(md5) {
-  if (!md5) return [];
-
+export function getLibGenMirrorUrl(md5) {
+  if (!md5) return null;
   const lowerMd5 = md5.toLowerCase();
-  return [
-    {
-      name: "LibGen.is",
-      url: `http://libgen.is/book/index.php?md5=${lowerMd5}`,
-      type: "primary"
-    },
-    {
-      name: "Gen.lib.rus.ec",
-      url: `http://gen.lib.rus.ec/book/index.php?md5=${lowerMd5}`,
-      type: "primary"
-    },
-    {
-      name: "LibGen.li",
-      url: `http://libgen.li/ads.php?md5=${lowerMd5}`,
-      type: "alternative"
-    },
-    {
-      name: "Library.lol",
-      url: `http://library.lol/main/${lowerMd5}`,
-      type: "alternative"
-    }
-  ];
+  return `http://libgen.is/book/index.php?md5=${lowerMd5}`;
+}
+
+/**
+ * Switch to the next available LibGen result for a book
+ * @param {Object} book - Book object with libgenMetadata
+ * @returns {Object|null} Updated libgenMetadata or null if no next result
+ */
+export function getNextLibGenResult(book) {
+  if (!book?.libgenMetadata?.allResults) return null;
+
+  const { currentIndex, allResults } = book.libgenMetadata;
+  const nextIndex = currentIndex + 1;
+
+  if (nextIndex >= allResults.length) {
+    return null; // No more results
+  }
+
+  const nextResult = allResults[nextIndex];
+
+  return {
+    ...book.libgenMetadata,
+    id: nextResult.id,
+    md5: nextResult.md5,
+    downloadUrl: nextResult.downloadUrl,
+    extension: nextResult.extension,
+    filesize: nextResult.filesize,
+    language: nextResult.language,
+    pages: nextResult.pages,
+    publisher: nextResult.publisher,
+    currentIndex: nextIndex
+  };
 }
 
 /**

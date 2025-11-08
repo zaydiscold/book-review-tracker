@@ -19,7 +19,8 @@ import { searchOpenLibrary } from "../data/openLibrary";
 import {
   searchLibgen,
   searchByTitleAndAuthor,
-  getAlternativeMirrors,
+  getLibGenMirrorUrl,
+  getNextLibGenResult,
   batchSearchBooks,
   calculateLibraryStats
 } from "../data/libgen";
@@ -1009,14 +1010,14 @@ function ToastOverlay({ toast, onDismiss }) {
 }
 
 // LibGen Widget Component - displays download options for a book
-function LibGenWidget({ book, showMirrors, onToggleMirrors, styles, ctaMessage }) {
+function LibGenWidget({ book, onTryNextVersion, styles, ctaMessage }) {
   if (!book.libgenMetadata?.md5) {
     return null;
   }
 
-  const mirrors = getAlternativeMirrors(book.libgenMetadata.md5);
-  const primaryMirror = mirrors.find(m => m.type === "primary");
-  const allMirrorsVisible = showMirrors;
+  const { currentIndex = 0, totalResults = 1 } = book.libgenMetadata;
+  const hasMoreVersions = currentIndex < totalResults - 1;
+  const mirrorUrl = getLibGenMirrorUrl(book.libgenMetadata.md5);
 
   return (
     <div style={styles.libgenWidget}>
@@ -1038,6 +1039,13 @@ function LibGenWidget({ book, showMirrors, onToggleMirrors, styles, ctaMessage }
         </div>
       )}
 
+      {totalResults > 1 && (
+        <div style={{ fontSize: "0.75rem", color: "#5f40c4", marginBottom: "0.5rem" }}>
+          Version {currentIndex + 1} of {totalResults}
+          {book.libgenMetadata.publisher && ` • ${book.libgenMetadata.publisher}`}
+        </div>
+      )}
+
       {book.libgenMetadata.filesize && (
         <div style={{ fontSize: "0.8rem", color: "#5f40c4", marginBottom: "0.5rem" }}>
           File size: {book.libgenMetadata.filesize}
@@ -1055,46 +1063,40 @@ function LibGenWidget({ book, showMirrors, onToggleMirrors, styles, ctaMessage }
           ...styles.mirrorButtonPrimary
         }}
       >
-        <span>⬇ Primary Download</span>
+        <span>⬇ Download</span>
         <span>→</span>
       </a>
 
-      {mirrors.length > 1 && (
-        <div style={{ marginTop: "0.5rem" }}>
+      <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+        {hasMoreVersions && (
           <button
             type="button"
-            onClick={() => onToggleMirrors(book.id)}
+            onClick={() => onTryNextVersion(book)}
             style={{
-              background: "transparent",
-              border: "none",
-              color: "#5f40c4",
-              fontSize: "0.75rem",
+              ...styles.mirrorButton,
+              flex: 1,
               cursor: "pointer",
-              padding: "0.3rem 0",
-              fontFamily: "inherit"
+              fontFamily: "inherit",
+              textAlign: "center"
             }}
           >
-            {allMirrorsVisible ? "▼" : "▶"} {allMirrorsVisible ? "Hide" : "Show"} backup mirrors ({mirrors.length - 1})
+            <span>🔄 Try Next Version</span>
           </button>
-
-          {allMirrorsVisible && (
-            <div style={styles.mirrorButtons}>
-              {mirrors.slice(1).map((mirror, idx) => (
-                <a
-                  key={idx}
-                  href={mirror.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={styles.mirrorButton}
-                >
-                  <span>🔗 {mirror.name}</span>
-                  <span>→</span>
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+        )}
+        <a
+          href={mirrorUrl}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            ...styles.mirrorButton,
+            flex: 1,
+            textDecoration: "none",
+            textAlign: "center"
+          }}
+        >
+          <span>🔗 View on LibGen</span>
+        </a>
+      </div>
     </div>
   );
 }
@@ -1207,8 +1209,6 @@ export default function App() {
   const [coverRefreshing, setCoverRefreshing] = useState(false);
   const [libgenSearching, setLibgenSearching] = useState(new Set());
   const [batchSearching, setBatchSearching] = useState(false);
-  const [showMirrors, setShowMirrors] = useState(new Set());
-  const [showAnalytics, setShowAnalytics] = useState(false);
   const isEditingBook = Boolean(editingBookFormId);
 
   // Calculate library statistics
@@ -2482,17 +2482,35 @@ export default function App() {
     }
   }
 
-  // Toggle mirror display for a book
-  function toggleMirrors(bookId) {
-    setShowMirrors(prev => {
-      const next = new Set(prev);
-      if (next.has(bookId)) {
-        next.delete(bookId);
-      } else {
-        next.add(bookId);
-      }
-      return next;
-    });
+  // Try next LibGen search result for a book
+  async function handleTryNextVersion(book) {
+    if (!book?.id || !book?.libgenMetadata) {
+      return;
+    }
+
+    const nextMetadata = getNextLibGenResult(book);
+
+    if (!nextMetadata) {
+      showToast("No more versions available.", "info");
+      return;
+    }
+
+    try {
+      const updatedBook = {
+        ...book,
+        libgenMetadata: nextMetadata
+      };
+
+      await updateBook(updatedBook);
+      await refreshData();
+      showToast(
+        `Switched to version ${nextMetadata.currentIndex + 1} of ${nextMetadata.totalResults}`,
+        "success"
+      );
+    } catch (error) {
+      console.error("Failed to switch LibGen version:", error);
+      showToast("Could not switch version.", "error");
+    }
   }
 
   const coverPreviewUrl = getCoverUrl(bookForm.cover, "M");
@@ -2745,8 +2763,8 @@ export default function App() {
                             >
                               Download
                             </a>
-                            {hasMetadata.mirrors && hasMetadata.mirrors.length > 0 && (
-                              <span style={styles.meta}> &middot; {hasMetadata.mirrors.length} mirrors</span>
+                            {hasMetadata.totalResults > 1 && (
+                              <span style={styles.meta}> &middot; {hasMetadata.totalResults} versions available</span>
                             )}
                           </div>
                         )}
@@ -2763,20 +2781,6 @@ export default function App() {
                       </div>
                     </div>
                     <div style={styles.searchResultActions}>
-                      {hasMetadata?.mirrors?.map((mirror, idx) => (
-                        <a
-                          key={idx}
-                          href={mirror}
-                          target="_blank"
-                          rel="noreferrer"
-                          style={{
-                            ...styles.availabilityAction,
-                            ...styles.availabilityActionDownload
-                          }}
-                        >
-                          Mirror {idx + 1}
-                        </a>
-                      ))}
                       <button
                         type="button"
                         style={styles.smallButton}
@@ -3141,7 +3145,7 @@ export default function App() {
                         Remove
                       </button>
                     </div>
-                    {(availabilityActions.length > 0 || book.libgenMetadata?.mirrors) && (
+                    {availabilityActions.length > 0 && (
                       <div style={styles.availabilityActionsList}>
                         {availabilityActions.map((action) => (
                           <a
@@ -3165,27 +3169,11 @@ export default function App() {
                             {action.label}
                           </a>
                         ))}
-                        {book.libgenMetadata?.mirrors?.map((mirror, idx) => (
-                          <a
-                            key={`${book.id}-libgen-${idx}`}
-                            href={mirror}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={{
-                              ...styles.availabilityAction,
-                              ...styles.availabilityActionDownload,
-                              color: "#5f40c4"
-                            }}
-                          >
-                            LibGen Mirror {idx + 1}
-                          </a>
-                        ))}
                       </div>
                     )}
                     <LibGenWidget
                       book={book}
-                      showMirrors={showMirrors.has(book.id)}
-                      onToggleMirrors={toggleMirrors}
+                      onTryNextVersion={handleTryNextVersion}
                       styles={styles}
                       ctaMessage={getLibGenCTA(statusSource)}
                     />
@@ -3462,8 +3450,7 @@ export default function App() {
               {reviewModal.book && (
                 <LibGenWidget
                   book={reviewModal.book}
-                  showMirrors={showMirrors.has(reviewModal.book.id)}
-                  onToggleMirrors={toggleMirrors}
+                  onTryNextVersion={handleTryNextVersion}
                   styles={styles}
                   ctaMessage={getLibGenCTA(modalReviewForm.status)}
                 />
@@ -4350,12 +4337,6 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "0.5rem"
-  },
-  mirrorButtons: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.5rem",
-    marginTop: "0.5rem"
   },
   mirrorButton: {
     display: "flex",
