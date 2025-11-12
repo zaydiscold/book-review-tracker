@@ -12,7 +12,6 @@ import {
   deleteBook,
   applyRemoteSnapshot
 } from "../data/db";
-import { spellcheckText } from "../utils/spellcheck";
 import { postReviewToDiscord } from "../utils/discord";
 import { downloadLibraryJson } from "../utils/export";
 import { searchOpenLibrary } from "../data/openLibrary";
@@ -880,7 +879,6 @@ function createReviewDraft(status = DEFAULT_STATUS) {
   return {
     rating: "",
     text: "",
-    autoCorrect: true,
     status
   };
 }
@@ -889,7 +887,6 @@ const emptyReviewForm = {
   bookId: "",
   rating: "",
   text: "",
-  autoCorrect: true,
   status: DEFAULT_STATUS
 };
 const DISCORD_STORAGE_KEY = "brtDiscordWebhook";
@@ -1727,8 +1724,7 @@ export default function App() {
       setModalReviewForm({
         ...baseDraft,
         rating: toFiveScale(existingReview.rating ?? null),
-        text: existingReview.text ?? "",
-        autoCorrect: true
+        text: existingReview.text ?? ""
       });
     } else {
       setModalReviewForm(createReviewDraft(book?.status ?? DEFAULT_STATUS));
@@ -1768,9 +1764,7 @@ export default function App() {
       return;
     }
 
-    const cleanText = modalReviewForm.autoCorrect
-      ? spellcheckText(modalReviewForm.text)
-      : modalReviewForm.text;
+    const cleanText = modalReviewForm.text;
 
     try {
       const reviewStatus = modalReviewForm.status;
@@ -2006,9 +2000,7 @@ export default function App() {
         try {
           const ratingFiveScale = Number.parseFloat(bookReviewDraft.rating);
           const ratingTenScale = fromFiveScale(ratingFiveScale);
-          const cleanText = bookReviewDraft.autoCorrect
-            ? spellcheckText(bookReviewDraft.text)
-            : bookReviewDraft.text;
+          const cleanText = bookReviewDraft.text;
 
           const reviewStatus = reviewStatusSelection;
           const reviewPayload = {
@@ -2103,9 +2095,7 @@ export default function App() {
       return;
     }
 
-    const cleanText = reviewForm.autoCorrect
-      ? spellcheckText(reviewForm.text)
-      : reviewForm.text;
+    const cleanText = reviewForm.text;
 
     const targetBook = books.find((book) => book.id === Number(reviewForm.bookId));
 
@@ -3033,19 +3023,6 @@ export default function App() {
                         placeholder="Share your thoughts while it's fresh."
                       />
                     </label>
-                    <label style={styles.inlineToggle}>
-                      <input
-                        type="checkbox"
-                        checked={bookReviewDraft.autoCorrect}
-                        onChange={(event) =>
-                          setBookReviewDraft({
-                            ...bookReviewDraft,
-                            autoCorrect: event.target.checked
-                          })
-                        }
-                      />
-                      Auto-correct obvious typos
-                    </label>
                   </div>
                 )}
               </>
@@ -3436,16 +3413,6 @@ export default function App() {
                   placeholder="Share your thoughts about this book..."
                   rows={6}
                 />
-              </label>
-              <label style={{ ...styles.label, flexDirection: "row", gap: 8 }}>
-                <input
-                  type="checkbox"
-                  checked={modalReviewForm.autoCorrect}
-                  onChange={(event) =>
-                    setModalReviewForm({ ...modalReviewForm, autoCorrect: event.target.checked })
-                  }
-                />
-                Auto-correct obvious typos
               </label>
               {reviewModal.book && (
                 <LibGenWidget
