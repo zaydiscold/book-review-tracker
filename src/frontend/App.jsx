@@ -2584,6 +2584,9 @@ export default function App() {
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               placeholder="Search OpenLibrary & Library Genesis"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
             />
             <button style={styles.searchButton} type="submit" disabled={searching}>
               {searching ? "Searching…" : "Search"}
@@ -2795,6 +2798,9 @@ export default function App() {
                 }
                 placeholder="The Left Hand of Darkness"
                 required
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
               />
             </label>
             <label style={styles.label}>
@@ -2806,6 +2812,9 @@ export default function App() {
                   setBookForm({ ...bookForm, author: event.target.value })
                 }
                 placeholder="Ursula K. Le Guin"
+                autoComplete="off"
+                autoCorrect="off"
+                spellCheck="false"
               />
             </label>
             <div style={styles.inlineRow}>
@@ -2868,6 +2877,9 @@ export default function App() {
                           ? "https://example.com/cover.jpg"
                           : "Enter the corresponding identifier"
                       }
+                      autoComplete="off"
+                      autoCorrect="off"
+                      spellCheck="false"
                     />
                   </label>
                 )}
@@ -3021,6 +3033,9 @@ export default function App() {
                           })
                         }
                         placeholder="Share your thoughts while it's fresh."
+                        autoComplete="off"
+                        autoCorrect="off"
+                        spellCheck="false"
                       />
                     </label>
                   </div>
@@ -3260,6 +3275,9 @@ export default function App() {
               value={discordWebhook}
               onChange={(event) => setDiscordWebhook(event.target.value.trim())}
               placeholder="https://discord.com/api/webhooks/..."
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck="false"
             />
             {discordWebhook && (
               <button
@@ -3412,6 +3430,9 @@ export default function App() {
                   }
                   placeholder="Share your thoughts about this book..."
                   rows={6}
+                  autoComplete="off"
+                  autoCorrect="off"
+                  spellCheck="false"
                 />
               </label>
               {reviewModal.book && (
