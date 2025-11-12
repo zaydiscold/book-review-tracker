@@ -71,7 +71,10 @@ function normalizeAvailability(doc) {
     : null;
 
   const previewUrl = availability.preview_url ?? openLibraryEditionUrl ?? openLibraryWorkUrl;
-  const borrowUrl = availability.borrow_url ?? openLibraryEditionUrl ?? openLibraryWorkUrl;
+  // For borrowing, link directly to the borrow page on Open Library
+  const borrowUrl = availability.borrow_url ??
+    (openLibraryEditionUrl ? `${openLibraryEditionUrl}/borrow` : null) ??
+    (openLibraryWorkUrl ? `${openLibraryWorkUrl}/borrow` : null);
   const hasDownload = status === "open" && Boolean(previewUrl);
 
   return {
