@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   initDB,
   addBook,
@@ -25,64 +26,26 @@ import {
 import { getCoverUrl, hasCover } from "../utils/covers";
 import { isCloudSyncEnabled, pullCloudSnapshot } from "../data/cloudSync";
 
-/**
- * === MODULAR ARCHITECTURE ===
- * This file has been refactored to use a modular structure:
- * - constants/: Theme, book statuses, availability, defaults
- * - utils/: Ratings, formatting, book matching utilities
- * - components/: Logo, Toast, StarRating, LibGen widgets
- * - styles/: Centralized style definitions
- */
-
-// Import constants
-import {
-  THEME,
-  STAR_SYMBOL,
-  STAR_COUNT,
-  PST_TIME_ZONE,
-  DEFAULT_STATUS,
-  DISCORD_STORAGE_KEY,
-  DISCORD_SHARE_MODE_KEY
-} from "./constants/theme";
-import {
-  BOOK_STATUS_SECTIONS,
-  REVIEW_DISABLED_STATUSES,
-  STATUS_LABELS,
-  isUnreadStatus
-} from "./constants/bookStatus";
-import {
-  describeAvailability,
-  buildAvailabilityActions,
-  shouldShowOpenLibraryLink
-} from "./constants/availability";
-import {
-  emptyBookForm,
-  emptyReviewForm,
-  emptyReviewDraft,
-  createReviewDraft
-} from "./constants/defaults";
-
-// Import utilities
-import {
-  toFiveScale,
-  fromFiveScale,
-  formatFiveScaleDisplay
-} from "./utils/ratings";
-import { formatTimestampForDisplay } from "./utils/formatting";
-import { autoPopulateCoverIfNeeded, applyBookUpdateToList } from "./utils/bookMatching";
-
-// Import components
-import {
-  Logo,
-  ToastOverlay,
-  StarRatingInput,
-  renderStarRating,
-  LibGenWidget,
-  LibGenAnalyticsDashboard
-} from "./components";
-
-// Import styles
-import { styles } from "./styles/appStyles";
+// Placeholder: future UI modules (filters, charts, sync indicators) will mount here.
+const THEME = {
+  background: "var(--warm-gradient)",
+  backgroundSolid: "var(--espresso)",
+  surface: "rgba(255, 232, 214, 0.45)",
+  surfaceGlass: "rgba(255, 255, 255, 0.35)",
+  surfaceAlt: "rgba(255, 212, 179, 0.5)",
+  surfaceHover: "rgba(255, 232, 214, 0.65)",
+  border: "rgba(232, 146, 91, 0.35)",
+  borderLight: "rgba(255, 255, 255, 0.4)",
+  textPrimary: "var(--bark)",
+  textMuted: "rgba(60, 47, 47, 0.65)",
+  accent: "var(--burnt-orange)",
+  accentHover: "var(--deep-amber)",
+  accentSoft: "rgba(255, 185, 140, 0.25)",
+  success: "#2F9F63",
+  warning: "var(--goldenrod)",
+  danger: "var(--cranberry)",
+  glow: "var(--glow-warm)"
+};
 
 const SAMPLE_LIBRARY = [
   {
@@ -376,10 +339,119 @@ const SAMPLE_LIBRARY = [
   }
 ];
 
-/**
- * Future library tools - placeholder for upcoming features
- * These will be gradually implemented in future iterations
- */
+const BOOK_STATUS_SECTIONS = [
+  {
+    label: "Plan & Collect",
+    options: [
+      { value: "wishlist", label: "Wishlist · To discover" },
+      { value: "library", label: "Library · Owned, unread" }
+    ]
+  },
+  {
+    label: "Reading Journey",
+    options: [
+      { value: "reading", label: "Currently reading" },
+      { value: "re-reading", label: "Re-reading" }
+    ]
+  },
+  {
+    label: "Paused",
+    options: [{ value: "on-hold", label: "On hold" }]
+  },
+  {
+    label: "Finished & Wrap-up",
+    options: [
+      { value: "finished", label: "Finished" },
+      { value: "did-not-finish", label: "Did not finish" }
+    ]
+  }
+];
+
+const BOOK_STATUSES = BOOK_STATUS_SECTIONS.flatMap((section) => section.options);
+
+const REVIEW_DISABLED_STATUSES = new Set(["wishlist", "library"]);
+const UNREAD_STATUSES = new Set(["wishlist", "library", "reading", "on-hold"]);
+const STATUS_LABELS = BOOK_STATUSES.reduce((acc, status) => {
+  acc[status.value] = status.label;
+  return acc;
+}, {});
+
+function isUnreadStatus(status) {
+  if (!status) {
+    return false;
+  }
+
+  return UNREAD_STATUSES.has(String(status));
+}
+
+const AVAILABILITY_STATUS_COPY = {
+  open: "Available to read online",
+  borrow_available: "Available to borrow",
+  borrow_unavailable: "All copies checked out",
+  restricted: "Requires library login or waitlist",
+  private: "Not available for digital lending",
+  error: "Availability unavailable",
+  unknown: "Availability unknown"
+};
+
+function describeAvailability(availability) {
+  if (!availability) {
+    return "";
+  }
+
+  let baseLabel = "";
+
+  if (availability.isReadAvailable) {
+    baseLabel = AVAILABILITY_STATUS_COPY.open;
+  } else if (availability.isBorrowAvailable) {
+    baseLabel = AVAILABILITY_STATUS_COPY.borrow_available;
+  } else if (availability.status !== "unknown") {
+    baseLabel = AVAILABILITY_STATUS_COPY[availability.status] ?? "";
+  }
+
+  if (availability.hasDownload) {
+    return baseLabel || "Downloads available";
+  }
+
+  return baseLabel;
+}
+
+function buildAvailabilityActions(availability) {
+  if (!availability) {
+    return [];
+  }
+
+  const actions = [];
+  const readUrl = availability.previewUrl ?? availability.openLibraryEditionUrl ?? availability.openLibraryWorkUrl;
+  const borrowUrl = availability.borrowUrl ?? availability.openLibraryEditionUrl ?? availability.openLibraryWorkUrl;
+
+  if (availability.isReadAvailable && readUrl) {
+    actions.push({
+      type: availability.hasDownload ? "download" : "read",
+      label: availability.hasDownload ? "Read / Download" : "Read online",
+      url: readUrl
+    });
+  } else if (readUrl) {
+    actions.push({ type: "preview", label: "View details", url: readUrl });
+  }
+
+  if (availability.isBorrowAvailable && borrowUrl) {
+    actions.push({ type: "borrow", label: "Borrow from Open Library", url: borrowUrl });
+  } else if (availability.status === "borrow_unavailable" && borrowUrl) {
+    actions.push({ type: "waitlist", label: "Join waitlist", url: borrowUrl });
+  }
+
+  return actions.filter((action, index, list) => {
+    if (!action.url) {
+      return false;
+    }
+    return list.findIndex((item) => item.url === action.url) === index;
+  });
+}
+
+const STAR_SYMBOL = "★";
+const STAR_COUNT = 5;
+const PST_TIME_ZONE = "America/Los_Angeles";
 const FUTURE_LIBRARY_TOOLS = [
   { label: "Bulk Import (Coming Soon)" },
   { label: "Sync with eReader" },
@@ -462,6 +534,643 @@ async function mergeSampleLibrary() {
     }
   }
 }
+
+function normalizeFiveValue(value) {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return "0";
+  }
+
+  const clamped = Math.min(STAR_COUNT, Math.max(0, value));
+  const rounded = Math.round(clamped * 10) / 10;
+  return Number.isInteger(rounded)
+    ? String(rounded)
+    : rounded.toFixed(1).replace(/\.0$/, "");
+}
+
+function toFiveScale(rating10) {
+  if (typeof rating10 !== "number" || Number.isNaN(rating10)) {
+    return "";
+  }
+  return normalizeFiveValue(rating10 / 2);
+}
+
+function fromFiveScale(value) {
+  const numeric = Number.parseFloat(value);
+  if (Number.isNaN(numeric)) {
+    return null;
+  }
+  return numeric * 2;
+}
+
+function formatFiveScaleDisplay(rating10) {
+  if (typeof rating10 !== "number" || Number.isNaN(rating10)) {
+    return "—";
+  }
+  const fiveScale = rating10 / 2;
+  return `${fiveScale.toFixed(fiveScale % 1 === 0 ? 0 : 1)}/5`;
+}
+
+function renderStarRating(rating10) {
+  if (typeof rating10 !== "number" || Number.isNaN(rating10)) {
+    return null;
+  }
+
+  const ratingFive = rating10 / 2;
+  const stars = [];
+
+  for (let idx = 1; idx <= STAR_COUNT; idx += 1) {
+    if (ratingFive >= idx) {
+      stars.push(
+        <span key={`star-${idx}`} style={styles.starFull}>
+          {STAR_SYMBOL}
+        </span>
+      );
+    } else if (ratingFive >= idx - 0.5) {
+      stars.push(
+        <span key={`star-${idx}`} style={styles.starHalf}>
+          {STAR_SYMBOL}
+        </span>
+      );
+    } else {
+      stars.push(
+        <span key={`star-${idx}`} style={styles.starEmpty}>
+          {STAR_SYMBOL}
+        </span>
+      );
+    }
+  }
+
+  return stars;
+}
+
+function formatTimestampForDisplay(isoString) {
+  if (!isoString) {
+    return "";
+  }
+
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  return date.toLocaleString("en-US", {
+    timeZone: PST_TIME_ZONE,
+    dateStyle: "medium",
+    timeStyle: "short"
+  });
+}
+
+function StarRatingInput({ value, onChange, ariaLabel }) {
+  const [hoverValue, setHoverValue] = useState(null);
+
+  const numericValue = Number.parseFloat(value ?? "0");
+  const safeValue = Number.isNaN(numericValue)
+    ? 0
+    : Math.min(STAR_COUNT, Math.max(0, numericValue));
+  const displayValue = hoverValue ?? safeValue;
+
+  function computeValueFromEvent(event, starIndex) {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const clientX =
+      event.clientX ?? event.nativeEvent?.clientX ?? event.nativeEvent?.touches?.[0]?.clientX;
+    if (typeof clientX !== "number") {
+      return safeValue;
+    }
+
+    const ratio = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
+    let computed;
+
+    // Simple 50/50 split: left half = half star, right half = full star
+    if (ratio < 0.5) {
+      computed = starIndex - 0.5;
+    } else {
+      computed = starIndex;
+    }
+
+    return Math.min(STAR_COUNT, Math.max(0, Number((Math.round(computed * 2) / 2).toFixed(1))));
+  }
+
+  function handleHover(event, starIndex) {
+    const nextValue = computeValueFromEvent(event, starIndex);
+    setHoverValue(nextValue);
+  }
+
+  function handleSelect(event, starIndex) {
+    const nextValue = computeValueFromEvent(event, starIndex);
+    onChange(normalizeFiveValue(nextValue));
+    setHoverValue(null);
+  }
+
+  function adjustBy(delta) {
+    const nextValue = Math.min(STAR_COUNT, Math.max(0, safeValue + delta));
+    onChange(normalizeFiveValue(nextValue));
+  }
+
+  return (
+    <div
+      style={styles.starInputWrapper}
+      role="radiogroup"
+      aria-label={ariaLabel}
+      onMouseLeave={() => setHoverValue(null)}
+    >
+      {Array.from({ length: STAR_COUNT }, (_, index) => {
+        const starIndex = index + 1;
+        const fill =
+          displayValue >= starIndex
+            ? "full"
+            : displayValue >= starIndex - 0.5
+            ? "half"
+            : "empty";
+        const colourStyle =
+          fill === "full"
+            ? styles.starFull
+            : fill === "half"
+            ? styles.starHalf
+            : styles.starEmpty;
+
+        return (
+          <button
+            key={`star-input-${starIndex}`}
+            type="button"
+            style={{ ...styles.starButton, ...colourStyle }}
+            onMouseMove={(event) => handleHover(event, starIndex)}
+            onClick={(event) => handleSelect(event, starIndex)}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowLeft" || event.key === "ArrowDown") {
+                event.preventDefault();
+                adjustBy(-0.5);
+              } else if (event.key === "ArrowRight" || event.key === "ArrowUp") {
+                event.preventDefault();
+                adjustBy(0.5);
+              } else if (event.key === "Home") {
+                event.preventDefault();
+                onChange("0");
+              } else if (event.key === "End") {
+                event.preventDefault();
+                onChange(String(STAR_COUNT));
+              }
+            }}
+            aria-label={`${starIndex} ${STAR_SYMBOL}`}
+            aria-pressed={
+              displayValue >= starIndex
+                ? "true"
+                : displayValue >= starIndex - 0.5
+                ? "mixed"
+                : "false"
+            }
+          >
+            {STAR_SYMBOL}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function shouldShowOpenLibraryLink(openLibraryUrl, availabilityActions) {
+  if (!openLibraryUrl) {
+    return false;
+  }
+
+  if (!Array.isArray(availabilityActions) || availabilityActions.length === 0) {
+    return true;
+  }
+
+  return !availabilityActions.some((action) => action.url === openLibraryUrl);
+}
+
+function normalizeForMatch(value) {
+  if (!value) {
+    return "";
+  }
+
+  return String(value)
+    .toLowerCase()
+    .replace(/[’']/g, "'")
+    .replace(/[^a-z0-9']+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function compactForComparison(value) {
+  return normalizeForMatch(value).replace(/[\s']/g, "");
+}
+
+function extractAuthorCandidates(authorText) {
+  if (!authorText) {
+    return [];
+  }
+
+  return authorText
+    .replace(/&/g, ",")
+    .replace(/\band\b/gi, ",")
+    .split(",")
+    .map((part) => normalizeForMatch(part))
+    .filter(Boolean);
+}
+
+function authorsIntersect(bookAuthors, candidateAuthors) {
+  if (!Array.isArray(bookAuthors) || !Array.isArray(candidateAuthors)) {
+    return false;
+  }
+
+  return bookAuthors.some((author) => {
+    if (!author) {
+      return false;
+    }
+    const authorCompact = compactForComparison(author);
+    return candidateAuthors.some((candidate) => {
+      if (!candidate) {
+        return false;
+      }
+
+      if (candidate === author) {
+        return true;
+      }
+
+      const candidateCompact = compactForComparison(candidate);
+      if (!candidateCompact || !authorCompact) {
+        return false;
+      }
+
+      return (
+        candidateCompact === authorCompact ||
+        candidateCompact.includes(authorCompact) ||
+        authorCompact.includes(candidateCompact)
+      );
+    });
+  });
+}
+
+async function autoPopulateCoverIfNeeded(book) {
+  if (!book?.id || hasCover(book.cover)) {
+    return null;
+  }
+
+  const title = normalizeForMatch(book.title);
+  const authorList = extractAuthorCandidates(book.author);
+
+  if (!title || authorList.length === 0) {
+    return false;
+  }
+
+  const queryParts = [book.title, book.author].filter(Boolean);
+  if (queryParts.length === 0) {
+    return false;
+  }
+
+  try {
+    const results = await searchOpenLibrary(queryParts.join(" "), { limit: 10 });
+    const match = results.find((result) => {
+      if (!result?.cover) {
+        return false;
+      }
+
+      const resultTitle = normalizeForMatch(result.title);
+      if (!resultTitle || resultTitle !== title) {
+        return false;
+      }
+
+      const candidateAuthors = extractAuthorCandidates(result.author);
+      if (candidateAuthors.length === 0) {
+        return false;
+      }
+
+      return authorsIntersect(authorList, candidateAuthors);
+    });
+
+    if (!match) {
+      return null;
+    }
+
+    const updatedBook = {
+      ...book,
+      cover: match.cover ? { ...match.cover } : book.cover,
+      openLibraryUrl: book.openLibraryUrl ?? match.openLibraryUrl ?? null,
+      openLibraryIdentifiers: book.openLibraryIdentifiers ?? match.identifiers ?? null,
+      availability: book.availability ?? match.availability ?? null,
+      titleLower: book.title ? book.title.toLowerCase() : null,
+      authorLower: book.author ? book.author.toLowerCase() : null,
+      updatedAt: new Date().toISOString()
+    };
+
+    await updateBook(updatedBook);
+    return updatedBook;
+  } catch (error) {
+    console.error("Failed to auto-populate cover from Open Library", error);
+    return null;
+  }
+}
+
+const DEFAULT_STATUS = "finished";
+
+const emptyBookForm = {
+  title: "",
+  author: "",
+  status: DEFAULT_STATUS,
+  cover: null,
+  openLibraryUrl: "",
+  openLibraryIdentifiers: null,
+  availability: null,
+  libgenMetadata: null
+};
+
+function createReviewDraft(status = DEFAULT_STATUS) {
+  return {
+    rating: "",
+    text: "",
+    status
+  };
+}
+
+const emptyReviewForm = {
+  bookId: "",
+  rating: "",
+  text: "",
+  status: DEFAULT_STATUS
+};
+const DISCORD_STORAGE_KEY = "brtDiscordWebhook";
+const DISCORD_SHARE_MODE_KEY = "brtDiscordShareFull";
+const emptyReviewDraft = createReviewDraft();
+
+function applyBookUpdateToList(list, updatedBook) {
+  if (!updatedBook?.id) {
+    return list;
+  }
+
+  let changed = false;
+  const next = list.map((entry) => {
+    if (entry.id === updatedBook.id) {
+      changed = true;
+      return { ...entry, ...updatedBook };
+    }
+    return entry;
+  });
+
+  return changed ? next : list;
+}
+
+function Logo() {
+  return (
+    <div style={styles.logoWrapper}>
+      <div style={styles.logoIcon} aria-hidden="true">
+        <svg
+          width="72"
+          height="64"
+          viewBox="0 0 72 64"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <defs>
+            <linearGradient id="book-spine" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#F2C199" />
+              <stop offset="100%" stopColor="#D9822B" />
+            </linearGradient>
+            <linearGradient id="book-cover" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#FFF5EC" />
+              <stop offset="100%" stopColor="#F9DFC6" />
+            </linearGradient>
+            <linearGradient id="bookmark" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#A73636" />
+              <stop offset="100%" stopColor="#6e2121" />
+            </linearGradient>
+          </defs>
+          <rect x="6" y="10" width="18" height="46" rx="4" fill="url(#book-cover)" />
+          <rect x="26" y="8" width="20" height="48" rx="4" fill="url(#book-spine)" />
+          <rect x="48" y="14" width="18" height="42" rx="4" fill="#F4E2CF" />
+          <rect x="9" y="16" width="12" height="2.4" rx="1.2" fill="#D9822B" opacity="0.8" />
+          <rect x="9" y="24" width="12" height="2.4" rx="1.2" fill="#D9822B" opacity="0.65" />
+          <rect x="9" y="32" width="12" height="2.4" rx="1.2" fill="#D9822B" opacity="0.5" />
+          <rect x="30" y="18" width="12" height="2.4" rx="1.2" fill="#FDF2E6" opacity="0.9" />
+          <rect x="30" y="28" width="12" height="2.4" rx="1.2" fill="#FDF2E6" opacity="0.8" />
+          <rect x="30" y="38" width="12" height="2.4" rx="1.2" fill="#FDF2E6" opacity="0.7" />
+          <rect x="52" y="20" width="10" height="2.2" rx="1.1" fill="#D9822B" opacity="0.7" />
+          <rect x="52" y="28" width="10" height="2.2" rx="1.1" fill="#D9822B" opacity="0.55" />
+          <rect x="52" y="36" width="10" height="2.2" rx="1.1" fill="#D9822B" opacity="0.4" />
+          <path
+            d="M44 8 L44 0 L52 6"
+            fill="url(#bookmark)"
+            stroke="#6e2121"
+            strokeWidth="1"
+            strokeLinejoin="round"
+          />
+          <ellipse cx="36" cy="54" rx="28" ry="5" fill="rgba(60, 47, 47, 0.18)" />
+        </svg>
+      </div>
+      <div style={styles.logoTextGroup}>
+        <span style={styles.logoTitle}>Book Review Tracker</span>
+        <span style={styles.logoSubtitle}>a cozy corner for every chapter</span>
+      </div>
+    </div>
+  );
+}
+
+function ToastOverlay({ toast, onDismiss }) {
+  if (!toast) {
+    return null;
+  }
+
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const toneStyle =
+    toast.tone === "success"
+      ? styles.toastSuccess
+      : toast.tone === "error" || toast.tone === "danger"
+      ? styles.toastDanger
+      : toast.tone === "warning"
+      ? styles.toastWarning
+      : styles.toastInfo;
+
+  return createPortal(
+    <div
+      style={{
+        ...styles.toast,
+        ...toneStyle
+      }}
+      role={toast.tone === "error" || toast.tone === "danger" ? "alert" : "status"}
+      aria-live={toast.tone === "error" || toast.tone === "danger" ? "assertive" : "polite"}
+    >
+      <span>{toast.text}</span>
+      <button
+        type="button"
+        onClick={onDismiss}
+        style={styles.toastDismiss}
+        aria-label="Dismiss notification"
+      >
+        ×
+      </button>
+    </div>,
+    document.body
+  );
+}
+
+// LibGen Widget Component - displays download options for a book
+function LibGenWidget({ book, onTryNextVersion, styles, ctaMessage }) {
+  if (!book.libgenMetadata?.md5) {
+    return null;
+  }
+
+  const { currentIndex = 0, totalResults = 1 } = book.libgenMetadata;
+  const hasMoreVersions = currentIndex < totalResults - 1;
+  const mirrorUrl = getLibGenMirrorUrl(book.libgenMetadata.md5);
+
+  return (
+    <div style={styles.libgenWidget}>
+      <div style={styles.libgenWidgetHeader}>
+        <div style={styles.libgenWidgetTitle}>
+          <span>📥</span>
+          <span>Download from Library Genesis</span>
+        </div>
+        {book.libgenMetadata.extension && (
+          <span style={styles.libgenBadge}>
+            {book.libgenMetadata.extension.toUpperCase()}
+          </span>
+        )}
+      </div>
+
+      {ctaMessage && (
+        <div style={{ fontSize: "0.85rem", color: "#5f40c4", fontStyle: "italic", marginBottom: "0.5rem" }}>
+          💡 {ctaMessage}
+        </div>
+      )}
+
+      {totalResults > 1 && (
+        <div style={{ fontSize: "0.75rem", color: "#5f40c4", marginBottom: "0.5rem" }}>
+          Version {currentIndex + 1} of {totalResults}
+          {book.libgenMetadata.publisher && ` • ${book.libgenMetadata.publisher}`}
+        </div>
+      )}
+
+      {book.libgenMetadata.filesize && (
+        <div style={{ fontSize: "0.8rem", color: "#5f40c4", marginBottom: "0.5rem" }}>
+          File size: {book.libgenMetadata.filesize}
+          {book.libgenMetadata.pages && ` • ${book.libgenMetadata.pages} pages`}
+          {book.libgenMetadata.language && ` • ${book.libgenMetadata.language}`}
+        </div>
+      )}
+
+      <a
+        href={book.libgenMetadata.downloadUrl}
+        target="_blank"
+        rel="noreferrer"
+        style={{
+          ...styles.mirrorButton,
+          ...styles.mirrorButtonPrimary
+        }}
+      >
+        <span>⬇ Download</span>
+        <span>→</span>
+      </a>
+
+      <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+        {hasMoreVersions && (
+          <button
+            type="button"
+            onClick={() => onTryNextVersion(book)}
+            style={{
+              ...styles.mirrorButton,
+              flex: 1,
+              cursor: "pointer",
+              fontFamily: "inherit",
+              textAlign: "center"
+            }}
+          >
+            <span>🔄 Try Next Version</span>
+          </button>
+        )}
+        <a
+          href={mirrorUrl}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            ...styles.mirrorButton,
+            flex: 1,
+            textDecoration: "none",
+            textAlign: "center"
+          }}
+        >
+          <span>🔗 View on LibGen</span>
+        </a>
+      </div>
+    </div>
+  );
+}
+
+// LibGen Analytics Dashboard Component
+function LibGenAnalyticsDashboard({ stats, onBatchSearch, batchSearching, styles }) {
+  if (!stats || stats.total === 0) {
+    return null;
+  }
+
+  return (
+    <div style={styles.analyticsCard}>
+      <div style={styles.analyticsTitle}>
+        <span>📊</span>
+        <span>Library Genesis Statistics</span>
+      </div>
+
+      <div style={styles.analyticsGrid}>
+        <div style={styles.analyticsStat}>
+          <div style={styles.analyticsValue}>{stats.withLibgen}</div>
+          <div style={styles.analyticsLabel}>Books on LibGen</div>
+        </div>
+
+        <div style={styles.analyticsStat}>
+          <div style={styles.analyticsValue}>{stats.percentage}%</div>
+          <div style={styles.analyticsLabel}>Coverage</div>
+        </div>
+
+        <div style={styles.analyticsStat}>
+          <div style={styles.analyticsValue}>{stats.totalSize}</div>
+          <div style={styles.analyticsLabel}>Total Size</div>
+        </div>
+
+        <div style={styles.analyticsStat}>
+          <div style={styles.analyticsValue}>{Object.keys(stats.formats).length}</div>
+          <div style={styles.analyticsLabel}>Formats</div>
+        </div>
+      </div>
+
+      {Object.keys(stats.formats).length > 0 && (
+        <div>
+          <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#5f40c4", marginBottom: "0.5rem" }}>
+            Available Formats:
+          </div>
+          <div style={styles.formatsList}>
+            {Object.entries(stats.formats).map(([format, count]) => (
+              <span key={format} style={styles.formatBadge}>
+                {format} ({count})
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {stats.withLibgen < stats.total && (
+        <div style={{ marginTop: "1rem" }}>
+          <button
+            type="button"
+            onClick={onBatchSearch}
+            disabled={batchSearching}
+            style={{
+              ...styles.findLibgenButton,
+              ...(batchSearching ? styles.findLibgenButtonSearching : {}),
+              width: "100%",
+              padding: "0.75rem"
+            }}
+          >
+            {batchSearching
+              ? "Searching..."
+              : `Find ${stats.total - stats.withLibgen} missing books on LibGen`}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const [initialized, setInitialized] = useState(false);
   const [books, setBooks] = useState([]);
@@ -2733,3 +3442,1095 @@ export default function App() {
   );
 }
 
+const styles = {
+  wrapper: {
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
+    margin: "0 auto",
+    padding: "3.2rem 2.6rem 4.2rem",
+    maxWidth: "1240px",
+    color: THEME.textPrimary,
+    background: "rgba(255, 255, 255, 0.28)",
+    border: "1px solid rgba(255, 255, 255, 0.45)",
+    borderRadius: "2.5rem",
+    boxShadow: "0 20px 60px rgba(60, 47, 47, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.5) inset, var(--shadow-xl)",
+    backdropFilter: "blur(40px) saturate(180%)",
+    WebkitBackdropFilter: "blur(40px) saturate(180%)",
+    minHeight: "92vh",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    position: "relative",
+    overflow: "hidden"
+  },
+  header: {
+    marginBottom: "2.6rem",
+    textAlign: "center",
+    maxWidth: "760px",
+    marginLeft: "auto",
+    marginRight: "auto"
+  },
+  logoWrapper: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "1.2rem",
+    marginBottom: "1.1rem",
+    flexWrap: "wrap"
+  },
+  logoIcon: {
+    width: "78px",
+    height: "68px",
+    borderRadius: "22px",
+    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 212, 179, 0.35) 100%)",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
+    boxShadow: "0 8px 24px rgba(60, 47, 47, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
+    backdropFilter: "blur(20px)",
+    WebkitBackdropFilter: "blur(20px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "0.45rem",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  logoTextGroup: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: "0.2rem"
+  },
+  logoTitle: {
+    fontFamily:
+      '"Lucida Handwriting","Brush Script MT","Segoe Script","Snell Roundhand","cursive"',
+    fontSize: "2.1rem",
+    color: THEME.burntOrange,
+    textShadow: "0 2px 6px rgba(217, 130, 43, 0.25)",
+    letterSpacing: "0.04em"
+  },
+  logoSubtitle: {
+    fontSize: "0.95rem",
+    color: THEME.textMuted,
+    fontWeight: 500,
+    fontStyle: "italic"
+  },
+  headerActions: {
+    marginTop: "1.4rem",
+    display: "flex",
+    justifyContent: "center",
+    gap: "0.75rem",
+    flexWrap: "wrap"
+  },
+  coverRefreshButton: {
+    background: "rgba(255, 185, 140, 0.3)",
+    border: "1px solid rgba(255, 255, 255, 0.45)",
+    color: THEME.accent,
+    padding: "0.7rem 1.5rem",
+    borderRadius: "999px",
+    fontSize: "0.92rem",
+    fontWeight: 600,
+    cursor: "pointer",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.08)",
+    fontFamily: "inherit"
+  },
+  coverRefreshButtonDisabled: {
+    opacity: 0.6,
+    cursor: "not-allowed"
+  },
+  warning: {
+    color: THEME.warning
+  },
+  toast: {
+    position: "fixed",
+    top: "1.5rem",
+    right: "1.4rem",
+    left: "50%",
+    transform: "translateX(-50%)",
+    pointerEvents: "auto",
+    zIndex: 9999,
+    display: "flex",
+    alignItems: "center",
+    gap: "0.7rem",
+    padding: "1rem 1.5rem",
+    borderRadius: "1.5rem",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
+    boxShadow: "0 12px 32px rgba(60, 47, 47, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
+    background: "rgba(255, 232, 214, 0.85)",
+    backdropFilter: "blur(30px) saturate(160%)",
+    WebkitBackdropFilter: "blur(30px) saturate(160%)",
+    color: THEME.textPrimary,
+    fontSize: "0.95rem",
+    lineHeight: 1.25,
+    maxWidth: "min(520px, 90vw)",
+    textAlign: "center",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  toastInfo: {
+    borderColor: "rgba(217, 130, 43, 0.45)",
+    boxShadow: "0 22px 44px rgba(95, 64, 40, 0.28)"
+  },
+  toastSuccess: {
+    backgroundColor: "rgba(47, 159, 99, 0.52)",
+    color: "#0c2f1e",
+    borderColor: "rgba(47, 159, 99, 0.9)",
+    boxShadow: "0 28px 58px rgba(21, 83, 52, 0.45)"
+  },
+  toastWarning: {
+    backgroundColor: "rgba(229, 182, 89, 0.56)",
+    color: "#422f12",
+    borderColor: "rgba(229, 182, 89, 0.92)",
+    boxShadow: "0 28px 58px rgba(140, 101, 38, 0.44)"
+  },
+  toastDanger: {
+    backgroundColor: "rgba(167, 54, 54, 0.54)",
+    color: "#fff4f2",
+    borderColor: "rgba(167, 54, 54, 0.92)",
+    boxShadow: "0 28px 58px rgba(88, 26, 26, 0.45)"
+  },
+  toastDismiss: {
+    background: "transparent",
+    border: "none",
+    color: "inherit",
+    fontSize: "1.1rem",
+    cursor: "pointer",
+    lineHeight: 1,
+    padding: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  main: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "1.6rem",
+    alignItems: "stretch",
+    justifyContent: "center",
+    width: "100%",
+    boxSizing: "border-box"
+  },
+  card: {
+    borderRadius: "2rem",
+    padding: "2rem",
+    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 232, 214, 0.35) 100%)",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
+    boxShadow: "0 16px 40px rgba(60, 47, 47, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.4) inset",
+    backdropFilter: "blur(30px) saturate(160%)",
+    WebkitBackdropFilter: "blur(30px) saturate(160%)",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    position: "relative",
+    overflow: "hidden",
+    width: "100%",
+    maxWidth: "520px",
+    flex: "1 1 360px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "1.15rem"
+  },
+  searchForm: {
+    display: "flex",
+    gap: "0.65rem",
+    marginBottom: "1rem",
+    alignItems: "stretch"
+  },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.9rem"
+  },
+  label: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.4rem",
+    fontSize: "0.95rem",
+    color: THEME.textPrimary
+  },
+  input: {
+    borderRadius: "1rem",
+    border: "1px solid rgba(255, 255, 255, 0.4)",
+    padding: "1rem 1.15rem",
+    fontSize: "1.02rem",
+    background: "rgba(255, 255, 255, 0.5)",
+    color: THEME.textPrimary,
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    width: "100%",
+    boxSizing: "border-box",
+    outline: "none",
+    fontFamily: "inherit"
+  },
+  textarea: {
+    resize: "vertical",
+    minHeight: "100px"
+  },
+  selectContainer: {
+    position: "relative",
+    display: "flex",
+    width: "100%"
+  },
+  select: {
+    appearance: "none",
+    WebkitAppearance: "none",
+    MozAppearance: "none",
+    paddingRight: "3rem",
+    background: "rgba(255, 255, 255, 0.5)",
+    cursor: "pointer"
+  },
+  selectArrow: {
+    position: "absolute",
+    top: "50%",
+    right: "1.2rem",
+    transform: "translateY(-50%)",
+    pointerEvents: "none",
+    fontSize: "0.85rem",
+    color: THEME.accent
+  },
+  searchButton: {
+    background: "rgba(255, 185, 140, 0.35)",
+    color: THEME.accent,
+    border: "1px solid rgba(255, 255, 255, 0.45)",
+    borderRadius: "1rem",
+    padding: "0.85rem 1.2rem",
+    cursor: "pointer",
+    fontWeight: 600,
+    alignSelf: "stretch",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    minWidth: "120px",
+    textAlign: "center",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.1)",
+    fontFamily: "inherit"
+  },
+  primaryButton: {
+    background: "linear-gradient(135deg, #ffb88c 0%, #e8925b 50%, #d4764d 100%)",
+    color: "#2c1e1e",
+    border: "1px solid rgba(255, 255, 255, 0.4)",
+    borderRadius: "1.1rem",
+    padding: "0.95rem 1.6rem",
+    cursor: "pointer",
+    fontWeight: 600,
+    fontSize: "1rem",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    boxShadow: "0 8px 20px rgba(212, 118, 77, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset",
+    alignSelf: "flex-start",
+    fontFamily: "inherit"
+  },
+  secondaryButtonMuted: {
+    background: "transparent",
+    color: THEME.textMuted,
+    border: `1px solid rgba(46, 26, 18, 0.2)`,
+    borderRadius: "999px",
+    padding: "0.4rem 0.85rem",
+    cursor: "pointer",
+    transition: "border 0.2s ease, background 0.2s ease"
+  },
+  coverControls: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.9rem"
+  },
+  toggleRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem",
+    fontSize: "0.92rem",
+    color: THEME.textMuted
+  },
+  inlineRow: {
+    display: "flex",
+    gap: "0.9rem",
+    flexWrap: "wrap"
+  },
+  inlineField: {
+    flex: "1 1 200px"
+  },
+  inlineFieldCompact: {
+    maxWidth: "320px"
+  },
+  inlineReview: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.75rem",
+    padding: "1.2rem",
+    border: "1px solid rgba(255, 255, 255, 0.4)",
+    borderRadius: "1.3rem",
+    background: "rgba(255, 232, 214, 0.4)",
+    backdropFilter: "blur(15px)",
+    WebkitBackdropFilter: "blur(15px)",
+    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.08)"
+  },
+  ratingGroup: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5rem",
+    background: "rgba(255, 255, 255, 0.4)",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
+    borderRadius: "1.2rem",
+    padding: "1rem",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.08)"
+  },
+  ratingInputs: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "0.5rem",
+    width: "100%"
+  },
+  ratingDisplay: {
+    fontSize: "0.95rem",
+    color: THEME.accent,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "0.9rem",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
+    background: "rgba(255, 255, 255, 0.45)",
+    padding: "0.6rem 1.2rem",
+    minWidth: "120px",
+    fontWeight: 600,
+    textAlign: "center",
+    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    minHeight: "48px"
+  },
+  ratingDisplayInput: {
+    cursor: "text",
+    gap: "0.25rem"
+  },
+  ratingDisplayInputField: {
+    width: "60px",
+    fontSize: "1.1rem",
+    fontWeight: 600,
+    color: THEME.accent,
+    background: "transparent",
+    border: "none",
+    textAlign: "center",
+    outline: "none",
+    padding: 0,
+    margin: 0,
+    appearance: "textfield",
+    WebkitAppearance: "none",
+    MozAppearance: "textfield"
+  },
+  ratingDisplaySuffix: {
+    fontSize: "0.85rem",
+    color: THEME.accent,
+    opacity: 0.85
+  },
+  inlineToggle: {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem",
+    fontSize: "0.9rem",
+    color: THEME.textMuted
+  },
+  coverPreview: {
+    display: "flex",
+    gap: "1rem",
+    alignItems: "center"
+  },
+  coverImage: {
+    width: "96px",
+    height: "144px",
+    objectFit: "cover",
+    borderRadius: "0.75rem",
+    border: `1px solid rgba(217, 130, 43, 0.25)`,
+    background: "rgba(249, 223, 198, 0.42)"
+  },
+  coverPreviewMeta: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.35rem"
+  },
+  smallButton: {
+    background: "rgba(255, 185, 140, 0.3)",
+    border: "1px solid rgba(255, 255, 255, 0.45)",
+    borderRadius: "0.9rem",
+    padding: "0.5rem 1rem",
+    fontSize: "0.82rem",
+    cursor: "pointer",
+    color: THEME.accent,
+    fontWeight: 600,
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
+    boxShadow: "0 2px 8px rgba(60, 47, 47, 0.08)",
+    fontFamily: "inherit"
+  },
+  dangerButton: {
+    background: "rgba(226, 70, 82, 0.12)",
+    border: `1px solid ${THEME.danger}`,
+    color: THEME.danger,
+    borderRadius: "0.9rem",
+    padding: "0.4rem 0.95rem",
+    fontSize: "0.82rem",
+    cursor: "pointer",
+    marginLeft: "0.55rem",
+    fontWeight: 600
+  },
+  helperText: {
+    fontSize: "0.9rem",
+    color: THEME.textMuted,
+    marginBottom: "0.9rem"
+  },
+  helperTextSmall: {
+    fontSize: "0.8rem",
+    color: THEME.textMuted,
+    marginTop: "-0.25rem"
+  },
+  discordRow: {
+    display: "flex",
+    gap: "0.65rem",
+    alignItems: "center"
+  },
+  discordInput: {
+    flex: 1,
+    minWidth: 0
+  },
+  discordButton: {
+    background: THEME.accentSoft,
+    color: THEME.accent,
+    border: `1px solid ${THEME.accent}`,
+    borderRadius: "0.9rem",
+    padding: "0.6rem 0.9rem",
+    cursor: "pointer",
+    transition: "border 0.2s ease, background 0.2s ease"
+  },
+  discordSection: {
+    marginTop: 0,
+    padding: "1.6rem 1.8rem",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
+    borderRadius: "2rem",
+    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 232, 214, 0.35) 100%)",
+    boxShadow: "0 12px 32px rgba(60, 47, 47, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.4) inset",
+    backdropFilter: "blur(30px) saturate(160%)",
+    WebkitBackdropFilter: "blur(30px) saturate(160%)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.85rem",
+    maxWidth: "600px",
+    marginLeft: "auto",
+    marginRight: "auto",
+    flex: "1 1 320px",
+    position: "relative",
+    overflow: "hidden",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  switchLabel: {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem",
+    cursor: "pointer",
+    userSelect: "none"
+  },
+  switchInput: {
+    display: "none"
+  },
+  switchTrack: {
+    position: "relative",
+    width: "44px",
+    height: "24px",
+    borderRadius: "999px",
+    background: "rgba(0,0,0,0.15)",
+    transition: "background 0.2s ease"
+  },
+  switchThumb: {
+    position: "absolute",
+    top: "3px",
+    left: "3px",
+    width: "18px",
+    height: "18px",
+    borderRadius: "50%",
+    background: "white",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+    transition: "transform 0.2s ease",
+    transform: "translateX(0)"
+  },
+  switchCopy: {
+    fontSize: "0.85rem",
+    color: THEME.textMuted
+  },
+  utilityGrid: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "1.4rem",
+    marginTop: "2.4rem",
+    width: "100%"
+  },
+  listSection: {
+    marginTop: "2.6rem"
+  },
+  list: {
+    listStyle: "none",
+    padding: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: "1.1rem"
+  },
+  listItem: {
+    border: "1px solid rgba(255, 255, 255, 0.45)",
+    borderRadius: "1.5rem",
+    padding: "1.3rem",
+    background: "rgba(255, 255, 255, 0.35)",
+    display: "flex",
+    gap: "1.1rem",
+    alignItems: "flex-start",
+    boxShadow: "0 8px 24px rgba(60, 47, 47, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
+    backdropFilter: "blur(20px) saturate(150%)",
+    WebkitBackdropFilter: "blur(20px) saturate(150%)",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  meta: {
+    fontSize: "0.85rem",
+    color: THEME.textMuted
+  },
+  reviewList: {
+    marginTop: "0.5rem",
+    paddingLeft: "1rem"
+  },
+  reviewHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.4rem",
+    flexWrap: "wrap"
+  },
+  starRow: {
+    display: "inline-flex",
+    gap: "0.08rem",
+    fontSize: "2rem",
+    color: THEME.accent,
+    userSelect: "none"
+  },
+  starInputWrapper: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "0.18rem",
+    padding: "0.25rem 0 0.35rem",
+    width: "66%",
+    maxWidth: "360px",
+    minWidth: "200px",
+    margin: "-0.25rem auto 0"
+  },
+  starButton: {
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    fontSize: "2.9rem",
+    lineHeight: 1,
+    padding: "0.22rem 0.14rem",
+    flex: "1 1 0%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  starFull: {
+    color: "#f4c245",
+    filter: "drop-shadow(0 2px 4px rgba(212, 118, 77, 0.4))",
+    WebkitTextStroke: "0.5px rgba(212, 118, 77, 0.5)",
+    textShadow: "0 0 8px rgba(244, 194, 69, 0.5)"
+  },
+  starHalf: {
+    display: "inline-block",
+    backgroundImage: "linear-gradient(90deg, #f4c245 0%, #f4c245 50%, rgba(60, 47, 47, 0.2) 50%)",
+    color: "transparent",
+    backgroundClip: "text",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+    filter: "drop-shadow(0 2px 4px rgba(212, 118, 77, 0.3))",
+    WebkitTextStroke: "0.5px rgba(212, 118, 77, 0.4)"
+  },
+  starEmpty: {
+    color: "rgba(60, 47, 47, 0.2)",
+    display: "inline-block",
+    filter: "drop-shadow(0 1px 2px rgba(60, 47, 47, 0.1))",
+    WebkitTextStroke: "0.5px rgba(60, 47, 47, 0.15)"
+  },
+  reviewScore: {
+    fontSize: "0.85rem",
+    color: THEME.textPrimary,
+    fontWeight: 600
+  },
+  reviewScoreSmall: {
+    fontSize: "0.75rem",
+    color: THEME.textMuted
+  },
+  reviewStatusBadge: {
+    fontSize: "0.72rem",
+    color: THEME.accent,
+    background: "rgba(217, 130, 43, 0.18)",
+    borderRadius: "999px",
+    padding: "0.18rem 0.55rem",
+    fontWeight: 600
+  },
+  reviewTimestamp: {
+    fontSize: "0.7rem",
+    color: THEME.textMuted,
+    marginLeft: "auto"
+  },
+  reviewActions: {
+    marginTop: "0.4rem"
+  },
+  badge: {
+    display: "inline-block",
+    background: THEME.accent,
+    color: "#3b2618",
+    padding: "0.25rem 0.65rem",
+    borderRadius: "999px",
+    fontSize: "0.78rem",
+    marginBottom: "0.75rem",
+    fontWeight: 600
+  },
+  badgeSecondary: {
+    display: "inline-block",
+    marginLeft: "0.5rem",
+    background: "rgba(229, 182, 89, 0.22)",
+    color: "#8f5a1f",
+    padding: "0.15rem 0.55rem",
+    borderRadius: "999px",
+    fontSize: "0.74rem"
+  },
+  utilitySection: {
+    marginTop: 0,
+    padding: "1.5rem",
+    border: "1px solid rgba(255, 255, 255, 0.5)",
+    borderRadius: "2rem",
+    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 232, 214, 0.35) 100%)",
+    boxShadow: "0 12px 32px rgba(60, 47, 47, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.4) inset",
+    backdropFilter: "blur(30px) saturate(160%)",
+    WebkitBackdropFilter: "blur(30px) saturate(160%)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "1rem",
+    flex: "1 1 220px",
+    maxWidth: "360px",
+    position: "relative",
+    overflow: "hidden",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  error: {
+    color: THEME.danger,
+    fontSize: "0.85rem"
+  },
+  searchResults: {
+    listStyle: "none",
+    padding: 0,
+    margin: "0 0 1.1rem 0",
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.75rem"
+  },
+  searchResultItem: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: "0.9rem",
+    padding: "0.85rem 1rem",
+    border: "1px solid rgba(255, 255, 255, 0.45)",
+    borderRadius: "1.2rem",
+    background: "rgba(255, 255, 255, 0.4)",
+    boxShadow: "0 6px 16px rgba(60, 47, 47, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
+    backdropFilter: "blur(15px)",
+    WebkitBackdropFilter: "blur(15px)",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  coverLink: {
+    color: THEME.accent,
+    fontSize: "0.85rem"
+  },
+  searchResultContent: {
+    display: "flex",
+    gap: "0.75rem",
+    alignItems: "center"
+  },
+  searchResultCover: {
+    width: "48px",
+    height: "72px",
+    objectFit: "cover",
+    borderRadius: "0.55rem",
+    border: `1px solid rgba(217, 130, 43, 0.25)`,
+    background: "rgba(249, 223, 198, 0.42)"
+  },
+  searchResultCoverPlaceholder: {
+    width: "48px",
+    height: "72px",
+    borderRadius: "0.55rem",
+    border: `1px dashed rgba(217,130,43,0.45)`,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "0.7rem",
+    color: THEME.textMuted,
+    background: THEME.surfaceAlt
+  },
+  searchResultActions: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    gap: "0.4rem"
+  },
+  availability: {
+    marginTop: "0.35rem",
+    display: "flex",
+    gap: "0.35rem",
+    flexWrap: "wrap"
+  },
+  availabilityBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "0.2rem 0.5rem",
+    borderRadius: "999px",
+    fontSize: "0.75rem",
+    background: "rgba(242, 193, 153, 0.24)",
+    color: THEME.accent,
+    fontWeight: 500
+  },
+  downloadBadge: {
+    display: "inline-flex",
+    alignItems: "center",
+    padding: "0.2rem 0.55rem",
+    borderRadius: "999px",
+    fontSize: "0.75rem",
+    background: "rgba(47, 159, 99, 0.18)",
+    color: THEME.success,
+    fontWeight: 500,
+    marginLeft: "0.35rem"
+  },
+  availabilityAction: {
+    fontSize: "0.75rem",
+    color: THEME.accent
+  },
+  availabilityActionRead: {
+    color: THEME.success
+  },
+  availabilityActionDownload: {
+    color: THEME.success
+  },
+  availabilityActionBorrow: {
+    color: THEME.warning
+  },
+  availabilityActionWaitlist: {
+    color: "#cfa0e9"
+  },
+  availabilityActionsList: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "0.35rem",
+    marginTop: "0.35rem"
+  },
+  searchTabs: {
+    display: "flex",
+    gap: "0.5rem",
+    marginBottom: "1rem",
+    borderBottom: "1px solid rgba(232, 146, 91, 0.2)",
+    paddingBottom: "0.5rem"
+  },
+  searchTab: {
+    background: "transparent",
+    border: "none",
+    color: THEME.textMuted,
+    padding: "0.5rem 1rem",
+    borderRadius: "0.5rem",
+    fontSize: "0.9rem",
+    fontWeight: 500,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    fontFamily: "inherit"
+  },
+  searchTabActive: {
+    background: "rgba(217, 130, 43, 0.15)",
+    color: THEME.accent,
+    fontWeight: 600
+  },
+  searchTabCount: {
+    display: "inline-block",
+    marginLeft: "0.4rem",
+    background: "rgba(217, 130, 43, 0.2)",
+    color: THEME.accent,
+    padding: "0.1rem 0.4rem",
+    borderRadius: "999px",
+    fontSize: "0.7rem",
+    fontWeight: 600
+  },
+  libgenBadge: {
+    display: "inline-block",
+    background: "rgba(95, 64, 196, 0.15)",
+    color: "#5f40c4",
+    padding: "0.2rem 0.5rem",
+    borderRadius: "999px",
+    fontSize: "0.75rem",
+    fontWeight: 500
+  },
+  libgenMirrorLink: {
+    fontSize: "0.75rem",
+    color: "#5f40c4",
+    textDecoration: "none",
+    marginLeft: "0.5rem"
+  },
+  libgenMetadata: {
+    display: "flex",
+    gap: "0.5rem",
+    marginTop: "0.3rem",
+    flexWrap: "wrap"
+  },
+  libgenMetadataItem: {
+    fontSize: "0.7rem",
+    color: THEME.textMuted,
+    background: "rgba(255, 255, 255, 0.3)",
+    padding: "0.15rem 0.4rem",
+    borderRadius: "0.3rem"
+  },
+  libgenWidget: {
+    background: "rgba(95, 64, 196, 0.08)",
+    border: "1px solid rgba(95, 64, 196, 0.2)",
+    borderRadius: "1rem",
+    padding: "1rem",
+    marginTop: "0.75rem"
+  },
+  libgenWidgetHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: "0.75rem"
+  },
+  libgenWidgetTitle: {
+    fontSize: "0.9rem",
+    fontWeight: 600,
+    color: "#5f40c4",
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem"
+  },
+  mirrorButton: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "0.6rem 0.8rem",
+    background: "rgba(255, 255, 255, 0.5)",
+    border: "1px solid rgba(95, 64, 196, 0.2)",
+    borderRadius: "0.6rem",
+    fontSize: "0.8rem",
+    color: "#5f40c4",
+    textDecoration: "none",
+    transition: "all 0.2s ease"
+  },
+  mirrorButtonPrimary: {
+    background: "rgba(95, 64, 196, 0.12)",
+    borderColor: "rgba(95, 64, 196, 0.3)"
+  },
+  findLibgenButton: {
+    background: "rgba(95, 64, 196, 0.12)",
+    color: "#5f40c4",
+    border: "1px solid rgba(95, 64, 196, 0.3)",
+    padding: "0.5rem 1rem",
+    borderRadius: "0.6rem",
+    fontSize: "0.85rem",
+    fontWeight: 500,
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    fontFamily: "inherit"
+  },
+  findLibgenButtonSearching: {
+    opacity: 0.6,
+    cursor: "not-allowed"
+  },
+  analyticsCard: {
+    background: "linear-gradient(135deg, rgba(95, 64, 196, 0.08) 0%, rgba(95, 64, 196, 0.12) 100%)",
+    border: "1px solid rgba(95, 64, 196, 0.25)",
+    borderRadius: "1.5rem",
+    padding: "1.5rem",
+    marginTop: "1rem"
+  },
+  analyticsTitle: {
+    fontSize: "1.1rem",
+    fontWeight: 600,
+    color: "#5f40c4",
+    marginBottom: "1rem",
+    display: "flex",
+    alignItems: "center",
+    gap: "0.5rem"
+  },
+  analyticsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+    gap: "1rem",
+    marginBottom: "1rem"
+  },
+  analyticsStat: {
+    background: "rgba(255, 255, 255, 0.5)",
+    borderRadius: "0.8rem",
+    padding: "1rem",
+    textAlign: "center"
+  },
+  analyticsValue: {
+    fontSize: "1.8rem",
+    fontWeight: 700,
+    color: "#5f40c4",
+    marginBottom: "0.25rem"
+  },
+  analyticsLabel: {
+    fontSize: "0.75rem",
+    color: THEME.textMuted,
+    textTransform: "uppercase",
+    letterSpacing: "0.05em"
+  },
+  formatsList: {
+    display: "flex",
+    gap: "0.5rem",
+    flexWrap: "wrap",
+    marginTop: "0.75rem"
+  },
+  formatBadge: {
+    background: "rgba(95, 64, 196, 0.15)",
+    color: "#5f40c4",
+    padding: "0.4rem 0.8rem",
+    borderRadius: "999px",
+    fontSize: "0.75rem",
+    fontWeight: 600
+  },
+  bookActions: {
+    display: "flex",
+    gap: "0.5rem",
+    marginTop: "0.6rem",
+    flexWrap: "wrap"
+  },
+  libraryCover: {
+    width: "96px",
+    height: "144px",
+    objectFit: "cover",
+    borderRadius: "0.8rem",
+    border: `1px solid rgba(217, 130, 43, 0.25)`,
+    background: "rgba(249, 223, 198, 0.4)"
+  },
+  libraryCoverPlaceholder: {
+    width: "96px",
+    height: "144px",
+    borderRadius: "0.8rem",
+    border: `1px dashed rgba(217,130,43,0.45)`,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "0.8rem",
+    color: THEME.textMuted,
+    background: THEME.surfaceAlt
+  },
+  bookContent: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.75rem"
+  },
+  libraryToolIdeas: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "0.6rem",
+    marginTop: "0.5rem",
+    justifyContent: "center"
+  },
+  fakeToolButton: {
+    background: "rgba(242, 193, 153, 0.18)",
+    border: `1px dashed rgba(217, 130, 43, 0.5)`,
+    borderRadius: "0.9rem",
+    padding: "0.6rem 1.1rem",
+    fontSize: "0.82rem",
+    color: THEME.accent,
+    fontWeight: 600,
+    cursor: "not-allowed",
+    opacity: 0.8,
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.3rem",
+    alignItems: "center",
+    textAlign: "center",
+    minWidth: "180px"
+  },
+  fakeToolHelper: {
+    fontSize: "0.72rem",
+    color: THEME.textMuted,
+    fontWeight: 500,
+    maxWidth: "160px",
+    lineHeight: 1.2
+  },
+  footer: {
+    marginTop: "3rem",
+    textAlign: "center",
+    fontSize: "0.85rem",
+    color: THEME.textMuted
+  },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(60, 47, 47, 0.4)",
+    backdropFilter: "blur(8px)",
+    WebkitBackdropFilter: "blur(8px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10000,
+    padding: "1rem",
+    transition: "all 0.3s ease"
+  },
+  modalContainer: {
+    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 232, 214, 0.45) 100%)",
+    borderRadius: "2rem",
+    border: "1px solid rgba(255, 255, 255, 0.6)",
+    boxShadow: "0 20px 60px rgba(60, 47, 47, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.5) inset",
+    backdropFilter: "blur(40px) saturate(180%)",
+    WebkitBackdropFilter: "blur(40px) saturate(180%)",
+    maxWidth: "600px",
+    width: "100%",
+    maxHeight: "90vh",
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+  },
+  modalHeader: {
+    padding: "1.5rem 1.5rem 0",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    gap: "1rem"
+  },
+  modalBookTitle: {
+    fontSize: "0.9rem",
+    fontWeight: "normal",
+    color: THEME.textMuted,
+    fontStyle: "italic"
+  },
+  modalCloseButton: {
+    background: "transparent",
+    border: "none",
+    fontSize: "1.5rem",
+    cursor: "pointer",
+    color: THEME.textMuted,
+    padding: "0.25rem",
+    lineHeight: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "0.5rem",
+    transition: "background 0.2s ease, color 0.2s ease"
+  },
+  modalBody: {
+    padding: "1.5rem",
+    display: "flex",
+    flexDirection: "column",
+    gap: "1rem",
+    flex: 1,
+    overflow: "auto"
+  },
+  modalFooter: {
+    padding: "0 1.5rem 1.5rem",
+    display: "flex",
+    gap: "0.75rem",
+    justifyContent: "flex-end"
+  }
+};
