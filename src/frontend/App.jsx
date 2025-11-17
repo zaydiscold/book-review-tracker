@@ -1862,7 +1862,6 @@ export default function App() {
           stats={libraryStats}
           onBatchSearch={handleBatchSearchLibGen}
           batchSearching={batchSearching}
-          styles={styles}
         />
       )}
 
@@ -2442,7 +2441,6 @@ export default function App() {
                     <LibGenWidget
                       book={book}
                       onTryNextVersion={handleTryNextVersion}
-                      styles={styles}
                       ctaMessage={getLibGenCTA(statusSource)}
                     />
                   </div>
@@ -2709,7 +2707,6 @@ export default function App() {
                 <LibGenWidget
                   book={reviewModal.book}
                   onTryNextVersion={handleTryNextVersion}
-                  styles={styles}
                   ctaMessage={getLibGenCTA(modalReviewForm.status)}
                 />
               )}
