@@ -102,13 +102,13 @@ def get_book_links(md5: str):
 
 ## Mirror Prioritization Strategy
 
-### For Book Search:
-1. Try **primary mirrors** first (most stable)
-   - libgen.is
-   - libgen.rs
-   - libgen.st
+### For Book Search (Using libgen-api-enhanced):
+1. Try **primary mirrors** first (library verified)
+   - https://libgen.li (default)
+   - https://libgen.bz
+   - https://libgen.gs
 2. Fall back to **working_fallbacks** if needed
-   - libgen.lc, libgen.br, libgen.bz, etc.
+   - https://libgen.rs, https://libgen.st, https://libgen.is, etc.
 3. Last resort: **all other mirrors**
 
 ### For Direct Links:

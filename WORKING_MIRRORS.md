@@ -1,29 +1,34 @@
 # LibGen Working Mirrors List
 
 **Last Updated:** 2025-11-21
-**Test Method:** Run `python3 src/python-service/test_mirrors.py`
+**Based On:** libgen-api-enhanced library defaults and documentation
+**Source:** https://github.com/libgen-api-enhanced/libgen-api-enhanced
 
-## Known Working Mirrors (Community Verified)
+## VERIFIED Working Mirrors (libgen-api-enhanced)
 
-Based on recent community reports, these mirrors are typically reliable:
+The `libgen-api-enhanced` library is the working implementation. It defaults to `.li` and supports documented alternatives.
 
-### Primary Mirrors (Most Stable)
-- ✓ `http://libgen.is` - Iceland (Original, most stable historically)
-- ✓ `http://libgen.rs` - Serbia (Very reliable backup)
-- ✓ `http://libgen.st` - Saint Helena (Good uptime)
+### Primary Mirrors (Library Verified)
+- ✓ `https://libgen.li` - **Library default (verified working)**
+- ✓ `https://libgen.bz` - Belize (documented alternative)
+- ✓ `https://libgen.gs` - South Georgia (documented alternative)
 
-### Highly Recommended Alternatives
-- ✓ `http://libgen.gs` - South Georgia
-- ✓ `http://libgen.lc` - Saint Lucia
-- ✓ `http://libgen.br` - Brazil (Good for South America)
+### Recommended Fallbacks (Compatible)
+- ✓ `https://libgen.rs` - Serbia
+- ✓ `https://libgen.st` - Saint Helena
+- ✓ `https://libgen.is` - Iceland
+- ✓ `https://libgen.lc` - Saint Lucia
+- ✓ `https://libgen.br` - Brazil
+- ✓ `https://libgen.vg` - British Virgin Islands
+- ✓ `https://libgen.io` - British Indian Ocean Territory
 
-### Other Working Options
-- `http://libgen.bz` - Belize
-- `http://libgen.il` - Israel
-- `http://libgen.sg` - Singapore
-- `http://libgen.in` - India
-- `http://libgen.click` - Generic TLD
-- `http://libgen.fun` - Generic TLD
+### Alternative TLDs (May Work)
+- `https://libgen.il` - Israel
+- `https://libgen.sg` - Singapore
+- `https://libgen.in` - India
+- `https://libgen.me` - Montenegro
+- `https://libgen.click` - Generic TLD
+- `https://libgen.fun` - Generic TLD
 - `http://gen.lib.rus.ec` - Russian relay
 
 ---

@@ -8,56 +8,55 @@ import asyncio
 import aiohttp
 
 LIBGEN_MIRRORS = {
-    # Primary mirrors - ordered by reliability
-    # Updated based on testing: test_mirrors.py
+    # Primary mirrors - based on libgen-api-enhanced library (verified working)
+    # Default: https://libgen.li (verified working with library)
     "primary": [
-        "http://libgen.is",      # Iceland (original, most stable)
-        "http://libgen.rs",      # Serbia (very reliable)
-        "http://libgen.st",      # Saint Helena (good uptime)
-        "http://libgen.gs",      # South Georgia
+        "https://libgen.li",     # Library default (verified working)
+        "https://libgen.bz",     # Belize (documented alternative)
+        "https://libgen.gs",     # South Georgia (documented alternative)
     ],
 
-    # Working fallback mirrors (known to be up)
+    # Working fallback mirrors (compatible with libgen-api-enhanced)
     "working_fallbacks": [
-        "http://libgen.lc",      # Saint Lucia
-        "http://libgen.br",      # Brazil
-        "http://libgen.bz",      # Belize
-        "http://libgen.il",      # Israel
-        "http://libgen.sg",      # Singapore
-        "http://libgen.in",      # India
-        "http://gen.lib.rus.ec", # Russian relay
+        "https://libgen.rs",     # Serbia
+        "https://libgen.st",     # Saint Helena
+        "https://libgen.is",     # Iceland
+        "https://libgen.lc",     # Saint Lucia
+        "https://libgen.br",     # Brazil
+        "https://libgen.vg",     # British Virgin Islands
+        "https://libgen.io",     # British Indian Ocean Territory
     ],
     "cc_tlds": [
-        "http://libgen.lc",      # Saint Lucia
-        "http://libgen.bz",      # Belize
-        "http://libgen.br",      # Brazil
-        "http://libgen.il",      # Israel
-        "http://libgen.sg",      # Singapore
-        "http://libgen.in",      # India
-        "http://libgen.mk",      # North Macedonia
-        "http://libgen.vg",      # British Virgin Islands
-        "http://libgen.me",      # Montenegro
-        "http://libgen.tv",      # Tuvalu
-        "http://libgen.io",      # British Indian Ocean Territory
-        "http://libgen.co",      # Colombia
-        "http://libgen.cc",      # Cocos Islands
-        "http://libgen.to",      # Tonga
-        "http://libgen.ws",      # Samoa
-        "http://libgen.nu",      # Niue
-        "http://libgen.sh",      # Saint Helena (alternate)
-        "http://libgen.re",      # Reunion
+        "https://libgen.lc",     # Saint Lucia
+        "https://libgen.bz",     # Belize
+        "https://libgen.br",     # Brazil
+        "https://libgen.il",     # Israel
+        "https://libgen.sg",     # Singapore
+        "https://libgen.in",     # India
+        "https://libgen.mk",     # North Macedonia
+        "https://libgen.vg",     # British Virgin Islands
+        "https://libgen.me",     # Montenegro
+        "https://libgen.tv",     # Tuvalu
+        "https://libgen.io",     # British Indian Ocean Territory
+        "https://libgen.co",     # Colombia
+        "https://libgen.cc",     # Cocos Islands
+        "https://libgen.to",     # Tonga
+        "https://libgen.ws",     # Samoa
+        "https://libgen.nu",     # Niue
+        "https://libgen.sh",     # Saint Helena (alternate)
+        "https://libgen.re",     # Reunion
     ],
     "generic_tlds": [
-        "http://libgen.click",   # Generic TLD
-        "http://libgen.today",   # Generic TLD
-        "http://libgen.fun",     # Generic TLD
-        "http://libgen.world",   # Generic TLD
-        "http://libgen.tech",    # Generic TLD
-        "http://libgen.top",     # Generic TLD
-        "http://libgen.site",    # Generic TLD
-        "http://libgen.online",  # Generic TLD
-        "http://libgen.space",   # Generic TLD
-        "http://libgen.zone",    # Generic TLD
+        "https://libgen.click",  # Generic TLD
+        "https://libgen.today",  # Generic TLD
+        "https://libgen.fun",    # Generic TLD
+        "https://libgen.world",  # Generic TLD
+        "https://libgen.tech",   # Generic TLD
+        "https://libgen.top",    # Generic TLD
+        "https://libgen.site",   # Generic TLD
+        "https://libgen.online", # Generic TLD
+        "https://libgen.space",  # Generic TLD
+        "https://libgen.zone",   # Generic TLD
     ],
     "backup": [
         "http://gen.lib.rus.ec", # Russian mirrors relay
