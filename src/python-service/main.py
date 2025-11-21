@@ -5,6 +5,7 @@ from libgen_api_enhanced import LibgenSearch, SearchTopic
 import uvicorn
 from libgen_mirrors import (
     get_all_mirrors,
+    get_recommended_mirrors,
     get_mirror_stats,
     test_all_mirrors,
     get_fastest_mirror,
@@ -121,6 +122,15 @@ def get_mirrors():
     return {
         "mirrors": get_all_mirrors(),
         "stats": get_mirror_stats(),
+    }
+
+@app.get("/mirrors/recommended")
+def get_recommended():
+    """Get recommended/working mirrors for fallback use"""
+    return {
+        "mirrors": get_recommended_mirrors(),
+        "count": len(get_recommended_mirrors()),
+        "note": "These mirrors are known to be reliably working"
     }
 
 @app.get("/mirrors/stats")

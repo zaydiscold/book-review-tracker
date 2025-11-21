@@ -193,9 +193,8 @@ export async function searchByTitleAndAuthor(title, author, options = {}) {
  * @returns {string} Mirror URL
  */
 export function getLibGenMirrorUrl(md5) {
-  if (!md5) return null;
-  const lowerMd5 = md5.toLowerCase();
-  return `http://libgen.is/book/index.php?md5=${lowerMd5}`;
+  // Using .li as it is currently more reliable than .is
+  return `http://libgen.li/ads.php?md5=${md5}`;
 }
 
 /**

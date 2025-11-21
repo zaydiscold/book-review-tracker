@@ -1,6 +1,22 @@
 # LibGen Mirror Management
 
-The Python service now includes comprehensive mirror management with 31+ known LibGen mirrors.
+The Python service includes comprehensive mirror management with 33 known LibGen mirrors.
+
+## Currently Working Mirrors
+
+Based on community reports and testing, these mirrors are reliable:
+
+### Primary (Most Stable)
+- `http://libgen.is` - Iceland
+- `http://libgen.rs` - Serbia
+- `http://libgen.st` - Saint Helena
+
+### Highly Recommended
+- `http://libgen.gs` - South Georgia
+- `http://libgen.lc` - Saint Lucia
+- `http://libgen.br` - Brazil
+
+*See `../../WORKING_MIRRORS.md` for complete current list and testing results.*
 
 ## Mirror Configuration
 

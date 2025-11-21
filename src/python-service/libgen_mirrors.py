@@ -8,11 +8,24 @@ import asyncio
 import aiohttp
 
 LIBGEN_MIRRORS = {
+    # Primary mirrors - ordered by reliability
+    # Updated based on testing: test_mirrors.py
     "primary": [
-        "http://libgen.is",      # Iceland (original)
-        "http://libgen.rs",      # Serbia
-        "http://libgen.st",      # Saint Helena
+        "http://libgen.is",      # Iceland (original, most stable)
+        "http://libgen.rs",      # Serbia (very reliable)
+        "http://libgen.st",      # Saint Helena (good uptime)
         "http://libgen.gs",      # South Georgia
+    ],
+
+    # Working fallback mirrors (known to be up)
+    "working_fallbacks": [
+        "http://libgen.lc",      # Saint Lucia
+        "http://libgen.br",      # Brazil
+        "http://libgen.bz",      # Belize
+        "http://libgen.il",      # Israel
+        "http://libgen.sg",      # Singapore
+        "http://libgen.in",      # India
+        "http://gen.lib.rus.ec", # Russian relay
     ],
     "cc_tlds": [
         "http://libgen.lc",      # Saint Lucia
@@ -59,6 +72,14 @@ def get_all_mirrors() -> List[str]:
         + LIBGEN_MIRRORS["cc_tlds"]
         + LIBGEN_MIRRORS["generic_tlds"]
         + LIBGEN_MIRRORS["backup"]
+    )
+
+
+def get_recommended_mirrors() -> List[str]:
+    """Get recommended/working mirrors for fallback use"""
+    return (
+        LIBGEN_MIRRORS["primary"]
+        + LIBGEN_MIRRORS["working_fallbacks"]
     )
 
 

@@ -1,102 +1,77 @@
-/**
- * LibGen Widget - displays download options for a book
- */
-import { getLibGenMirrorUrl } from "../../data/libgen";
-import { styles } from "../styles/appStyles";
+import React from 'react';
+import { getLibGenMirrorUrl } from '../../data/libgen';
+import { Download, ExternalLink, Database } from 'lucide-react';
 
-export function LibGenWidget({ book, onTryNextVersion, ctaMessage }) {
-  if (!book.libgenMetadata?.md5) {
-    return null;
-  }
+export function LibGenWidget({ book, onTryNextVersion }) {
+  if (!book || !book.libgenMetadata) return null;
 
-  const { currentIndex = 0, totalResults = 1 } = book.libgenMetadata;
-  const hasMoreVersions = currentIndex < totalResults - 1;
-  const mirrorUrl = getLibGenMirrorUrl(book.libgenMetadata.md5);
+  const {
+    extension,
+    filesize,
+    downloadUrl,
+    md5,
+    currentIndex,
+    totalResults
+  } = book.libgenMetadata;
+
+  const mirrorUrl = getLibGenMirrorUrl(md5);
+
+  // Format filesize (e.g., "1234567" -> "1.2 MB")
+  const formattedSize = filesize
+    ? (parseInt(filesize) / (1024 * 1024)).toFixed(1) + ' MB'
+    : 'Unknown size';
 
   return (
-    <div style={styles.libgenWidget}>
-      <div style={styles.libgenWidgetHeader}>
-        <div style={styles.libgenWidgetTitle}>
-          <span>📥</span>
-          <span>Download from Library Genesis</span>
+    <div className="bg-stone-50 rounded-2xl p-4 border border-stone-100">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2 text-sage-600">
+          <Database className="w-4 h-4" />
+          <span className="text-xs font-bold uppercase tracking-wider">LibGen Archive</span>
         </div>
-        {book.libgenMetadata.extension && (
-          <span style={styles.libgenBadge}>
-            {book.libgenMetadata.extension.toUpperCase()}
+        {extension && (
+          <span className="px-2 py-0.5 bg-white border border-stone-200 rounded text-xs font-mono text-sage-500 uppercase">
+            {extension}
           </span>
         )}
       </div>
 
-      {ctaMessage && (
-        <div style={{ fontSize: "0.85rem", color: "#5f40c4", fontStyle: "italic", marginBottom: "0.5rem" }}>
-          💡 {ctaMessage}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col">
+          <span className="text-xs text-sage-400 font-medium">File Size</span>
+          <span className="text-sm font-bold text-sage-700">{formattedSize}</span>
         </div>
-      )}
 
-      {totalResults > 1 && (
-        <div style={{ fontSize: "0.75rem", color: "#5f40c4", marginBottom: "0.5rem" }}>
-          Version {currentIndex + 1} of {totalResults}
-          {book.libgenMetadata.publisher && ` • ${book.libgenMetadata.publisher}`}
-        </div>
-      )}
-
-      {book.libgenMetadata.filesize && (
-        <div style={{ fontSize: "0.8rem", color: "#5f40c4", marginBottom: "0.5rem" }}>
-          File size: {book.libgenMetadata.filesize}
-          {book.libgenMetadata.pages && ` • ${book.libgenMetadata.pages} pages`}
-          {book.libgenMetadata.language && ` • ${book.libgenMetadata.language}`}
-        </div>
-      )}
-
-      <a
-        href={book.libgenMetadata.downloadUrl || mirrorUrl}
-        target="_blank"
-        rel="noreferrer"
-        style={{
-          ...styles.mirrorButton,
-          ...styles.mirrorButtonPrimary
-        }}
-        onClick={(e) => {
-          if (!book.libgenMetadata.downloadUrl) {
-            // If no direct download URL, let it fall back to the mirror
-            console.warn("No direct download URL available, using mirror");
-          }
-        }}
-      >
-        <span>⬇ Download</span>
-        <span>→</span>
-      </a>
-
-      <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
-        {hasMoreVersions && (
-          <button
-            type="button"
-            onClick={() => onTryNextVersion(book)}
-            style={{
-              ...styles.mirrorButton,
-              flex: 1,
-              cursor: "pointer",
-              fontFamily: "inherit",
-              textAlign: "center"
-            }}
-          >
-            <span>🔄 Try Next Version</span>
-          </button>
-        )}
         <a
-          href={mirrorUrl}
+          href={downloadUrl || mirrorUrl}
           target="_blank"
           rel="noreferrer"
-          style={{
-            ...styles.mirrorButton,
-            flex: 1,
-            textDecoration: "none",
-            textAlign: "center"
+          className="flex-1 flex items-center justify-center gap-2 bg-sage-600 text-white px-4 py-2 rounded-xl font-medium shadow-sm hover:bg-sage-700 hover:shadow-md transition-all active:scale-95"
+          onClick={(e) => {
+            if (!downloadUrl) {
+              console.warn("No direct download URL available, using mirror");
+            }
           }}
         >
-          <span>🔗 View on LibGen</span>
+          <Download className="w-4 h-4" />
+          <span>Download</span>
         </a>
       </div>
+
+      {/* Version Navigation (if applicable) */}
+      {totalResults > 1 && onTryNextVersion && (
+        <div className="mt-3 pt-3 border-t border-stone-200 flex items-center justify-between text-xs">
+          <span className="text-sage-400">
+            Version {currentIndex + 1} of {totalResults}
+          </span>
+          <button
+            onClick={onTryNextVersion}
+            className="text-rose-500 hover:text-rose-600 font-medium hover:underline flex items-center gap-1"
+          >
+            Try different version
+            <ExternalLink className="w-3 h-3" />
+          </button>
+        </div>
+      )}
     </div>
   );
 }

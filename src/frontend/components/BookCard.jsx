@@ -1,87 +1,73 @@
 import React from 'react';
-import { getCoverUrl } from '../../utils/covers';
+import { Star, Book, Edit, Trash2 } from 'lucide-react';
+import { hasCover, getCoverUrl } from '../../utils/covers';
 
 export function BookCard({ book, onEdit, onDelete }) {
-    const coverUrl = getCoverUrl(book.cover, 'M');
-    const rating = book.rating || 0;
+    const coverUrl = hasCover(book) ? getCoverUrl(book) : null;
 
     return (
-        <div className="group relative bg-white rounded-3xl shadow-soft hover:shadow-soft-xl transition-all duration-300 overflow-hidden hover:-translate-y-1 ring-1 ring-black/5">
+        <div className="group relative bg-white rounded-3xl shadow-soft hover:shadow-soft-xl transition-all duration-500 hover:-translate-y-2 overflow-hidden border border-stone-100 flex flex-col h-full">
             {/* Cover Image Area */}
-            <div className="aspect-[2/3] bg-stone-100 relative overflow-hidden">
+            <div className="relative aspect-[2/3] overflow-hidden bg-stone-100">
                 {coverUrl ? (
                     <img
                         src={coverUrl}
                         alt={`Cover of ${book.title}`}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     />
                 ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-rose-50/50 text-rose-300">
-                        <div className="w-12 h-12 mb-3 rounded-full bg-rose-100 flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-                            </svg>
-                        </div>
-                        <span className="text-sm font-medium font-serif text-rose-400">No Cover</span>
+                    <div className="w-full h-full flex flex-col items-center justify-center text-sage-300 p-6 text-center bg-cream-50">
+                        <Book className="w-16 h-16 mb-2 opacity-50" strokeWidth={1} />
+                        <span className="text-sm font-medium">No Cover</span>
                     </div>
                 )}
 
-                {/* Status Badge */}
-                <div className="absolute top-3 right-3">
-                    <span className={`
-                        px-3 py-1 rounded-full text-xs font-bold tracking-wide shadow-sm backdrop-blur-md
-                        ${book.status === 'reading' ? 'bg-rose-400/90 text-white' : ''}
-                        ${book.status === 'finished' ? 'bg-sage-500/90 text-white' : ''}
-                        ${book.status === 'wishlist' ? 'bg-lavender-400/90 text-white' : ''}
-                        ${!['reading', 'finished', 'wishlist'].includes(book.status) ? 'bg-white/90 text-sage-600' : ''}
-                    `}>
-                        {book.status}
-                    </span>
-                </div>
+                {/* Overlay Gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                {/* Hover Overlay with Actions */}
-                <div className="absolute inset-0 bg-sage-900/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3 backdrop-blur-[2px]">
+                {/* Quick Actions Overlay */}
+                <div className="absolute bottom-4 right-4 flex gap-2 translate-y-10 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-100">
                     <button
                         onClick={() => onEdit(book)}
-                        className="p-3 bg-white text-sage-600 rounded-full shadow-lg hover:bg-rose-50 hover:text-rose-500 hover:scale-110 transition-all duration-200"
-                        title="Edit Details"
+                        className="p-2 bg-white/90 backdrop-blur-sm text-sage-600 rounded-full hover:bg-white hover:text-rose-500 shadow-lg transition-colors"
+                        title="Edit"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                            <path d="M21.731 2.269a2.625 2.625 0 00-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 000-3.712zM19.513 8.199l-3.712-3.712-12.15 12.15a5.25 5.25 0 00-1.32 2.214l-.8 2.685a.75.75 0 00.933.933l2.685-.8a5.25 5.25 0 002.214-1.32L19.513 8.2z" />
-                        </svg>
+                        <Edit className="w-4 h-4" />
                     </button>
                     <button
                         onClick={() => onDelete(book)}
-                        className="p-3 bg-white text-rose-500 rounded-full shadow-lg hover:bg-rose-50 hover:text-rose-600 hover:scale-110 transition-all duration-200"
-                        title="Remove Book"
+                        className="p-2 bg-white/90 backdrop-blur-sm text-sage-600 rounded-full hover:bg-white hover:text-rose-500 shadow-lg transition-colors"
+                        title="Delete"
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
-                            <path fillRule="evenodd" d="M16.5 4.478v.227a48.816 48.816 0 013.878.512.75.75 0 11-.49 1.478l-.56 17.433A2.25 2.25 0 0117.08 26.25H6.92a2.25 2.25 0 01-2.248-2.122L4.11 6.695a48.817 48.817 0 01-3.878-.512.75.75 0 11.49-1.478 48.809 48.809 0 013.878-.512v-.227c0-1.185 1.054-2.126 2.365-2.126h6.268c1.31 0 2.365.941 2.365 2.126zM18.04 6.75l.55 17.155h-13.18l.55-17.155h12.08z" clipRule="evenodd" />
-                        </svg>
+                        <Trash2 className="w-4 h-4" />
                     </button>
                 </div>
             </div>
 
-            {/* Book Info */}
-            <div className="p-5">
-                <h3 className="font-serif font-bold text-lg text-sage-700 leading-tight mb-1 line-clamp-2 min-h-[3rem]">
-                    {book.title}
-                </h3>
-                <p className="text-sm text-sage-400 mb-4 font-medium line-clamp-1">
-                    {book.author}
-                </p>
+            {/* Content Area */}
+            <div className="p-5 flex flex-col flex-grow">
+                <div className="mb-1">
+                    <h3 className="font-serif font-bold text-lg text-sage-900 leading-tight line-clamp-2 group-hover:text-rose-600 transition-colors">
+                        {book.title}
+                    </h3>
+                    <p className="text-sm text-sage-500 font-medium mt-1">{book.author}</p>
+                </div>
 
-                {/* Rating Display */}
-                <div className="flex items-center gap-1.5">
-                    <div className="flex text-honey-400">
-                        {[...Array(5)].map((_, i) => (
-                            <svg key={i} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-4 h-4 ${i < Math.round(rating / 2) ? 'text-honey-400' : 'text-stone-200'}`}>
-                                <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
-                            </svg>
-                        ))}
+                {/* Rating & Status */}
+                <div className="mt-auto pt-4 flex items-center justify-between border-t border-stone-50">
+                    <div className="flex items-center gap-1 text-honey-400">
+                        <Star className="w-4 h-4 fill-current" />
+                        <span className="text-sm font-bold text-sage-700">{book.rating || '-'}</span>
                     </div>
-                    <span className="text-xs font-bold text-sage-400 ml-1">{book.rating ? book.rating : ''}</span>
+
+                    <div className={`
+                px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider
+                ${book.status === 'reading' ? 'bg-rose-100 text-rose-600' :
+                            book.status === 'completed' ? 'bg-sage-100 text-sage-600' :
+                                'bg-stone-100 text-stone-500'}
+            `}>
+                        {book.status}
+                    </div>
                 </div>
             </div>
         </div>
