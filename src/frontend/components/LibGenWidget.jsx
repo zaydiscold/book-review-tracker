@@ -49,12 +49,18 @@ export function LibGenWidget({ book, onTryNextVersion, ctaMessage }) {
       )}
 
       <a
-        href={book.libgenMetadata.downloadUrl}
+        href={book.libgenMetadata.downloadUrl || mirrorUrl}
         target="_blank"
         rel="noreferrer"
         style={{
           ...styles.mirrorButton,
           ...styles.mirrorButtonPrimary
+        }}
+        onClick={(e) => {
+          if (!book.libgenMetadata.downloadUrl) {
+            // If no direct download URL, let it fall back to the mirror
+            console.warn("No direct download URL available, using mirror");
+          }
         }}
       >
         <span>⬇ Download</span>

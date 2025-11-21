@@ -1,46 +1,50 @@
 import React from 'react';
 import { getCoverUrl } from '../../utils/covers';
-import { renderStarRating } from './StarRatingDisplay';
 
 export function BookCard({ book, onEdit, onDelete }) {
     const coverUrl = getCoverUrl(book.cover, 'M');
-    const rating = book.rating || 0; // Assuming rating might be on the book object or derived
+    const rating = book.rating || 0;
 
     return (
-        <div className="group relative bg-dark-surface rounded-brutal-sm border-4 border-light shadow-brutal-lg hover:shadow-brutal-magenta transition-all duration-200 overflow-hidden hover:translate-x-[2px] hover:translate-y-[2px]">
+        <div className="group relative bg-white rounded-3xl shadow-soft hover:shadow-soft-xl transition-all duration-300 overflow-hidden hover:-translate-y-1 ring-1 ring-black/5">
             {/* Cover Image Area */}
-            <div className="aspect-[2/3] bg-dark relative overflow-hidden border-b-4 border-light">
+            <div className="aspect-[2/3] bg-stone-100 relative overflow-hidden">
                 {coverUrl ? (
                     <img
                         src={coverUrl}
-                        alt={`Cover of ${book.title} `}
-                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        alt={`Cover of ${book.title}`}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         loading="lazy"
                     />
                 ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-dark-elevated text-light-muted">
-                        <span className="text-sm font-bold uppercase tracking-wider">No Cover</span>
+                    <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-rose-50/50 text-rose-300">
+                        <div className="w-12 h-12 mb-3 rounded-full bg-rose-100 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                            </svg>
+                        </div>
+                        <span className="text-sm font-medium font-serif text-rose-400">No Cover</span>
                     </div>
                 )}
 
                 {/* Status Badge */}
                 <div className="absolute top-3 right-3">
                     <span className={`
-px - 3 py - 1 rounded - brutal border - 2 border - black text - xs font - bold uppercase tracking - wider shadow - brutal
-              ${book.status === 'reading' ? 'bg-magenta text-light' : ''}
-              ${book.status === 'finished' ? 'bg-neon text-dark' : ''}
-              ${book.status === 'wishlist' ? 'bg-electric text-dark' : ''}
-              ${!['reading', 'finished', 'wishlist'].includes(book.status) ? 'bg-light text-dark' : ''}
-`}>
+                        px-3 py-1 rounded-full text-xs font-bold tracking-wide shadow-sm backdrop-blur-md
+                        ${book.status === 'reading' ? 'bg-rose-400/90 text-white' : ''}
+                        ${book.status === 'finished' ? 'bg-sage-500/90 text-white' : ''}
+                        ${book.status === 'wishlist' ? 'bg-lavender-400/90 text-white' : ''}
+                        ${!['reading', 'finished', 'wishlist'].includes(book.status) ? 'bg-white/90 text-sage-600' : ''}
+                    `}>
                         {book.status}
                     </span>
                 </div>
 
                 {/* Hover Overlay with Actions */}
-                <div className="absolute inset-0 bg-dark/95 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-3">
+                <div className="absolute inset-0 bg-sage-900/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3 backdrop-blur-[2px]">
                     <button
                         onClick={() => onEdit(book)}
-                        className="p-3 bg-cyber text-dark rounded-brutal border-3 border-black shadow-brutal hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all"
+                        className="p-3 bg-white text-sage-600 rounded-full shadow-lg hover:bg-rose-50 hover:text-rose-500 hover:scale-110 transition-all duration-200"
                         title="Edit Details"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -49,7 +53,7 @@ px - 3 py - 1 rounded - brutal border - 2 border - black text - xs font - bold u
                     </button>
                     <button
                         onClick={() => onDelete(book)}
-                        className="p-3 bg-magenta text-light rounded-brutal border-3 border-black shadow-brutal hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all"
+                        className="p-3 bg-white text-rose-500 rounded-full shadow-lg hover:bg-rose-50 hover:text-rose-600 hover:scale-110 transition-all duration-200"
                         title="Remove Book"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -60,22 +64,24 @@ px - 3 py - 1 rounded - brutal border - 2 border - black text - xs font - bold u
             </div>
 
             {/* Book Info */}
-            <div className="p-4 bg-dark-surface">
-                <h3 className="font-bold text-lg text-light leading-tight mb-1 line-clamp-2 min-h-[3rem] uppercase tracking-tight">
+            <div className="p-5">
+                <h3 className="font-serif font-bold text-lg text-sage-700 leading-tight mb-1 line-clamp-2 min-h-[3rem]">
                     {book.title}
                 </h3>
-                <p className="text-sm text-light-muted mb-3 font-mono line-clamp-1">
+                <p className="text-sm text-sage-400 mb-4 font-medium line-clamp-1">
                     {book.author}
                 </p>
 
                 {/* Rating Display */}
-                <div className="flex items-center gap-2">
-                    <div className="px-2 py-1 bg-dark-elevated border-2 border-electric rounded-brutal">
-                        <span className="font-bold text-electric font-mono">{book.rating ? book.rating : '—'}</span>
+                <div className="flex items-center gap-1.5">
+                    <div className="flex text-honey-400">
+                        {[...Array(5)].map((_, i) => (
+                            <svg key={i} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={`w-4 h-4 ${i < Math.round(rating / 2) ? 'text-honey-400' : 'text-stone-200'}`}>
+                                <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
+                            </svg>
+                        ))}
                     </div>
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 text-electric">
-                        <path fillRule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z" clipRule="evenodd" />
-                    </svg>
+                    <span className="text-xs font-bold text-sage-400 ml-1">{book.rating ? book.rating : ''}</span>
                 </div>
             </div>
         </div>
