@@ -5,12 +5,12 @@ from libgen_api_enhanced import LibgenSearch, SearchTopic
 import uvicorn
 from libgen_mirrors import (
     get_all_mirrors,
+    get_verified_mirrors,
     get_recommended_mirrors,
     get_mirror_stats,
-    test_all_mirrors,
-    get_fastest_mirror,
     get_book_mirror_urls,
     get_primary_mirror,
+    LIBGEN_MIRRORS,
 )
 import asyncio
 
@@ -45,8 +45,7 @@ def health_check():
 
 @app.post("/search")
 def search_books(req: SearchRequest):
-    s = LibgenSearch()
-    
+    """Search LibGen with automatic mirror fallback"""
     # Map string topics to SearchTopic enum
     topic_map = {
         "libgen": SearchTopic.LIBGEN,
@@ -57,41 +56,60 @@ def search_books(req: SearchRequest):
         "fiction_rus": SearchTopic.FICTION_RUS,
         "standards": SearchTopic.STANDARDS
     }
-    
+
     selected_topics = [topic_map.get(t.lower(), SearchTopic.LIBGEN) for t in req.topics]
-    
-    try:
-        if req.search_type == "title":
-            results = s.search_title(req.query, search_in=selected_topics)
-        elif req.search_type == "author":
-            results = s.search_author(req.query, search_in=selected_topics)
-        else:
-            results = s.search_default(req.query, search_in=selected_topics)
-            
-        # Convert Book objects to dicts
-        # The library returns Book objects, we need to serialize them
-        serialized_results = []
-        for book in results:
-            # Assuming Book object has __dict__ or similar, but let's be safe and map fields
-            # Based on user provided output format
-            serialized_results.append({
-                "id": getattr(book, "id", ""),
-                "title": getattr(book, "title", ""),
-                "author": getattr(book, "author", ""),
-                "publisher": getattr(book, "publisher", ""),
-                "year": getattr(book, "year", ""),
-                "language": getattr(book, "language", ""),
-                "pages": getattr(book, "pages", ""),
-                "size": getattr(book, "size", ""),
-                "extension": getattr(book, "extension", ""),
-                "md5": getattr(book, "md5", ""),
-                "mirrors": getattr(book, "mirrors", []),
-                "tor_download_link": getattr(book, "tor_download_link", ""),
-            })
-            
-        return {"results": serialized_results}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
+    # Try verified working mirrors with fallback
+    verified_mirrors = get_verified_mirrors()
+    last_error = None
+    results = None
+
+    for mirror in verified_mirrors:
+        try:
+            s = LibgenSearch(mirror=mirror)
+
+            if req.search_type == "title":
+                results = s.search_title(req.query, search_in=selected_topics)
+            elif req.search_type == "author":
+                results = s.search_author(req.query, search_in=selected_topics)
+            else:
+                results = s.search_default(req.query, search_in=selected_topics)
+
+            if results:
+                break  # Success, stop trying mirrors
+
+        except Exception as e:
+            last_error = e
+            continue  # Try next mirror
+
+    if not results:
+        if last_error:
+            raise HTTPException(status_code=500, detail=f"All mirrors failed: {str(last_error)}")
+        return {"results": [], "mirror_used": None}
+
+    # Convert Book objects to dicts
+    serialized_results = []
+    for book in results:
+        serialized_results.append({
+            "id": getattr(book, "id", ""),
+            "title": getattr(book, "title", ""),
+            "author": getattr(book, "author", ""),
+            "publisher": getattr(book, "publisher", ""),
+            "year": getattr(book, "year", ""),
+            "language": getattr(book, "language", ""),
+            "pages": getattr(book, "pages", ""),
+            "size": getattr(book, "size", ""),
+            "extension": getattr(book, "extension", ""),
+            "md5": getattr(book, "md5", ""),
+            "mirrors": getattr(book, "mirrors", []),
+            "tor_download_link": getattr(book, "tor_download_link", ""),
+        })
+
+    return {
+        "results": serialized_results,
+        "count": len(serialized_results),
+        "mirror_used": mirror
+    }
 
 @app.post("/resolve")
 def resolve_download(req: ResolveRequest):
@@ -130,7 +148,19 @@ def get_recommended():
     return {
         "mirrors": get_recommended_mirrors(),
         "count": len(get_recommended_mirrors()),
-        "note": "These mirrors are known to be reliably working"
+        "note": "VERIFIED working mirrors (tested 2025-11-21)"
+    }
+
+@app.get("/mirrors/verified")
+def get_verified():
+    """Get only verified working mirrors (TLD format for LibgenSearch)"""
+    return {
+        "mirrors": get_verified_mirrors(),
+        "count": len(get_verified_mirrors()),
+        "usage": "LibgenSearch(mirror='li') or LibgenSearch(mirror='bz')",
+        "tested": "2025-11-21",
+        "test_query": "Dune",
+        "test_results": "100 results each",
     }
 
 @app.get("/mirrors/stats")

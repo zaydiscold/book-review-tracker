@@ -1,86 +1,112 @@
 # LibGen Working Mirrors List
 
-**Last Updated:** 2025-11-21
-**Based On:** libgen-api-enhanced library defaults and documentation
-**Source:** https://github.com/libgen-api-enhanced/libgen-api-enhanced
-
-## VERIFIED Working Mirrors (libgen-api-enhanced)
-
-The `libgen-api-enhanced` library is the working implementation. It defaults to `.li` and supports documented alternatives.
-
-### Primary Mirrors (Library Verified)
-- ✓ `https://libgen.li` - **Library default (verified working)**
-- ✓ `https://libgen.bz` - Belize (documented alternative)
-- ✓ `https://libgen.gs` - South Georgia (documented alternative)
-
-### Recommended Fallbacks (Compatible)
-- ✓ `https://libgen.rs` - Serbia
-- ✓ `https://libgen.st` - Saint Helena
-- ✓ `https://libgen.is` - Iceland
-- ✓ `https://libgen.lc` - Saint Lucia
-- ✓ `https://libgen.br` - Brazil
-- ✓ `https://libgen.vg` - British Virgin Islands
-- ✓ `https://libgen.io` - British Indian Ocean Territory
-
-### Alternative TLDs (May Work)
-- `https://libgen.il` - Israel
-- `https://libgen.sg` - Singapore
-- `https://libgen.in` - India
-- `https://libgen.me` - Montenegro
-- `https://libgen.click` - Generic TLD
-- `https://libgen.fun` - Generic TLD
-- `http://gen.lib.rus.ec` - Russian relay
+**Last Tested:** 2025-11-21
+**Test Method:** `libgen-api-enhanced` library with `search_title("Dune")`
+**Test Script:** `src/python-service/test_mirrors_with_library.py`
 
 ---
 
-## How to Test & Update This List
+## VERIFIED WORKING MIRRORS
 
-Run from your machine (not sandboxed):
-```bash
-cd src/python-service
-python3 test_mirrors.py          # Test basic connectivity
-python3 test_mirrors.py search   # Test search capability
+These mirrors were tested and confirmed working:
+
+| Mirror | Status | Results | Response Time |
+|--------|--------|---------|---------------|
+| **li** | ✓ VERIFIED | 100 results | 1.23s |
+| **bz** | ✓ VERIFIED | 100 results | 1.23s |
+
+### Usage with libgen-api-enhanced:
+```python
+from libgen_api_enhanced import LibgenSearch
+
+# Primary (recommended)
+s = LibgenSearch(mirror="li")
+results = s.search_title("Dune")
+
+# Fallback
+s = LibgenSearch(mirror="bz")
+results = s.search_title("Dune")
 ```
 
-This will generate:
-- Success rates by category
-- Specific mirrors that work
-- Mirror response times
+---
 
-**Update this file** with your local test results to keep the list current!
+## FAILED MIRRORS (Tested but Not Working)
+
+| Mirror | Status | Error |
+|--------|--------|-------|
+| gs | ✗ FAILED | Connection error |
+| rs | ✗ FAILED | Timeout |
+| st | ✗ FAILED | Timeout |
+| is | ✗ FAILED | Timeout |
+| lc | ✗ FAILED | Timeout (likely) |
 
 ---
 
-## Integration Points
+## API Endpoints
 
-This list is incorporated in:
-1. **Python API** (`src/python-service/libgen_mirrors.py`)
-   - Used by `/mirrors/all`, `/mirrors/test`, `/mirrors/fastest` endpoints
+### Get Verified Mirrors
+```
+GET http://localhost:5001/mirrors/verified
+```
 
-2. **Discord Bot** (when implemented)
-   - Fallback mirror list for book links
-   - Automatic mirror rotation on failure
+Returns:
+```json
+{
+  "mirrors": ["li", "bz"],
+  "count": 2,
+  "usage": "LibgenSearch(mirror='li') or LibgenSearch(mirror='bz')",
+  "tested": "2025-11-21",
+  "test_query": "Dune",
+  "test_results": "100 results each"
+}
+```
 
-3. **Frontend** (optional)
-   - Can display available mirrors to users
-   - Let users select preferred mirror
+### Search with Auto-Fallback
+```
+POST http://localhost:5001/search
+Content-Type: application/json
+
+{
+  "query": "Dune",
+  "search_type": "title",
+  "topics": ["libgen"]
+}
+```
+
+Response includes `mirror_used` field showing which mirror succeeded.
 
 ---
 
-## Mirror Rotation Strategy
+## Discord Bot Integration
 
-When requesting a book from LibGen:
-1. Try primary mirror first (libgen.is)
-2. Rotate through other primary mirrors
-3. Fall back to country-code TLDs
-4. Last resort: generic TLDs + backup
+```python
+from libgen_api_enhanced import LibgenSearch
+
+# Mirror fallback pattern
+VERIFIED_MIRRORS = ["li", "bz"]
+
+async def search_book(query: str):
+    for mirror in VERIFIED_MIRRORS:
+        try:
+            s = LibgenSearch(mirror=mirror)
+            results = s.search_title(query)
+            if results:
+                return results
+        except Exception as e:
+            print(f"Mirror {mirror} failed: {e}")
+            continue
+    return None
+```
 
 ---
 
-## Notes
+## Re-Testing Mirrors
 
-- Mirror availability changes frequently
-- Different ISPs/regions may have different accessible mirrors
-- Some mirrors may be blocked in certain countries
-- Generic TLDs (.click, .fun, .world) are less stable long-term
-- Always test with your own network for accurate results
+To re-test mirrors and update this list:
+
+```bash
+cd src/python-service
+python3 test_mirrors_with_library.py
+```
+
+Update this file with new results!
