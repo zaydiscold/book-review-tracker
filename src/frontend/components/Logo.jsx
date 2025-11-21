@@ -1,12 +1,10 @@
 /**
  * Logo component for the Book Review Tracker
  */
-import { styles } from "../styles/appStyles";
-
 export function Logo() {
   return (
-    <div style={styles.logoWrapper}>
-      <div style={styles.logoIcon} aria-hidden="true">
+    <div className="flex flex-col items-center gap-4 p-8">
+      <div aria-hidden="true">
         <svg
           width="72"
           height="64"
@@ -50,9 +48,9 @@ export function Logo() {
           <ellipse cx="36" cy="54" rx="28" ry="5" fill="rgba(60, 47, 47, 0.1)" />
         </svg>
       </div>
-      <div style={styles.logoTextGroup}>
-        <span style={styles.logoTitle}>Book Review Tracker</span>
-        <span style={styles.logoSubtitle}>a cozy corner for every chapter</span>
+      <div className="flex flex-col items-center gap-1">
+        <span className="text-xl font-serif font-bold text-sage-600">Book Review Tracker</span>
+        <span className="text-sm font-hand text-sage-400 italic">a cozy corner for every chapter</span>
       </div>
     </div>
   );

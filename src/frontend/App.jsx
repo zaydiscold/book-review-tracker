@@ -28,15 +28,13 @@ import { normalizeForMatch } from "./utils/formatting";
 import { applyBookUpdateToList } from "./utils/bookMatching";
 import { hasCover } from "./utils/covers";
 
+
 // Import new Cozy components
 import { Layout } from "./components/Layout";
 import { HeroSection } from "./components/HeroSection";
 import { BookGrid } from "./components/BookGrid";
 import { ToastOverlay } from "./components/ToastOverlay";
 import { LibGenWidget } from "./components/LibGenWidget";
-
-// Import styles (legacy styles might still be needed for some internal logic or toasts)
-import { styles } from "./styles/appStyles";
 
 export default function App() {
   const [initialized, setInitialized] = useState(false);

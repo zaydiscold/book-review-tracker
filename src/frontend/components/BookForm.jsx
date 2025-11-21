@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { StarRatingInput } from './StarRatingInput';
-import { normalizeFiveValue } from '../utils/ratings';
 import { BOOK_STATUS_SECTIONS, REVIEW_DISABLED_STATUSES } from '../constants/bookStatus';
 
 export function BookForm({
@@ -41,9 +40,9 @@ export function BookForm({
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-sm border border-stone-100">
             <div className="space-y-4">
                 <div>
-                    <label className="block text-sm font-bold text-ink mb-1">Title</label>
+                    <label className="block text-sm font-bold text-sage-800 mb-1">Title</label>
                     <input
-                        className="input-field"
+                        className="input"
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                         placeholder="The Left Hand of Darkness"
@@ -52,9 +51,9 @@ export function BookForm({
                 </div>
 
                 <div>
-                    <label className="block text-sm font-bold text-ink mb-1">Author</label>
+                    <label className="block text-sm font-bold text-sage-800 mb-1">Author</label>
                     <input
-                        className="input-field"
+                        className="input"
                         value={formData.author}
                         onChange={(e) => setFormData({ ...formData, author: e.target.value })}
                         placeholder="Ursula K. Le Guin"
@@ -64,10 +63,10 @@ export function BookForm({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {!isEditing && (
                         <div>
-                            <label className="block text-sm font-bold text-ink mb-1">Status</label>
+                            <label className="block text-sm font-bold text-sage-800 mb-1">Status</label>
                             <div className="relative">
                                 <select
-                                    className="input-field appearance-none cursor-pointer"
+                                    className="input appearance-none cursor-pointer"
                                     value={formData.status}
                                     onChange={handleStatusChange}
                                 >
@@ -99,30 +98,30 @@ export function BookForm({
                                 type="checkbox"
                                 checked={addReviewWithBook}
                                 onChange={(e) => setAddReviewWithBook(e.target.checked)}
-                                className="rounded text-rose focus:ring-rose"
+                                className="rounded text-rose-500 focus:ring-rose-200"
                             />
-                            <span className="text-sm text-ink-light">Add a review now</span>
+                            <span className="text-sm text-sage-500">Add a review now</span>
                         </label>
 
                         {addReviewWithBook && (
-                            <div className="space-y-4 animate-fadeIn">
+                            <div className="space-y-4 animate-fade-in">
                                 <div>
-                                    <label className="block text-sm font-bold text-ink mb-1">Rating</label>
+                                    <label className="block text-sm font-bold text-sage-800 mb-1">Rating</label>
                                     <div className="flex items-center gap-4">
                                         <StarRatingInput
                                             value={reviewDraft.rating}
                                             onChange={(val) => setReviewDraft({ ...reviewDraft, rating: val })}
                                         />
-                                        <span className="text-sm text-ink-light font-medium">
+                                        <span className="text-sm text-sage-500 font-medium">
                                             {reviewDraft.rating ? `${reviewDraft.rating}/5` : 'Rate this book'}
                                         </span>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-bold text-ink mb-1">Review</label>
+                                    <label className="block text-sm font-bold text-sage-800 mb-1">Review</label>
                                     <textarea
-                                        className="input-field min-h-[100px]"
+                                        className="input min-h-[100px]"
                                         value={reviewDraft.text}
                                         onChange={(e) => setReviewDraft({ ...reviewDraft, text: e.target.value })}
                                         placeholder="What did you think?"

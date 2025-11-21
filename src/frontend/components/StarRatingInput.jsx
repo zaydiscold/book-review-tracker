@@ -4,7 +4,6 @@
 import { useState } from "react";
 import { STAR_SYMBOL, STAR_COUNT } from "../constants/theme";
 import { normalizeFiveValue } from "../utils/ratings";
-import { styles } from "../styles/appStyles";
 
 export function StarRatingInput({ value, onChange, ariaLabel }) {
   const [hoverValue, setHoverValue] = useState(null);
@@ -54,7 +53,7 @@ export function StarRatingInput({ value, onChange, ariaLabel }) {
 
   return (
     <div
-      style={styles.starInputWrapper}
+      className="flex gap-1 cursor-pointer"
       role="radiogroup"
       aria-label={ariaLabel}
       onMouseLeave={() => setHoverValue(null)}
@@ -65,20 +64,20 @@ export function StarRatingInput({ value, onChange, ariaLabel }) {
           displayValue >= starIndex
             ? "full"
             : displayValue >= starIndex - 0.5
-            ? "half"
-            : "empty";
-        const colourStyle =
-          fill === "full"
-            ? styles.starFull
-            : fill === "half"
-            ? styles.starHalf
-            : styles.starEmpty;
+              ? "half"
+              : "empty";
+
+        const colorClass = fill === "full"
+          ? "star"
+          : fill === "half"
+            ? "star opacity-50"
+            : "star-empty";
 
         return (
           <button
             key={`star-input-${starIndex}`}
             type="button"
-            style={{ ...styles.starButton, ...colourStyle }}
+            className={`text-2xl border-0 bg-transparent cursor-pointer p-0 transition-transform hover:scale-110 ${colorClass}`}
             onMouseMove={(event) => handleHover(event, starIndex)}
             onClick={(event) => handleSelect(event, starIndex)}
             onKeyDown={(event) => {
@@ -101,8 +100,8 @@ export function StarRatingInput({ value, onChange, ariaLabel }) {
               displayValue >= starIndex
                 ? "true"
                 : displayValue >= starIndex - 0.5
-                ? "mixed"
-                : "false"
+                  ? "mixed"
+                  : "false"
             }
           >
             {STAR_SYMBOL}
