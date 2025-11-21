@@ -3,7 +3,7 @@
  */
 import { searchOpenLibrary } from "../../data/openLibrary";
 import { updateBook } from "../../data/db";
-import { hasCover } from "../../utils/covers";
+import { hasCover } from "./covers";
 import { normalizeForMatch, compactForComparison, extractAuthorCandidates } from "./formatting";
 
 export function authorsIntersect(bookAuthors, candidateAuthors) {
