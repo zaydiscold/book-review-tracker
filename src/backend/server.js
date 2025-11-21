@@ -1,16 +1,18 @@
 const express = require("express");
 const cors = require("cors");
-const libgen = require("libgen");
+const libgenService = require("./services/libgenService");
 
-// Placeholder: future releases will persist submissions server-side and sync to cloud providers.
+// Book Review Tracker Backend Server
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Health check endpoint
 app.get("/health", (_request, response) => {
   response.json({ status: "ok" });
 });
 
+// Placeholder endpoints for future features
 app.post("/api/books", (_request, response) => {
   response.status(501).json({
     message: "Local-first mode only. Use IndexedDB client instead."
@@ -21,10 +23,15 @@ app.post("/api/scan", (_request, response) => {
   response.json({ message: "Not implemented" });
 });
 
-// Libgen API endpoints
+// ===== LIBGEN API ENDPOINTS =====
+
+/**
+ * GET /api/libgen/mirror
+ * Returns the fastest available LibGen mirror
+ */
 app.get("/api/libgen/mirror", async (_request, response) => {
   try {
-    const mirror = await libgen.mirror();
+    const mirror = await libgenService.getMirror();
     response.json({ mirror });
   } catch (error) {
     console.error("Error fetching libgen mirror:", error);
@@ -35,59 +42,43 @@ app.get("/api/libgen/mirror", async (_request, response) => {
   }
 });
 
+/**
+ * POST /api/libgen/search
+ * Search LibGen for books
+ * Body: { query, count?, search_in? }
+ */
 app.post("/api/libgen/search", async (request, response) => {
   try {
-    const { query, count = 10, sort_by, reverse } = request.body;
+    const { query, count = 25, search_in = 'def' } = request.body;
 
+    // Validate query
     if (!query) {
-      return response.status(400).json({ error: "Query parameter is required" });
-    }
-
-    // Get the fastest mirror first
-    let mirror;
-    try {
-      mirror = await libgen.mirror();
-    } catch (err) {
-      // Fallback to default mirror if mirror test fails
-      mirror = "http://libgen.is";
-      console.warn("Using fallback mirror:", mirror);
-    }
-
-    const options = {
-      mirror,
-      query,
-      count: parseInt(count, 10),
-      sort_by: sort_by || "def",
-      reverse: reverse || false
-    };
-
-    const results = await libgen.search(options);
-
-    // Ensure results is an array
-    if (!Array.isArray(results)) {
-      console.warn("Libgen search returned non-array result:", results);
-      return response.json({
-        results: [],
-        mirror,
-        count: 0,
-        warning: "No results found or invalid response from libgen"
+      return response.status(400).json({
+        error: "Query parameter is required"
       });
     }
 
-    // Normalize results to include download links
-    const normalizedResults = results.map(result => ({
-      ...result,
-      downloadUrl: `${mirror}/book/index.php?md5=${result.md5?.toLowerCase()}`,
-      mirrors: [
-        `http://libgen.is/book/index.php?md5=${result.md5?.toLowerCase()}`,
-        `http://gen.lib.rus.ec/book/index.php?md5=${result.md5?.toLowerCase()}`
-      ]
-    }));
+    if (query.length < 3) {
+      return response.status(400).json({
+        error: "Search query must be at least 3 characters long"
+      });
+    }
+
+    // Perform search based on search_in field
+    let results;
+    if (search_in === 'title') {
+      results = await libgenService.searchByTitle(query, { count });
+    } else if (search_in === 'author') {
+      results = await libgenService.searchByAuthor(query, { count });
+    } else {
+      results = await libgenService.search(query, { count, search_in });
+    }
 
     response.json({
-      results: normalizedResults,
-      mirror,
-      count: normalizedResults.length
+      results: results || [],
+      count: results ? results.length : 0,
+      query,
+      search_in
     });
   } catch (error) {
     console.error("Error searching libgen:", error);
@@ -98,22 +89,16 @@ app.post("/api/libgen/search", async (request, response) => {
   }
 });
 
+/**
+ * GET /api/libgen/latest
+ * Get the latest uploaded book to LibGen
+ */
 app.get("/api/libgen/latest", async (_request, response) => {
   try {
-    let mirror;
-    try {
-      mirror = await libgen.mirror();
-    } catch (err) {
-      mirror = "http://libgen.is";
-    }
-
-    const latestText = await libgen.latest.text(mirror);
+    const latest = await libgenService.getLatest();
     response.json({
-      latest: {
-        ...latestText,
-        downloadUrl: `${mirror}/book/index.php?md5=${latestText.md5?.toLowerCase()}`
-      },
-      mirror
+      latest,
+      mirror: latest.mirrors && latest.mirrors[0]
     });
   } catch (error) {
     console.error("Error fetching latest from libgen:", error);
@@ -124,6 +109,7 @@ app.get("/api/libgen/latest", async (_request, response) => {
   }
 });
 
+// Start server
 const port = process.env.PORT || 4000;
 app.listen(port, () => {
   console.log(`Book Review Tracker API listening on http://localhost:${port}`);

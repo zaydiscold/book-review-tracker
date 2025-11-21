@@ -1,0 +1,171 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Cozy Reading Journal Theme */
+
+@layer base {
+  body {
+    @apply bg-gradient-to-br from-cream-50 via-rose-50/30 to-lavender-50/20;
+    @apply text-sage-600;
+    @apply font-sans antialiased;
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-serif text-sage-600;
+  }
+}
+
+@layer components {
+
+  /* Buttons */
+  .btn {
+    @apply px-6 py-2.5 rounded-2xl font-medium transition-all duration-200;
+    @apply shadow-soft hover:shadow-soft-lg;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply bg-rose-400 text-white;
+    @apply hover:bg-rose-500;
+    @apply focus:ring-rose-300;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-sage-600 border-2 border-sage-200;
+    @apply hover:bg-sage-50 hover:border-sage-300;
+    @apply focus:ring-sage-200;
+  }
+
+  .btn-soft {
+    @apply bg-lavender-100 text-lavender-600;
+    @apply hover:bg-lavender-200;
+    @apply focus:ring-lavender-200;
+  }
+
+  .btn-danger {
+    @apply bg-rose-100 text-rose-600 border border-rose-200;
+    @apply hover:bg-rose-200;
+    @apply focus:ring-rose-200;
+  }
+
+  /* Cards */
+  .card {
+    @apply bg-white/80 backdrop-blur-sm;
+    @apply rounded-3xl p-6;
+    @apply shadow-soft hover:shadow-soft-lg;
+    @apply border border-white/60;
+    @apply transition-all duration-300;
+  }
+
+  .card-feature {
+    @apply bg-gradient-to-br from-white via-cream-50/50 to-rose-50/30;
+    @apply backdrop-blur-md;
+    @apply rounded-4xl p-8;
+    @apply shadow-soft-lg hover:shadow-soft-xl;
+    @apply border-2 border-white/80;
+  }
+
+  /* Inputs */
+  .input {
+    @apply w-full px-4 py-3 rounded-2xl;
+    @apply bg-white/80 backdrop-blur-sm;
+    @apply border-2 border-sage-100 focus:border-rose-300;
+    @apply text-sage-600 placeholder-sage-300;
+    @apply transition-all duration-200;
+    @apply shadow-inner-soft;
+    @apply focus:outline-none focus:ring-2 focus:ring-rose-200 focus:ring-offset-1;
+  }
+
+  .textarea {
+    @apply input;
+    @apply min-h-[120px] resize-y;
+  }
+
+  .select {
+    @apply input;
+    @apply cursor-pointer;
+  }
+
+  /* Book Card Styling */
+  .book-card {
+    @apply bg-gradient-to-br from-white via-cream-50/40 to-transparent;
+    @apply backdrop-blur-sm;
+    @apply rounded-3xl overflow-hidden;
+    @apply shadow-soft hover:shadow-soft-lg;
+    @apply border-2 border-white/60;
+    @apply transition-all duration-300 hover:-translate-y-1;
+  }
+
+  .book-cover {
+    @apply rounded-2xl overflow-hidden;
+    @apply shadow-soft;
+    @apply border-2 border-white/80;
+  }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .badge-rose {
+    @apply bg-rose-100 text-rose-600;
+  }
+
+  .badge-lavender {
+    @apply bg-lavender-100 text-lavender-600;
+  }
+
+  .badge-sage {
+    @apply bg-sage-100 text-sage-600;
+  }
+
+  .badge-honey {
+    @apply bg-honey-100 text-honey-600;
+  }
+
+  /* Star Rating */
+  .star {
+    @apply text-honey-400;
+    filter: drop-shadow(0 1px 2px rgba(245, 158, 11, 0.3));
+  }
+
+  .star-empty {
+    @apply text-sage-200;
+  }
+
+  /* Animations */
+  .animate-in {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s ease-out;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-cream-50;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-rose-200 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-rose-300;
+}
+
+/* Selection */
+::selection {
+  @apply bg-rose-200 text-rose-900;
+}

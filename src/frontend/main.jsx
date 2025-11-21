@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
+import "./index.css";
 import "./styles/variables.css";
 
 // Placeholder: inject future global providers (router, sync status, feature flags) here.

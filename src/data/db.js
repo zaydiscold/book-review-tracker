@@ -274,6 +274,7 @@ export async function initDB() {
     };
 
     request.onerror = () => {
+      console.error("IndexedDB open failed:", request.error);
       reject(request.error ?? new Error("Unable to open IndexedDB"));
     };
   });

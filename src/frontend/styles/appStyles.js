@@ -1,1097 +1,942 @@
 /**
- * Application styles
+ * Cozy Reading Journal - Application Styles
+ * Warm, inviting, and elegant design for book lovers
  */
-import { THEME } from "../constants/theme";
+
+// Cozy color palette
+const COZY = {
+  // Backgrounds
+  cream50: '#FFFBF5',
+  cream100: '#FFF7ED',
+  rose50: '#FFF1F2',
+  rose100: '#FFE4E6',
+  lavender50: '#FAF5FF',
+
+  // Surfaces
+  white: '#FFFFFF',
+  whiteGlass: 'rgba(255, 255, 255, 0.85)',
+
+  // Text
+  sage600: '#495749',
+  sage500: '#5A6D5A',
+  sage400: '#7F927F',
+  sage300: '#A8B5A8',
+
+  // Accents
+  rose400: '#FB7185',
+  rose500: '#F43F5E',
+  rose300: '#FDA4AF',
+  lavender400: '#C084FC',
+  lavender300: '#D8B4FE',
+  peach400: '#FB923C',
+  honey400: '#FBBF24',
+
+  // Shadows
+  softShadow: '0 2px 15px rgba(0, 0, 0, 0.08)',
+  softShadowLg: '0 10px 40px rgba(0, 0, 0, 0.1)',
+  softShadowXl: '0 20px 60px rgba(0, 0, 0, 0.12)',
+  innerShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.06)',
+};
 
 export const styles = {
   wrapper: {
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif",
-    margin: "0 auto",
-    padding: "3.2rem 2.6rem 4.2rem",
-    maxWidth: "1240px",
-    color: THEME.textPrimary,
-    background: "rgba(255, 255, 255, 0.28)",
-    border: "1px solid rgba(255, 255, 255, 0.45)",
-    borderRadius: "2.5rem",
-    boxShadow: "0 20px 60px rgba(60, 47, 47, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.5) inset, var(--shadow-xl)",
-    backdropFilter: "blur(40px) saturate(180%)",
-    WebkitBackdropFilter: "blur(40px) saturate(180%)",
-    minHeight: "92vh",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    position: "relative",
-    overflow: "hidden"
+    fontFamily: '"Inter", "Helvetica", system-ui, sans-serif',
+    margin: '0 auto',
+    padding: '2rem',
+    maxWidth: '1400px',
+    minHeight: '100vh',
+    background: 'linear-gradient(135deg, #FFFBF5 0%, rgba(255, 241, 242, 0.3) 50%, rgba(250, 245, 255, 0.2) 100%)',
+    color: COZY.sage600
   },
+
   header: {
-    marginBottom: "2.6rem",
-    textAlign: "center",
-    maxWidth: "760px",
-    marginLeft: "auto",
-    marginRight: "auto"
+    textAlign: 'center',
+    marginBottom: '3rem',
+    padding: '2.5rem',
+    background: COZY.whiteGlass,
+    backdropFilter: 'blur(12px)',
+    borderRadius: '2rem',
+    border: `2px solid ${COZY.white}`,
+    boxShadow: COZY.softShadowLg
   },
+
   logoWrapper: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "1.2rem",
-    marginBottom: "1.1rem",
-    flexWrap: "wrap"
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '1.5rem',
+    marginBottom: '1rem'
   },
+
   logoIcon: {
-    width: "78px",
-    height: "68px",
-    borderRadius: "22px",
-    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 212, 179, 0.35) 100%)",
-    border: "1px solid rgba(255, 255, 255, 0.5)",
-    boxShadow: "0 8px 24px rgba(60, 47, 47, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
-    backdropFilter: "blur(20px)",
-    WebkitBackdropFilter: "blur(20px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "0.45rem",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+    width: '70px',
+    height: '70px',
+    borderRadius: '1.5rem',
+    background: 'linear-gradient(135deg, #FDA4AF 0%, #FB7185 100%)',
+    border: `2px solid ${COZY.white}`,
+    boxShadow: COZY.softShadow,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: COZY.white
   },
-  logoTextGroup: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: "0.2rem"
-  },
+
   logoTitle: {
-    fontFamily:
-      '"Lucida Handwriting","Brush Script MT","Segoe Script","Snell Roundhand","cursive"',
-    fontSize: "2.1rem",
-    color: THEME.burntOrange,
-    textShadow: "0 2px 6px rgba(217, 130, 43, 0.25)",
-    letterSpacing: "0.04em"
+    fontFamily: '"Playfair Display", "Georgia", serif',
+    fontSize: '2.5rem',
+    fontWeight: '700',
+    color: COZY.sage600,
+    letterSpacing: '-0.02em',
+    marginBottom: '0.5rem'
   },
+
   logoSubtitle: {
-    fontSize: "0.95rem",
-    color: THEME.textMuted,
-    fontWeight: 500,
-    fontStyle: "italic"
+    fontSize: '1rem',
+    color: COZY.sage400,
+    fontWeight: '500',
+    fontStyle: 'italic'
   },
+
   headerActions: {
-    marginTop: "1.4rem",
-    display: "flex",
-    justifyContent: "center",
-    gap: "0.75rem",
-    flexWrap: "wrap"
+    marginTop: '1.5rem',
+    display: 'flex',
+    justifyContent: 'center',
+    gap: '1rem',
+    flexWrap: 'wrap'
   },
+
   coverRefreshButton: {
-    background: "rgba(255, 185, 140, 0.3)",
-    border: "1px solid rgba(255, 255, 255, 0.45)",
-    color: THEME.accent,
-    padding: "0.7rem 1.5rem",
-    borderRadius: "999px",
-    fontSize: "0.92rem",
-    fontWeight: 600,
-    cursor: "pointer",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.08)",
-    fontFamily: "inherit"
+    background: COZY.lavender300,
+    border: `2px solid ${COZY.lavender400}`,
+    color: COZY.sage600,
+    padding: '0.75rem 1.75rem',
+    borderRadius: '1.5rem',
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    boxShadow: COZY.softShadow,
+    fontFamily: 'inherit'
   },
+
   coverRefreshButtonDisabled: {
     opacity: 0.6,
-    cursor: "not-allowed"
+    cursor: 'not-allowed'
   },
+
   warning: {
-    color: THEME.warning
+    color: COZY.peach400,
+    marginTop: '1rem',
+    fontWeight: '500'
   },
+
   toast: {
-    position: "fixed",
-    top: "1.5rem",
-    right: "1.4rem",
-    left: "50%",
-    transform: "translateX(-50%)",
-    pointerEvents: "auto",
+    position: 'fixed',
+    top: '2rem',
+    right: '50%',
+    transform: 'translateX(50%)',
+    pointerEvents: 'auto',
     zIndex: 9999,
-    display: "flex",
-    alignItems: "center",
-    gap: "0.7rem",
-    padding: "1rem 1.5rem",
-    borderRadius: "1.5rem",
-    border: "1px solid rgba(255, 255, 255, 0.5)",
-    boxShadow: "0 12px 32px rgba(60, 47, 47, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
-    background: "rgba(255, 232, 214, 0.85)",
-    backdropFilter: "blur(30px) saturate(160%)",
-    WebkitBackdropFilter: "blur(30px) saturate(160%)",
-    color: THEME.textPrimary,
-    fontSize: "0.95rem",
-    lineHeight: 1.25,
-    maxWidth: "min(520px, 90vw)",
-    textAlign: "center",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+    padding: '1.25rem 2rem',
+    borderRadius: '1.5rem',
+    border: `2px solid ${COZY.white}`,
+    boxShadow: COZY.softShadowXl,
+    background: COZY.whiteGlass,
+    backdropFilter: 'blur(16px)',
+    color: COZY.sage600,
+    fontSize: '1rem',
+    maxWidth: '500px',
+    fontWeight: '500'
   },
+
   toastInfo: {
-    borderColor: "rgba(217, 130, 43, 0.45)",
-    boxShadow: "0 22px 44px rgba(95, 64, 40, 0.28)"
+    borderLeftWidth: '4px',
+    borderLeftColor: COZY.lavender400
   },
+
   toastSuccess: {
-    backgroundColor: "rgba(47, 159, 99, 0.52)",
-    color: "#0c2f1e",
-    borderColor: "rgba(47, 159, 99, 0.9)",
-    boxShadow: "0 28px 58px rgba(21, 83, 52, 0.45)"
+    borderLeftWidth: '4px',
+    borderLeftColor: '#5A6D5A' // sage for success
   },
+
   toastWarning: {
-    backgroundColor: "rgba(229, 182, 89, 0.56)",
-    color: "#422f12",
-    borderColor: "rgba(229, 182, 89, 0.92)",
-    boxShadow: "0 28px 58px rgba(140, 101, 38, 0.44)"
+    borderLeftWidth: '4px',
+    borderLeftColor: COZY.honey400
   },
+
   toastDanger: {
-    backgroundColor: "rgba(167, 54, 54, 0.54)",
-    color: "#fff4f2",
-    borderColor: "rgba(167, 54, 54, 0.92)",
-    boxShadow: "0 28px 58px rgba(88, 26, 26, 0.45)"
+    borderLeftWidth: '4px',
+    borderLeftColor: COZY.rose500
   },
+
   toastDismiss: {
-    background: "transparent",
-    border: "none",
-    color: "inherit",
-    fontSize: "1.1rem",
-    cursor: "pointer",
-    lineHeight: 1,
+    background: 'transparent',
+    border: 'none',
+    color: COZY.sage400,
+    fontSize: '1.5rem',
+    cursor: 'pointer',
     padding: 0,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
+    lineHeight: 1
   },
+
   main: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "1.6rem",
-    alignItems: "stretch",
-    justifyContent: "center",
-    width: "100%",
-    boxSizing: "border-box"
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '2rem',
+    width: '100%'
   },
+
   card: {
-    borderRadius: "2rem",
-    padding: "2rem",
-    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 232, 214, 0.35) 100%)",
-    border: "1px solid rgba(255, 255, 255, 0.5)",
-    boxShadow: "0 16px 40px rgba(60, 47, 47, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.4) inset",
-    backdropFilter: "blur(30px) saturate(160%)",
-    WebkitBackdropFilter: "blur(30px) saturate(160%)",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    position: "relative",
-    overflow: "hidden",
-    width: "100%",
-    maxWidth: "520px",
-    flex: "1 1 360px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "1.15rem"
+    borderRadius: '2rem',
+    padding: '2.5rem',
+    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 251, 245, 0.9) 100%)',
+    backdropFilter: 'blur(12px)',
+    border: `2px solid rgba(255, 255, 255, 0.8)`,
+    boxShadow: COZY.softShadow,
+    width: '100%',
+    maxWidth: '600px',
+    flex: '1 1 400px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.5rem',
+    transition: 'all 0.3s ease'
   },
+
   searchForm: {
-    display: "flex",
-    gap: "0.65rem",
-    marginBottom: "1rem",
-    alignItems: "stretch"
+    display: 'flex',
+    gap: '1rem',
+    marginBottom: '1.5rem'
   },
+
   form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.9rem"
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.5rem'
   },
+
   label: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.4rem",
-    fontSize: "0.95rem",
-    color: THEME.textPrimary
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem',
+    fontSize: '0.95rem',
+    color: COZY.sage600,
+    fontWeight: '600'
   },
+
   input: {
-    borderRadius: "1rem",
-    border: "1px solid rgba(255, 255, 255, 0.4)",
-    padding: "1rem 1.15rem",
-    fontSize: "1.02rem",
-    background: "rgba(255, 255, 255, 0.5)",
-    color: THEME.textPrimary,
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-    width: "100%",
-    boxSizing: "border-box",
-    outline: "none",
-    fontFamily: "inherit"
+    borderRadius: '1.25rem',
+    border: `2px solid rgba(168, 181, 168, 0.3)`,
+    padding: '1rem 1.25rem',
+    fontSize: '1rem',
+    background: 'rgba(255, 255, 255, 0.8)',
+    backdropFilter: 'blur(8px)',
+    color: COZY.sage600,
+    transition: 'all 0.2s ease',
+    boxShadow: COZY.innerShadow,
+    width: '100%',
+    boxSizing: 'border-box',
+    outline: 'none',
+    fontFamily: 'inherit'
   },
+
   textarea: {
-    resize: "vertical",
-    minHeight: "100px"
+    resize: 'vertical',
+    minHeight: '120px',
+    fontFamily: 'inherit'
   },
+
   selectContainer: {
-    position: "relative",
-    display: "flex",
-    width: "100%"
+    position: 'relative',
+    display: 'flex',
+    width: '100%'
   },
+
   select: {
-    appearance: "none",
-    WebkitAppearance: "none",
-    MozAppearance: "none",
-    paddingRight: "3rem",
-    background: "rgba(255, 255, 255, 0.5)",
-    cursor: "pointer"
+    appearance: 'none',
+    paddingRight: '3rem',
+    background: 'rgba(255, 255, 255, 0.8)',
+    cursor: 'pointer'
   },
+
   selectArrow: {
-    position: "absolute",
-    top: "50%",
-    right: "1.2rem",
-    transform: "translateY(-50%)",
-    pointerEvents: "none",
-    fontSize: "0.85rem",
-    color: THEME.accent
+    position: 'absolute',
+    top: '50%',
+    right: '1.25rem',
+    transform: 'translateY(-50%)',
+    pointerEvents: 'none',
+    color: COZY.rose400
   },
+
   searchButton: {
-    background: "rgba(255, 185, 140, 0.35)",
-    color: THEME.accent,
-    border: "1px solid rgba(255, 255, 255, 0.45)",
-    borderRadius: "1rem",
-    padding: "0.85rem 1.2rem",
-    cursor: "pointer",
-    fontWeight: 600,
-    alignSelf: "stretch",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    minWidth: "120px",
-    textAlign: "center",
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.1)",
-    fontFamily: "inherit"
+    background: COZY.rose400,
+    color: COZY.white,
+    border: 'none',
+    borderRadius: '1.25rem',
+    padding: '1rem 2rem',
+    cursor: 'pointer',
+    fontWeight: '600',
+    fontSize: '1rem',
+    transition: 'all 0.2s ease',
+    boxShadow: COZY.softShadow,
+    fontFamily: 'inherit'
   },
+
   primaryButton: {
-    background: "linear-gradient(135deg, #ffb88c 0%, #e8925b 50%, #d4764d 100%)",
-    color: "#2c1e1e",
-    border: "1px solid rgba(255, 255, 255, 0.4)",
-    borderRadius: "1.1rem",
-    padding: "0.95rem 1.6rem",
-    cursor: "pointer",
-    fontWeight: 600,
-    fontSize: "1rem",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    boxShadow: "0 8px 20px rgba(212, 118, 77, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset",
-    alignSelf: "flex-start",
-    fontFamily: "inherit"
+    background: COZY.rose400,
+    color: COZY.white,
+    border: 'none',
+    borderRadius: '1.5rem',
+    padding: '1rem 2rem',
+    cursor: 'pointer',
+    fontWeight: '600',
+    fontSize: '1.05rem',
+    transition: 'all 0.2s ease',
+    boxShadow: COZY.softShadow,
+    fontFamily: 'inherit'
   },
+
   secondaryButtonMuted: {
-    background: "transparent",
-    color: THEME.textMuted,
-    border: `1px solid rgba(46, 26, 18, 0.2)`,
-    borderRadius: "999px",
-    padding: "0.4rem 0.85rem",
-    cursor: "pointer",
-    transition: "border 0.2s ease, background 0.2s ease"
+    background: 'transparent',
+    color: COZY.sage400,
+    border: `2px solid ${COZY.sage200}`,
+    borderRadius: '1.25rem',
+    padding: '0.65rem 1.5rem',
+    cursor: 'pointer',
+    fontSize: '0.95rem',
+    fontWeight: '500',
+    transition: 'all 0.2s ease'
   },
+
   coverControls: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.9rem"
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.25rem'
   },
+
   toggleRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-    fontSize: "0.92rem",
-    color: THEME.textMuted
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    fontSize: '0.95rem',
+    color: COZY.sage500
   },
+
   inlineRow: {
-    display: "flex",
-    gap: "0.9rem",
-    flexWrap: "wrap"
+    display: 'flex',
+    gap: '1.25rem',
+    flexWrap: 'wrap'
   },
+
   inlineField: {
-    flex: "1 1 200px"
+    flex: '1 1 200px'
   },
+
   inlineFieldCompact: {
-    maxWidth: "320px"
+    maxWidth: '320px'
   },
+
   inlineReview: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.75rem",
-    padding: "1.2rem",
-    border: "1px solid rgba(255, 255, 255, 0.4)",
-    borderRadius: "1.3rem",
-    background: "rgba(255, 232, 214, 0.4)",
-    backdropFilter: "blur(15px)",
-    WebkitBackdropFilter: "blur(15px)",
-    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.08)"
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.25rem',
+    padding: '1.75rem',
+    border: `2px solid ${COZY.lavender300}`,
+    borderRadius: '1.5rem',
+    background: 'rgba(250, 245, 255, 0.3)',
+    backdropFilter: 'blur(8px)'
   },
+
   ratingGroup: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.5rem",
-    background: "rgba(255, 255, 255, 0.4)",
-    border: "1px solid rgba(255, 255, 255, 0.5)",
-    borderRadius: "1.2rem",
-    padding: "1rem",
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.08)"
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem',
+    background: 'rgba(255, 255, 255, 0.8)',
+    border: `2px solid ${COZY.cream100}`,
+    borderRadius: '1.5rem',
+    padding: '1.5rem'
   },
+
   ratingInputs: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: "0.5rem",
-    width: "100%"
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: '0.75rem',
+    width: '100%'
   },
+
   ratingDisplay: {
-    fontSize: "0.95rem",
-    color: THEME.accent,
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: "0.9rem",
-    border: "1px solid rgba(255, 255, 255, 0.5)",
-    background: "rgba(255, 255, 255, 0.45)",
-    padding: "0.6rem 1.2rem",
-    minWidth: "120px",
-    fontWeight: 600,
-    textAlign: "center",
-    boxShadow: "0 4px 12px rgba(60, 47, 47, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-    minHeight: "48px"
+    fontSize: '1.25rem',
+    color: COZY.honey400,
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '1.25rem',
+    border: `2px solid ${COZY.cream100}`,
+    background: COZY.cream50,
+    padding: '1rem 1.75rem',
+    fontWeight: '700',
+    fontFamily: '"Playfair Display", "Georgia", serif'
   },
+
   ratingDisplayInput: {
-    cursor: "text",
-    gap: "0.25rem"
+    cursor: 'text',
+    gap: '0.35rem'
   },
+
   ratingDisplayInputField: {
-    width: "60px",
-    fontSize: "1.1rem",
-    fontWeight: 600,
-    color: THEME.accent,
-    background: "transparent",
-    border: "none",
-    textAlign: "center",
-    outline: "none",
-    padding: 0,
-    margin: 0,
-    appearance: "textfield",
-    WebkitAppearance: "none",
-    MozAppearance: "textfield"
+    width: '70px',
+    fontSize: '1.35rem',
+    fontWeight: '700',
+    color: COZY.honey400,
+    background: 'transparent',
+    border: 'none',
+    textAlign: 'center',
+    outline: 'none',
+    fontFamily: '"Playfair Display", "Georgia", serif'
   },
+
   ratingDisplaySuffix: {
-    fontSize: "0.85rem",
-    color: THEME.accent,
-    opacity: 0.85
+    fontSize: '1rem',
+    color: COZY.sage400
   },
+
   inlineToggle: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-    fontSize: "0.9rem",
-    color: THEME.textMuted
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    fontSize: '0.95rem',
+    color: COZY.sage500
   },
+
   coverPreview: {
-    display: "flex",
-    gap: "1rem",
-    alignItems: "center"
+    display: 'flex',
+    gap: '1.25rem',
+    alignItems: 'center'
   },
+
   coverImage: {
-    width: "96px",
-    height: "144px",
-    objectFit: "cover",
-    borderRadius: "0.75rem",
-    border: `1px solid rgba(217, 130, 43, 0.25)`,
-    background: "rgba(249, 223, 198, 0.42)"
+    width: '110px',
+    height: '165px',
+    objectFit: 'cover',
+    borderRadius: '1rem',
+    border: `2px solid ${COZY.white}`,
+    boxShadow: COZY.softShadow
   },
+
   coverPreviewMeta: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.35rem"
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem'
   },
+
   smallButton: {
-    background: "rgba(255, 185, 140, 0.3)",
-    border: "1px solid rgba(255, 255, 255, 0.45)",
-    borderRadius: "0.9rem",
-    padding: "0.5rem 1rem",
-    fontSize: "0.82rem",
-    cursor: "pointer",
-    color: THEME.accent,
-    fontWeight: 600,
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-    backdropFilter: "blur(10px)",
-    WebkitBackdropFilter: "blur(10px)",
-    boxShadow: "0 2px 8px rgba(60, 47, 47, 0.08)",
-    fontFamily: "inherit"
+    background: COZY.lavender100,
+    border: `1px solid ${COZY.lavender200}`,
+    borderRadius: '1rem',
+    padding: '0.65rem 1.25rem',
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+    color: COZY.lavender600,
+    fontWeight: '600',
+    transition: 'all 0.2s ease',
+    boxShadow: '0 2px 8px rgba(192, 132, 252, 0.15)',
+    fontFamily: 'inherit'
   },
+
   dangerButton: {
-    background: "rgba(226, 70, 82, 0.12)",
-    border: `1px solid ${THEME.danger}`,
-    color: THEME.danger,
-    borderRadius: "0.9rem",
-    padding: "0.4rem 0.95rem",
-    fontSize: "0.82rem",
-    cursor: "pointer",
-    marginLeft: "0.55rem",
-    fontWeight: 600
+    background: COZY.rose100,
+    border: `1px solid ${COZY.rose300}`,
+    color: COZY.rose600,
+    borderRadius: '1rem',
+    padding: '0.5rem 1.25rem',
+    fontSize: '0.9rem',
+    cursor: 'pointer',
+    fontWeight: '600',
+    transition: 'all 0.2s ease'
   },
+
   helperText: {
-    fontSize: "0.9rem",
-    color: THEME.textMuted,
-    marginBottom: "0.9rem"
+    fontSize: '0.9rem',
+    color: COZY.sage400,
+    lineHeight: 1.5
   },
+
   helperTextSmall: {
-    fontSize: "0.8rem",
-    color: THEME.textMuted,
-    marginTop: "-0.25rem"
+    fontSize: '0.85rem',
+    color: COZY.sage400,
+    marginTop: '-0.5rem'
   },
+
   discordRow: {
-    display: "flex",
-    gap: "0.65rem",
-    alignItems: "center"
+    display: 'flex',
+    gap: '1rem',
+    alignItems: 'center'
   },
+
   discordInput: {
     flex: 1,
     minWidth: 0
   },
+
   discordButton: {
-    background: THEME.accentSoft,
-    color: THEME.accent,
-    border: `1px solid ${THEME.accent}`,
-    borderRadius: "0.9rem",
-    padding: "0.6rem 0.9rem",
-    cursor: "pointer",
-    transition: "border 0.2s ease, background 0.2s ease"
+    background: COZY.lavender400,
+    color: COZY.white,
+    border: 'none',
+    borderRadius: '1.25rem',
+    padding: '0.85rem 1.5rem',
+    cursor: 'pointer',
+    fontWeight: '600',
+    fontSize: '0.95rem',
+    transition: 'all 0.2s ease'
   },
+
   discordSection: {
-    marginTop: 0,
-    padding: "1.6rem 1.8rem",
-    border: "1px solid rgba(255, 255, 255, 0.5)",
-    borderRadius: "2rem",
-    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 232, 214, 0.35) 100%)",
-    boxShadow: "0 12px 32px rgba(60, 47, 47, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.4) inset",
-    backdropFilter: "blur(30px) saturate(160%)",
-    WebkitBackdropFilter: "blur(30px) saturate(160%)",
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.85rem",
-    maxWidth: "600px",
-    marginLeft: "auto",
-    marginRight: "auto",
-    flex: "1 1 320px",
-    position: "relative",
-    overflow: "hidden",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+    padding: '2.5rem',
+    border: `2px solid ${COZY.lavender200}`,
+    borderRadius: '2rem',
+    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(250, 245, 255, 0.7) 100%)',
+    backdropFilter: 'blur(12px)',
+    boxShadow: COZY.softShadow,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.25rem',
+    maxWidth: '700px',
+    flex: '1 1 400px'
   },
+
   switchLabel: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-    cursor: "pointer",
-    userSelect: "none"
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    cursor: 'pointer',
+    userSelect: 'none'
   },
+
   switchInput: {
-    display: "none"
+    display: 'none'
   },
+
   switchTrack: {
-    position: "relative",
-    width: "44px",
-    height: "24px",
-    borderRadius: "999px",
-    background: "rgba(0,0,0,0.15)",
-    transition: "background 0.2s ease"
+    position: 'relative',
+    width: '52px',
+    height: '28px',
+    borderRadius: '14px',
+    background: COZY.sage200,
+    transition: 'background 0.2s ease'
   },
+
   switchThumb: {
-    position: "absolute",
-    top: "3px",
-    left: "3px",
-    width: "18px",
-    height: "18px",
-    borderRadius: "50%",
-    background: "white",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-    transition: "transform 0.2s ease",
-    transform: "translateX(0)"
+    position: 'absolute',
+    top: '3px',
+    left: '3px',
+    width: '22px',
+    height: '22px',
+    borderRadius: '50%',
+    background: COZY.white,
+    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.2)',
+    transition: 'transform 0.2s ease'
   },
+
   switchCopy: {
-    fontSize: "0.85rem",
-    color: THEME.textMuted
+    fontSize: '0.95rem',
+    color: COZY.sage500
   },
+
   utilityGrid: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "1.4rem",
-    marginTop: "2.4rem",
-    width: "100%"
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '2rem',
+    marginTop: '3rem',
+    width: '100%'
   },
+
   listSection: {
-    marginTop: "2.6rem"
+    marginTop: '3rem'
   },
+
   list: {
-    listStyle: "none",
+    listStyle: 'none',
     padding: 0,
-    display: "flex",
-    flexDirection: "column",
-    gap: "1.1rem"
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.5rem'
   },
+
   listItem: {
-    border: "1px solid rgba(255, 255, 255, 0.45)",
-    borderRadius: "1.5rem",
-    padding: "1.3rem",
-    background: "rgba(255, 255, 255, 0.35)",
-    display: "flex",
-    gap: "1.1rem",
-    alignItems: "flex-start",
-    boxShadow: "0 8px 24px rgba(60, 47, 47, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
-    backdropFilter: "blur(20px) saturate(150%)",
-    WebkitBackdropFilter: "blur(20px) saturate(150%)",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+    border: `2px solid rgba(255, 255, 255, 0.8)`,
+    borderRadius: '2rem',
+    padding: '2rem',
+    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 251, 245, 0.9) 50%, rgba(255, 241, 242, 0.8) 100%)',
+    backdropFilter: 'blur(12px)',
+    display: 'flex',
+    gap: '1.5rem',
+    alignItems: 'flex-start',
+    boxShadow: COZY.softShadow,
+    transition: 'all 0.3s ease'
   },
+
   meta: {
-    fontSize: "0.85rem",
-    color: THEME.textMuted
+    fontSize: '0.9rem',
+    color: COZY.sage400
   },
+
   reviewList: {
-    marginTop: "0.5rem",
-    paddingLeft: "1rem"
+    marginTop: '0.75rem',
+    paddingLeft: '1.25rem'
   },
+
   reviewHeader: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.4rem",
-    flexWrap: "wrap"
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.75rem',
+    flexWrap: 'wrap'
   },
+
   starRow: {
-    display: "inline-flex",
-    gap: "0.08rem",
-    fontSize: "2rem",
-    color: THEME.accent,
-    userSelect: "none"
+    display: 'inline-flex',
+    gap: '0.15rem',
+    fontSize: '1.5rem',
+    color: COZY.honey400,
+    textShadow: '0 1px 2px rgba(245, 158, 11, 0.3)'
   },
+
   starInputWrapper: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "0.18rem",
-    padding: "0.25rem 0 0.35rem",
-    width: "66%",
-    maxWidth: "360px",
-    minWidth: "200px",
-    margin: "-0.25rem auto 0"
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.35rem',
+    padding: '0.75rem',
+    width: '100%',
+    maxWidth: '420px',
+    margin: '0 auto'
   },
+
   starButton: {
-    background: "transparent",
-    border: "none",
-    cursor: "pointer",
-    fontSize: "2.9rem",
+    background: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '2.5rem',
     lineHeight: 1,
-    padding: "0.22rem 0.14rem",
-    flex: "1 1 0%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center"
+    padding: '0.35rem',
+    flex: '1 1 0%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: COZY.honey400,
+    transition: 'transform 0.1s ease'
   },
+
   starFull: {
-    color: "#f4c245",
-    filter: "drop-shadow(0 2px 4px rgba(212, 118, 77, 0.4))",
-    WebkitTextStroke: "0.5px rgba(212, 118, 77, 0.5)",
-    textShadow: "0 0 8px rgba(244, 194, 69, 0.5)"
+    color: COZY.honey400,
+    textShadow: '0 1px 3px rgba(245, 158, 11, 0.4)'
   },
+
   starHalf: {
-    display: "inline-block",
-    backgroundImage: "linear-gradient(90deg, #f4c245 0%, #f4c245 50%, rgba(60, 47, 47, 0.2) 50%)",
-    color: "transparent",
-    backgroundClip: "text",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
-    filter: "drop-shadow(0 2px 4px rgba(212, 118, 77, 0.3))",
-    WebkitTextStroke: "0.5px rgba(212, 118, 77, 0.4)"
+    color: COZY.honey400,
+    opacity: 0.6
   },
+
   starEmpty: {
-    color: "rgba(60, 47, 47, 0.2)",
-    display: "inline-block",
-    filter: "drop-shadow(0 1px 2px rgba(60, 47, 47, 0.1))",
-    WebkitTextStroke: "0.5px rgba(60, 47, 47, 0.15)"
+    color: COZY.sage200
   },
+
   reviewScore: {
-    fontSize: "0.85rem",
-    color: THEME.textPrimary,
-    fontWeight: 600
+    fontSize: '1rem',
+    color: COZY.honey400,
+    fontWeight: '700',
+    fontFamily: '"Playfair Display", "Georgia", serif'
   },
+
   reviewScoreSmall: {
-    fontSize: "0.75rem",
-    color: THEME.textMuted
+    fontSize: '0.85rem',
+    color: COZY.sage400
   },
+
   reviewStatusBadge: {
-    fontSize: "0.72rem",
-    color: THEME.accent,
-    background: "rgba(217, 130, 43, 0.18)",
-    borderRadius: "999px",
-    padding: "0.18rem 0.55rem",
-    fontWeight: 600
+    fontSize: '0.8rem',
+    color: COZY.rose500,
+    background: COZY.rose100,
+    borderRadius: '999px',
+    padding: '0.35rem 0.85rem',
+    fontWeight: '600'
   },
+
   reviewTimestamp: {
-    fontSize: "0.7rem",
-    color: THEME.textMuted,
-    marginLeft: "auto"
+    fontSize: '0.75rem',
+    color: COZY.sage400,
+    marginLeft: 'auto'
   },
+
   reviewActions: {
-    marginTop: "0.4rem"
+    marginTop: '0.75rem'
   },
+
   badge: {
-    display: "inline-block",
-    background: THEME.accent,
-    color: "#3b2618",
-    padding: "0.25rem 0.65rem",
-    borderRadius: "999px",
-    fontSize: "0.78rem",
-    marginBottom: "0.75rem",
-    fontWeight: 600
+    display: 'inline-block',
+    background: COZY.rose400,
+    color: COZY.white,
+    padding: '0.35rem 0.85rem',
+    borderRadius: '999px',
+    fontSize: '0.85rem',
+    fontWeight: '600'
   },
+
   badgeSecondary: {
-    display: "inline-block",
-    marginLeft: "0.5rem",
-    background: "rgba(229, 182, 89, 0.22)",
-    color: "#8f5a1f",
-    padding: "0.15rem 0.55rem",
-    borderRadius: "999px",
-    fontSize: "0.74rem"
+    display: 'inline-block',
+    marginLeft: '0.5rem',
+    background: COZY.lavender100,
+    color: COZY.lavender600,
+    padding: '0.25rem 0.75rem',
+    borderRadius: '999px',
+    fontSize: '0.85rem',
+    fontWeight: '500'
   },
+
   utilitySection: {
-    marginTop: 0,
-    padding: "1.5rem",
-    border: "1px solid rgba(255, 255, 255, 0.5)",
-    borderRadius: "2rem",
-    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 232, 214, 0.35) 100%)",
-    boxShadow: "0 12px 32px rgba(60, 47, 47, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.4) inset",
-    backdropFilter: "blur(30px) saturate(160%)",
-    WebkitBackdropFilter: "blur(30px) saturate(160%)",
-    display: "flex",
-    flexDirection: "column",
-    gap: "1rem",
-    flex: "1 1 220px",
-    maxWidth: "360px",
-    position: "relative",
-    overflow: "hidden",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+    padding: '2.5rem',
+    border: `2px solid ${COZY.peach200}`,
+    borderRadius: '2rem',
+    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 247, 237, 0.8) 100%)',
+    backdropFilter: 'blur(12px)',
+    boxShadow: COZY.softShadow,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1.25rem',
+    flex: '1 1 280px',
+    maxWidth: '420px'
   },
+
   error: {
-    color: THEME.danger,
-    fontSize: "0.85rem"
+    color: COZY.rose500,
+    fontSize: '0.9rem',
+    fontWeight: '500'
   },
+
   searchResults: {
-    listStyle: "none",
+    listStyle: 'none',
     padding: 0,
-    margin: "0 0 1.1rem 0",
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.75rem"
+    margin: '0 0 1.5rem 0',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem'
   },
+
   searchResultItem: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "0.9rem",
-    padding: "0.85rem 1rem",
-    border: "1px solid rgba(255, 255, 255, 0.45)",
-    borderRadius: "1.2rem",
-    background: "rgba(255, 255, 255, 0.4)",
-    boxShadow: "0 6px 16px rgba(60, 47, 47, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.3) inset",
-    backdropFilter: "blur(15px)",
-    WebkitBackdropFilter: "blur(15px)",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: '1.25rem',
+    padding: '1.25rem 1.5rem',
+    border: `2px solid ${COZY.cream100}`,
+    borderRadius: '1.5rem',
+    background: 'rgba(255, 255, 255, 0.9)',
+    backdropFilter: 'blur(8px)',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.06)',
+    transition: 'all 0.2s ease'
   },
+
   coverLink: {
-    color: THEME.accent,
-    fontSize: "0.85rem"
+    color: COZY.rose400,
+    fontSize: '0.9rem',
+    fontWeight: '500',
+    textDecoration: 'none'
   },
+
   searchResultContent: {
-    display: "flex",
-    gap: "0.75rem",
-    alignItems: "center"
+    display: 'flex',
+    gap: '1rem',
+    alignItems: 'center'
   },
+
   searchResultCover: {
-    width: "48px",
-    height: "72px",
-    objectFit: "cover",
-    borderRadius: "0.55rem",
-    border: `1px solid rgba(217, 130, 43, 0.25)`,
-    background: "rgba(249, 223, 198, 0.42)"
+    width: '55px',
+    height: '82px',
+    objectFit: 'cover',
+    borderRadius: '0.75rem',
+    border: `2px solid ${COZY.white}`,
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
   },
+
   searchResultCoverPlaceholder: {
-    width: "48px",
-    height: "72px",
-    borderRadius: "0.55rem",
-    border: `1px dashed rgba(217,130,43,0.45)`,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "0.7rem",
-    color: THEME.textMuted,
-    background: THEME.surfaceAlt
+    width: '55px',
+    height: '82px',
+    borderRadius: '0.75rem',
+    border: `2px dashed ${COZY.sage300}`,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '0.75rem',
+    color: COZY.sage400,
+    background: COZY.cream50
   },
+
   searchResultActions: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "flex-end",
-    gap: "0.4rem"
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: '0.65rem'
   },
+
   availability: {
-    marginTop: "0.35rem",
-    display: "flex",
-    gap: "0.35rem",
-    flexWrap: "wrap"
+    marginTop: '0.65rem',
+    display: 'flex',
+    gap: '0.5rem',
+    flexWrap: 'wrap'
   },
+
   availabilityBadge: {
-    display: "inline-flex",
-    alignItems: "center",
-    padding: "0.2rem 0.5rem",
-    borderRadius: "999px",
-    fontSize: "0.75rem",
-    background: "rgba(242, 193, 153, 0.24)",
-    color: THEME.accent,
-    fontWeight: 500
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '0.3rem 0.75rem',
+    borderRadius: '999px',
+    fontSize: '0.8rem',
+    background: COZY.peach100,
+    color: COZY.peach500,
+    fontWeight: '600'
   },
+
   downloadBadge: {
-    display: "inline-flex",
-    alignItems: "center",
-    padding: "0.2rem 0.55rem",
-    borderRadius: "999px",
-    fontSize: "0.75rem",
-    background: "rgba(47, 159, 99, 0.18)",
-    color: THEME.success,
-    fontWeight: 500,
-    marginLeft: "0.35rem"
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '0.3rem 0.75rem',
+    borderRadius: '999px',
+    fontSize: '0.8rem',
+    background: COZY.sage100,
+    color: COZY.sage600,
+    fontWeight: '600',
+    marginLeft: '0.5rem'
   },
-  availabilityAction: {
-    fontSize: "0.75rem",
-    color: THEME.accent
-  },
-  availabilityActionRead: {
-    color: THEME.success
-  },
-  availabilityActionDownload: {
-    color: THEME.success
-  },
-  availabilityActionBorrow: {
-    color: THEME.warning
-  },
-  availabilityActionWaitlist: {
-    color: "#cfa0e9"
-  },
-  availabilityActionsList: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "0.35rem",
-    marginTop: "0.35rem"
-  },
-  searchTabs: {
-    display: "flex",
-    gap: "0.5rem",
-    marginBottom: "1rem",
-    borderBottom: "1px solid rgba(232, 146, 91, 0.2)",
-    paddingBottom: "0.5rem"
-  },
-  searchTab: {
-    background: "transparent",
-    border: "none",
-    color: THEME.textMuted,
-    padding: "0.5rem 1rem",
-    borderRadius: "0.5rem",
-    fontSize: "0.9rem",
-    fontWeight: 500,
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    fontFamily: "inherit"
-  },
-  searchTabActive: {
-    background: "rgba(217, 130, 43, 0.15)",
-    color: THEME.accent,
-    fontWeight: 600
-  },
-  searchTabCount: {
-    display: "inline-block",
-    marginLeft: "0.4rem",
-    background: "rgba(217, 130, 43, 0.2)",
-    color: THEME.accent,
-    padding: "0.1rem 0.4rem",
-    borderRadius: "999px",
-    fontSize: "0.7rem",
-    fontWeight: 600
-  },
+
   libgenBadge: {
-    display: "inline-block",
-    background: "rgba(95, 64, 196, 0.15)",
-    color: "#5f40c4",
-    padding: "0.2rem 0.5rem",
-    borderRadius: "999px",
-    fontSize: "0.75rem",
-    fontWeight: 500
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '0.3rem 0.75rem',
+    borderRadius: '999px',
+    fontSize: '0.8rem',
+    background: COZY.lavender100,
+    color: COZY.lavender600,
+    fontWeight: '600'
   },
-  libgenMirrorLink: {
-    fontSize: "0.75rem",
-    color: "#5f40c4",
-    textDecoration: "none",
-    marginLeft: "0.5rem"
-  },
+
   libgenMetadata: {
-    display: "flex",
-    gap: "0.5rem",
-    marginTop: "0.3rem",
-    flexWrap: "wrap"
+    marginTop: '0.65rem',
+    display: 'flex',
+    gap: '0.65rem',
+    flexWrap: 'wrap'
   },
+
   libgenMetadataItem: {
-    fontSize: "0.7rem",
-    color: THEME.textMuted,
-    background: "rgba(255, 255, 255, 0.3)",
-    padding: "0.15rem 0.4rem",
-    borderRadius: "0.3rem"
+    fontSize: '0.85rem',
+    color: COZY.sage400
   },
-  libgenWidget: {
-    background: "rgba(95, 64, 196, 0.08)",
-    border: "1px solid rgba(95, 64, 196, 0.2)",
-    borderRadius: "1rem",
-    padding: "1rem",
-    marginTop: "0.75rem"
+
+  availabilityAction: {
+    fontSize: '0.8rem',
+    color: COZY.rose400,
+    fontWeight: '500'
   },
-  libgenWidgetHeader: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: "0.75rem"
+
+  availabilityActionRead: {
+    color: COZY.sage500
   },
-  libgenWidgetTitle: {
-    fontSize: "0.9rem",
-    fontWeight: 600,
-    color: "#5f40c4",
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem"
+
+  availabilityActionDownload: {
+    color: COZY.sage500
   },
-  mirrorButton: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "0.6rem 0.8rem",
-    background: "rgba(255, 255, 255, 0.5)",
-    border: "1px solid rgba(95, 64, 196, 0.2)",
-    borderRadius: "0.6rem",
-    fontSize: "0.8rem",
-    color: "#5f40c4",
-    textDecoration: "none",
-    transition: "all 0.2s ease"
+
+  availabilityActionBorrow: {
+    color: COZY.honey500
   },
-  mirrorButtonPrimary: {
-    background: "rgba(95, 64, 196, 0.12)",
-    borderColor: "rgba(95, 64, 196, 0.3)"
+
+  availabilityActionWaitlist: {
+    color: COZY.lavender400
   },
-  findLibgenButton: {
-    background: "rgba(95, 64, 196, 0.12)",
-    color: "#5f40c4",
-    border: "1px solid rgba(95, 64, 196, 0.3)",
-    padding: "0.5rem 1rem",
-    borderRadius: "0.6rem",
-    fontSize: "0.85rem",
-    fontWeight: 500,
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    fontFamily: "inherit"
+
+  availabilityActionsList: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '0.5rem',
+    marginTop: '0.65rem'
   },
-  findLibgenButtonSearching: {
-    opacity: 0.6,
-    cursor: "not-allowed"
+
+  searchTabs: {
+    display: 'flex',
+    gap: '0.75rem',
+    marginBottom: '1.5rem',
+    borderBottom: `2px solid ${COZY.cream100}`,
+    paddingBottom: '0.75rem'
   },
-  analyticsCard: {
-    background: "linear-gradient(135deg, rgba(95, 64, 196, 0.08) 0%, rgba(95, 64, 196, 0.12) 100%)",
-    border: "1px solid rgba(95, 64, 196, 0.25)",
-    borderRadius: "1.5rem",
-    padding: "1.5rem",
-    marginTop: "1rem"
+
+  searchTab: {
+    background: 'transparent',
+    border: 'none',
+    color: COZY.sage400,
+    padding: '0.65rem 1.5rem',
+    borderRadius: '1rem',
+    fontSize: '0.95rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease'
   },
-  analyticsTitle: {
-    fontSize: "1.1rem",
-    fontWeight: 600,
-    color: "#5f40c4",
-    marginBottom: "1rem",
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem"
+
+  searchTabActive: {
+    background: COZY.rose400,
+    color: COZY.white,
+    boxShadow: '0 2px 8px rgba(251, 113, 133, 0.3)'
   },
-  analyticsGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-    gap: "1rem",
-    marginBottom: "1rem"
+
+  searchTabCount: {
+    marginLeft: '0.5rem',
+    padding: '0.15rem 0.65rem',
+    borderRadius: '999px',
+    background: 'rgba(255, 255, 255, 0.3)',
+    fontSize: '0.85rem'
   },
-  analyticsStat: {
-    background: "rgba(255, 255, 255, 0.5)",
-    borderRadius: "0.8rem",
-    padding: "1rem",
-    textAlign: "center"
-  },
-  analyticsValue: {
-    fontSize: "1.8rem",
-    fontWeight: 700,
-    color: "#5f40c4",
-    marginBottom: "0.25rem"
-  },
-  analyticsLabel: {
-    fontSize: "0.75rem",
-    color: THEME.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: "0.05em"
-  },
-  formatsList: {
-    display: "flex",
-    gap: "0.5rem",
-    flexWrap: "wrap",
-    marginTop: "0.75rem"
-  },
-  formatBadge: {
-    background: "rgba(95, 64, 196, 0.15)",
-    color: "#5f40c4",
-    padding: "0.4rem 0.8rem",
-    borderRadius: "999px",
-    fontSize: "0.75rem",
-    fontWeight: 600
-  },
-  bookActions: {
-    display: "flex",
-    gap: "0.5rem",
-    marginTop: "0.6rem",
-    flexWrap: "wrap"
-  },
-  libraryCover: {
-    width: "96px",
-    height: "144px",
-    objectFit: "cover",
-    borderRadius: "0.8rem",
-    border: `1px solid rgba(217, 130, 43, 0.25)`,
-    background: "rgba(249, 223, 198, 0.4)"
-  },
-  libraryCoverPlaceholder: {
-    width: "96px",
-    height: "144px",
-    borderRadius: "0.8rem",
-    border: `1px dashed rgba(217,130,43,0.45)`,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "0.8rem",
-    color: THEME.textMuted,
-    background: THEME.surfaceAlt
-  },
-  bookContent: {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.75rem"
-  },
-  libraryToolIdeas: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "0.6rem",
-    marginTop: "0.5rem",
-    justifyContent: "center"
-  },
-  fakeToolButton: {
-    background: "rgba(242, 193, 153, 0.18)",
-    border: `1px dashed rgba(217, 130, 43, 0.5)`,
-    borderRadius: "0.9rem",
-    padding: "0.6rem 1.1rem",
-    fontSize: "0.82rem",
-    color: THEME.accent,
-    fontWeight: 600,
-    cursor: "not-allowed",
-    opacity: 0.8,
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.3rem",
-    alignItems: "center",
-    textAlign: "center",
-    minWidth: "180px"
-  },
-  fakeToolHelper: {
-    fontSize: "0.72rem",
-    color: THEME.textMuted,
-    fontWeight: 500,
-    maxWidth: "160px",
-    lineHeight: 1.2
-  },
-  footer: {
-    marginTop: "3rem",
-    textAlign: "center",
-    fontSize: "0.85rem",
-    color: THEME.textMuted
-  },
+
+  // Modal styles
   modalOverlay: {
-    position: "fixed",
+    position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(60, 47, 47, 0.4)",
-    backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 10000,
-    padding: "1rem",
-    transition: "all 0.3s ease"
+    background: 'rgba(73, 87, 73, 0.4)',
+    backdropFilter: 'blur(8px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10000
   },
-  modalContainer: {
-    background: "linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 232, 214, 0.45) 100%)",
-    borderRadius: "2rem",
-    border: "1px solid rgba(255, 255, 255, 0.6)",
-    boxShadow: "0 20px 60px rgba(60, 47, 47, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.5) inset",
-    backdropFilter: "blur(40px) saturate(180%)",
-    WebkitBackdropFilter: "blur(40px) saturate(180%)",
-    maxWidth: "600px",
-    width: "100%",
-    maxHeight: "90vh",
-    overflow: "hidden",
-    display: "flex",
-    flexDirection: "column",
-    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)"
+
+  modalContent: {
+    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 251, 245, 0.95) 100%)',
+    backdropFilter: 'blur(16px)',
+    border: `2px solid ${COZY.white}`,
+    borderRadius: '2rem',
+    padding: '3rem',
+    maxWidth: '650px',
+    width: '90%',
+    maxHeight: '90vh',
+    overflow: 'auto',
+    boxShadow: COZY.softShadowXl,
+    color: COZY.sage600
   },
+
   modalHeader: {
-    padding: "1.5rem 1.5rem 0",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    gap: "1rem"
+    fontSize: '2rem',
+    fontWeight: '700',
+    marginBottom: '2rem',
+    color: COZY.sage600,
+    fontFamily: '"Playfair Display", "Georgia", serif'
   },
-  modalBookTitle: {
-    fontSize: "0.9rem",
-    fontWeight: "normal",
-    color: THEME.textMuted,
-    fontStyle: "italic"
-  },
-  modalCloseButton: {
-    background: "transparent",
-    border: "none",
-    fontSize: "1.5rem",
-    cursor: "pointer",
-    color: THEME.textMuted,
-    padding: "0.25rem",
-    lineHeight: 1,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: "0.5rem",
-    transition: "background 0.2s ease, color 0.2s ease"
-  },
-  modalBody: {
-    padding: "1.5rem",
-    display: "flex",
-    flexDirection: "column",
-    gap: "1rem",
-    flex: 1,
-    overflow: "auto"
-  },
-  modalFooter: {
-    padding: "0 1.5rem 1.5rem",
-    display: "flex",
-    gap: "0.75rem",
-    justifyContent: "flex-end"
+
+  modalActions: {
+    display: 'flex',
+    gap: '1.25rem',
+    marginTop: '2rem',
+    justifyContent: 'flex-end'
   }
 };
