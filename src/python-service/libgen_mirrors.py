@@ -13,12 +13,14 @@ LIBGEN_MIRRORS = {
     "verified_working": [
         "li",                    # ✓ VERIFIED: 100 results in 1.23s (DEFAULT)
         "bz",                    # ✓ VERIFIED: 100 results in 1.23s
+        "vg",                    # ✓ VERIFIED: 100 results in 1.66s
     ],
 
     # Primary mirrors - use TLD format for LibgenSearch(mirror="xx")
     "primary": [
         "li",                    # Library default (VERIFIED WORKING)
         "bz",                    # Belize (VERIFIED WORKING)
+        "vg",                    # British Virgin Islands (VERIFIED WORKING)
     ],
 
     # FAILED/TIMEOUT mirrors (tested but don't work)
@@ -33,7 +35,6 @@ LIBGEN_MIRRORS = {
     # Untested mirrors (may or may not work)
     "untested": [
         "br",                    # Brazil
-        "vg",                    # British Virgin Islands
         "io",                    # British Indian Ocean Territory
         "il",                    # Israel
         "sg",                    # Singapore

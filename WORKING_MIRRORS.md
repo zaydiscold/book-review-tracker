@@ -14,6 +14,7 @@ These mirrors were tested and confirmed working:
 |--------|--------|---------|---------------|
 | **li** | ✓ VERIFIED | 100 results | 1.23s |
 | **bz** | ✓ VERIFIED | 100 results | 1.23s |
+| **vg** | ✓ VERIFIED | 100 results | 1.66s |
 
 ### Usage with libgen-api-enhanced:
 ```python
@@ -23,8 +24,11 @@ from libgen_api_enhanced import LibgenSearch
 s = LibgenSearch(mirror="li")
 results = s.search_title("Dune")
 
-# Fallback
+# Fallbacks
 s = LibgenSearch(mirror="bz")
+results = s.search_title("Dune")
+
+s = LibgenSearch(mirror="vg")
 results = s.search_title("Dune")
 ```
 
@@ -52,8 +56,8 @@ GET http://localhost:5001/mirrors/verified
 Returns:
 ```json
 {
-  "mirrors": ["li", "bz"],
-  "count": 2,
+  "mirrors": ["li", "bz", "vg"],
+  "count": 3,
   "usage": "LibgenSearch(mirror='li') or LibgenSearch(mirror='bz')",
   "tested": "2025-11-21",
   "test_query": "Dune",
@@ -83,7 +87,7 @@ Response includes `mirror_used` field showing which mirror succeeded.
 from libgen_api_enhanced import LibgenSearch
 
 # Mirror fallback pattern
-VERIFIED_MIRRORS = ["li", "bz"]
+VERIFIED_MIRRORS = ["li", "bz", "vg"]
 
 async def search_book(query: str):
     for mirror in VERIFIED_MIRRORS:
