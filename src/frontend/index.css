@@ -81,6 +81,11 @@
     @apply focus:outline-none focus:ring-2 focus:ring-rose-200 focus:ring-offset-1;
   }
 
+  /* Legacy input alias used by older components */
+  .input-field {
+    @apply input;
+  }
+
   .textarea {
     @apply input;
     @apply min-h-[120px] resize-y;
@@ -145,6 +150,11 @@
 
   .animate-slide-up {
     animation: slideUp 0.4s ease-out;
+  }
+
+  /* Alias for older animation class naming */
+  .animate-fadeIn {
+    @apply animate-fade-in;
   }
 }
 

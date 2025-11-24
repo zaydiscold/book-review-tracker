@@ -2,31 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   initDB,
   addBook,
-  updateBook,
   getBooks,
-  getReviews,
-  saveReview,
-  deleteReviewById,
   deleteBook,
   applyRemoteSnapshot
 } from "../data/db";
 import { isCloudSyncEnabled, pullCloudSnapshot } from "../data/cloudSync";
 import {
   searchLibgen,
-  calculateLibraryStats,
-  batchSearchBooks
+  calculateLibraryStats
 } from "../data/libgen";
-import {
-  emptyBookForm,
-  createReviewDraft
-} from "./constants/defaults";
-import {
-  REVIEW_DISABLED_STATUSES,
-  isUnreadStatus
-} from "./constants/bookStatus";
-import { normalizeForMatch } from "./utils/formatting";
-import { applyBookUpdateToList } from "./utils/bookMatching";
-import { hasCover } from "./utils/covers";
 
 // Import new Cozy components
 import { Layout } from "./components/Layout";
@@ -35,20 +19,12 @@ import { BookGrid } from "./components/BookGrid";
 import { ToastOverlay } from "./components/ToastOverlay";
 import { LibGenWidget } from "./components/LibGenWidget";
 
-// Import styles (legacy styles might still be needed for some internal logic or toasts)
-import { styles } from "./styles/appStyles";
-
 export default function App() {
-  const [initialized, setInitialized] = useState(false);
   const [books, setBooks] = useState([]);
-  const [reviews, setReviews] = useState([]);
   const [toast, setToast] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
-
-  // State for editing/modals
-  const [editingBook, setEditingBook] = useState(null);
 
   // Calculate library statistics
   const libraryStats = useMemo(() => calculateLibraryStats(books), [books]);
@@ -66,16 +42,12 @@ export default function App() {
     async function bootstrap() {
       try {
         await initDB();
-        let skipSampleLibrary = false;
 
         if (isCloudSyncEnabled()) {
           try {
             const snapshot = await pullCloudSnapshot();
             if (snapshot.status === "ok") {
-              const applied = await applyRemoteSnapshot(snapshot);
-              if ((applied.books ?? 0) > 0 || (applied.reviews ?? 0) > 0) {
-                skipSampleLibrary = true;
-              }
+              await applyRemoteSnapshot(snapshot);
             }
           } catch (cloudError) {
             console.warn("Failed to sync remote snapshot", cloudError);
@@ -83,11 +55,7 @@ export default function App() {
           }
         }
 
-        // Load existing books
-        const existingBooks = await getBooks();
-
         await refreshData();
-        setInitialized(true);
       } catch (error) {
         console.error("Failed to init IndexedDB", error);
         showToast("IndexedDB unavailable. Data will not persist.", "warning");
@@ -98,9 +66,8 @@ export default function App() {
   }, [showToast]);
 
   async function refreshData() {
-    const [bookList, reviewList] = await Promise.all([getBooks(), getReviews()]);
+    const bookList = await getBooks();
     setBooks(bookList);
-    setReviews(reviewList);
   }
 
   // Handlers
@@ -139,9 +106,7 @@ export default function App() {
   };
 
   const handleEditBook = (book) => {
-    setEditingBook(book);
-    // Open modal logic would go here
-    showToast("Edit feature coming in next update", "info");
+    showToast(`Edit coming soon for "${book.title}"`, "info");
   };
 
   const handleDeleteBook = async (book) => {
@@ -166,6 +131,12 @@ export default function App() {
         <div className="text-center py-12">
           <div className="animate-spin w-8 h-8 border-4 border-rose-400 border-t-transparent rounded-full mx-auto mb-4"></div>
           <p className="text-sage-500">Searching the archives...</p>
+        </div>
+      )}
+
+      {searchError && (
+        <div className="mb-10 mx-4 md:mx-0 rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-rose-700 shadow-soft animate-slide-up">
+          {searchError}
         </div>
       )}
 

@@ -1,9 +1,9 @@
 import React from 'react';
 import { Star, Book, Edit, Trash2 } from 'lucide-react';
-import { hasCover, getCoverUrl } from '../../utils/covers';
+import { hasCover, getCoverUrl } from '../utils/covers';
 
 export function BookCard({ book, onEdit, onDelete }) {
-    const coverUrl = hasCover(book) ? getCoverUrl(book) : null;
+    const coverUrl = hasCover(book.cover) ? getCoverUrl(book.cover) : null;
 
     return (
         <div className="group relative bg-white rounded-3xl shadow-soft hover:shadow-soft-xl transition-all duration-500 hover:-translate-y-2 overflow-hidden border border-stone-100 flex flex-col h-full">

@@ -6,8 +6,8 @@ export function BookGrid({ books, onEdit, onDelete }) {
         return (
             <div className="text-center py-20 bg-white rounded-3xl border border-stone-100 shadow-sm">
                 <div className="text-6xl mb-6 opacity-80">📚</div>
-                <h3 className="text-2xl font-serif font-bold text-ink mb-3">Your library is waiting</h3>
-                <p className="text-ink-light max-w-md mx-auto">
+                <h3 className="text-2xl font-serif font-bold text-sage-800 mb-3">Your library is waiting</h3>
+                <p className="text-sage-500 max-w-md mx-auto">
                     It looks like you haven't added any books yet. Search for a title above to start your collection.
                 </p>
             </div>
