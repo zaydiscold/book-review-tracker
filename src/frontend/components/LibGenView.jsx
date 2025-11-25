@@ -161,13 +161,8 @@ export function LibGenView({ onAddBook }) {
                                     </div>
                                     <h4 className="font-bold text-lg text-sage-800 mb-1">{result.title}</h4>
                                     <p className="text-sage-500 mb-2">{result.author}</p>
-                                    <p className="text-xs text-sage-400 mb-2 flex flex-wrap gap-2">
-                                        <span className="px-2 py-1 rounded-full bg-stone-50 border border-stone-100">
-                                            {result.extension || 'Unknown type'}
-                                        </span>
-                                        <span className="px-2 py-1 rounded-full bg-stone-50 border border-stone-100">
-                                            {result.filesize || result.size || 'Unknown size'}
-                                        </span>
+                                    <p className="text-xs text-sage-400 mb-2">
+                                        {result.extension || 'Unknown type'} · {result.filesize || result.size || 'Unknown size'}
                                     </p>
 
                                     <div className="mt-auto flex gap-3">
