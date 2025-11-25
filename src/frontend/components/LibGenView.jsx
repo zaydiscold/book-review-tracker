@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Download, ExternalLink, Loader2 } from 'lucide-react';
+import { Search, Download, ExternalLink, Loader2, ArrowUpRight } from 'lucide-react';
 import { searchLibgen } from '../../data/libgen';
 import { LibGenWidget } from './LibGenWidget';
 
@@ -146,8 +146,29 @@ export function LibGenView({ onAddBook }) {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {results.map((result) => (
                                 <div key={result.md5} className="bg-white p-6 rounded-3xl shadow-soft border border-stone-100 flex flex-col">
-                                    <h4 className="font-bold text-lg text-sage-800 mb-2">{result.title}</h4>
-                                    <p className="text-sage-500 mb-4">{result.author}</p>
+                                    <div className="mb-4">
+                                        <div className="relative rounded-xl overflow-hidden aspect-[3/4] bg-stone-100">
+                                            {result.coverUrl ? (
+                                                <img
+                                                    src={result.coverUrl}
+                                                    alt={result.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center text-sage-300 text-sm">No cover</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <h4 className="font-bold text-lg text-sage-800 mb-1">{result.title}</h4>
+                                    <p className="text-sage-500 mb-2">{result.author}</p>
+                                    <p className="text-xs text-sage-400 mb-2 flex flex-wrap gap-2">
+                                        <span className="px-2 py-1 rounded-full bg-stone-50 border border-stone-100">
+                                            {result.extension || 'Unknown type'}
+                                        </span>
+                                        <span className="px-2 py-1 rounded-full bg-stone-50 border border-stone-100">
+                                            {result.filesize || result.size || 'Unknown size'}
+                                        </span>
+                                    </p>
 
                                     <div className="mt-auto flex gap-3">
                                         <button
@@ -166,6 +187,17 @@ export function LibGenView({ onAddBook }) {
 
                                     <div className="mt-4 pt-4 border-t border-stone-100">
                                         <LibGenWidget book={{ libgenMetadata: result }} />
+                                        <div className="mt-3 flex items-center justify-between text-xs text-sage-500">
+                                            <span>LibGen Archive</span>
+                                            <a
+                                                href={result.mirror || getMirrorLink(MIRROR_CONFIGS[0], result)}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center gap-1 text-rose-600 hover:text-rose-700 font-medium"
+                                            >
+                                                Download <ArrowUpRight className="w-3 h-3" />
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             ))}
