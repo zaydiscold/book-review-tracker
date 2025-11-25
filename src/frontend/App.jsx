@@ -6,7 +6,7 @@ import {
   deleteBook,
   applyRemoteSnapshot
 } from "../data/db";
-import { isCloudSyncEnabled, pullCloudSnapshot } from "../data/cloudSync";
+import { isCloudSyncEnabled, pullCloudSnapshot, checkSupabaseConnection } from "../data/cloudSync";
 import {
   searchLibgen,
   calculateLibraryStats
@@ -21,7 +21,11 @@ import { LibGenWidget } from "./components/LibGenWidget";
 import { StatsView } from "./components/StatsView";
 
 export default function App() {
-  const cloudEnabled = isCloudSyncEnabled();
+  const [cloudStatus, setCloudStatus] = useState(() => ({
+    enabled: isCloudSyncEnabled(),
+    status: isCloudSyncEnabled() ? "checking" : "disabled",
+    message: ""
+  }));
   const [books, setBooks] = useState([]);
   const [toast, setToast] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
@@ -46,7 +50,27 @@ export default function App() {
       try {
         await initDB();
 
-        if (isCloudSyncEnabled()) {
+        if (cloudStatus.enabled) {
+          checkSupabaseConnection()
+            .then((result) => {
+              if (result.status === "online") {
+                setCloudStatus({ enabled: true, status: "online", message: "" });
+              } else {
+                setCloudStatus({
+                  enabled: true,
+                  status: "offline",
+                  message: result.message ?? "Supabase not reachable"
+                });
+              }
+            })
+            .catch((err) => {
+              setCloudStatus({
+                enabled: true,
+                status: "offline",
+                message: err?.message ?? "Supabase check failed"
+              });
+            });
+
           try {
             const snapshot = await pullCloudSnapshot();
             if (snapshot.status === "ok") {
@@ -66,7 +90,7 @@ export default function App() {
     }
 
     bootstrap();
-  }, [showToast]);
+  }, [showToast, cloudStatus.enabled]);
 
   async function refreshData() {
     const bookList = await getBooks();
@@ -126,7 +150,11 @@ export default function App() {
   };
 
   return (
-    <Layout currentView={currentView} onNavigate={setCurrentView} cloudEnabled={cloudEnabled}>
+    <Layout
+      currentView={currentView}
+      onNavigate={setCurrentView}
+      cloudStatus={cloudStatus}
+    >
       {currentView === 'home' && <HeroSection onSearch={handleSearch} />}
 
       {/* Search Results Section */}

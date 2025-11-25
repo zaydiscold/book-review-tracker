@@ -160,6 +160,31 @@ export function isCloudSyncEnabled() {
   return isSupabaseConfigured();
 }
 
+export async function checkSupabaseConnection() {
+  const client = getSupabaseClient();
+  if (!client) {
+    return { status: "disabled" };
+  }
+
+  try {
+    const { error } = await client
+      .from(BOOK_TABLE)
+      .select("id", { head: true, count: "exact" })
+      .limit(1);
+
+    if (error) {
+      throw error;
+    }
+
+    return { status: "online" };
+  } catch (err) {
+    return {
+      status: "offline",
+      message: err?.message ?? "Supabase not reachable"
+    };
+  }
+}
+
 async function fetchAllFromSupabase(client, table, { normalizer, validator }) {
   const PAGE_SIZE = 1000;
   const results = [];

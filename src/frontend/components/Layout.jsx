@@ -1,10 +1,14 @@
 import React from 'react';
 import { Navbar } from './Navbar';
 
-export function Layout({ children, currentView, onNavigate, cloudEnabled }) {
+export function Layout({ children, currentView, onNavigate, cloudStatus }) {
     return (
         <div className="min-h-screen bg-cream-50 text-sage-600 font-sans selection:bg-rose-200 selection:text-rose-900">
-            <Navbar currentView={currentView} onNavigate={onNavigate} cloudEnabled={cloudEnabled} />
+            <Navbar
+                currentView={currentView}
+                onNavigate={onNavigate}
+                cloudStatus={cloudStatus}
+            />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
                 {children}
