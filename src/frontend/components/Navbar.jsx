@@ -1,7 +1,7 @@
 import React from 'react';
-import { BookOpen, Search, Plus, BarChart3, Library, Heart } from 'lucide-react';
+import { BookOpen, Search, Plus, BarChart3, Library } from 'lucide-react';
 
-export function Navbar({ currentView = 'library', onNavigate }) {
+export function Navbar({ currentView = 'library', onNavigate, cloudEnabled }) {
     return (
         <nav className="sticky top-0 z-50 bg-cream-50/80 backdrop-blur-md border-b border-stone-200/50 shadow-soft transition-all duration-300">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
@@ -42,6 +42,7 @@ export function Navbar({ currentView = 'library', onNavigate }) {
 
                 {/* Actions */}
                 <div className="flex items-center gap-3">
+                    <CloudBadge cloudEnabled={cloudEnabled} />
                     <button className="p-2.5 text-sage-500 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-all duration-300 group">
                         <Search className="w-5 h-5 group-hover:scale-110 transition-transform" strokeWidth={2} />
                     </button>
@@ -70,5 +71,17 @@ function NavLink({ icon, text, active, onClick }) {
             {icon}
             <span>{text}</span>
         </button>
+    );
+}
+
+function CloudBadge({ cloudEnabled }) {
+    const styles = cloudEnabled
+        ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+        : "bg-amber-50 text-amber-700 border border-amber-100";
+
+    return (
+        <span className={`hidden sm:inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium ${styles}`}>
+            {cloudEnabled ? "Supabase connected" : "Offline only"}
+        </span>
     );
 }

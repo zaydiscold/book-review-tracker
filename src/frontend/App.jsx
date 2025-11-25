@@ -21,6 +21,7 @@ import { LibGenWidget } from "./components/LibGenWidget";
 import { StatsView } from "./components/StatsView";
 
 export default function App() {
+  const cloudEnabled = isCloudSyncEnabled();
   const [books, setBooks] = useState([]);
   const [toast, setToast] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
@@ -125,7 +126,7 @@ export default function App() {
   };
 
   return (
-    <Layout currentView={currentView} onNavigate={setCurrentView}>
+    <Layout currentView={currentView} onNavigate={setCurrentView} cloudEnabled={cloudEnabled}>
       {currentView === 'home' && <HeroSection onSearch={handleSearch} />}
 
       {/* Search Results Section */}
