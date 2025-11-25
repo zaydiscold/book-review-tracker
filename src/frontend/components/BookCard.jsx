@@ -1,13 +1,40 @@
 import React from 'react';
-import { Star, Book, Edit, Trash2, ExternalLink, Download } from 'lucide-react';
-import { hasCover, getCoverUrl } from '../utils/covers';
+import { Star, Book, Edit, Trash2, ExternalLink, Download, BookmarkPlus } from 'lucide-react';
+import { getCoverUrl, ensureCover } from '../utils/covers';
 
-export function BookCard({ book, onEdit, onDelete }) {
-    const coverUrl = hasCover(book.cover) ? getCoverUrl(book.cover) : null;
+export function BookCard({ book, onEdit, onDelete, onAdd }) {
+    const cover = ensureCover(book);
+    const coverUrl = cover ? getCoverUrl(cover, 'L') : null;
 
     // Generate external links
     const openLibraryLink = book.openLibraryUrl || `https://openlibrary.org/search?q=${encodeURIComponent(book.title + ' ' + book.author)}`;
-    const libGenLink = book.libgenMetadata?.downloadUrl || `http://libgen.is/search.php?req=${encodeURIComponent(book.title + ' ' + book.author)}`;
+
+    // Get results from libgen metadata
+    const allResults = book.libgenMetadata?.allResults || [];
+    const result1 = allResults[0] || book.libgenMetadata;
+    const result2 = allResults[1];
+    const result3 = allResults[2];
+
+    // Main button: libgen.li (Alternative - uses ID for edition page)
+    const directLibGenLink = result1?.id
+        ? `https://libgen.li/edition.php?id=${result1.id}`
+        : `https://libgen.li/index.php?req=${encodeURIComponent(book.title + ' ' + book.author)}`;
+
+    // Button 2: libgen.st (Saint Helena - Working Primary)
+    // Use search by MD5 for reliability
+    const mirror2Link = result2?.md5
+        ? `http://libgen.st/search.php?req=${result2.md5}&column=md5`
+        : result1?.md5
+            ? `http://libgen.st/search.php?req=${result1.md5}&column=md5`
+            : `http://libgen.st/search.php?req=${encodeURIComponent(book.title)}`;
+
+    // Button 3: libgen.gs (South Georgia - Highly Recommended)
+    // Use search by MD5 for reliability
+    const mirror3Link = result3?.md5
+        ? `http://libgen.gs/search.php?req=${result3.md5}&column=md5`
+        : result1?.md5
+            ? `http://libgen.gs/search.php?req=${result1.md5}&column=md5`
+            : `http://libgen.gs/search.php?req=${encodeURIComponent(book.title)}`;
 
     return (
         <div className="group relative bg-white rounded-3xl shadow-soft hover:shadow-soft-xl transition-all duration-500 hover:-translate-y-2 overflow-hidden border border-stone-100 flex flex-col h-full">
@@ -30,21 +57,33 @@ export function BookCard({ book, onEdit, onDelete }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                 {/* Quick Actions Overlay */}
-                <div className="absolute bottom-4 right-4 flex gap-2 translate-y-10 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300 delay-100">
-                    <button
-                        onClick={() => onEdit(book)}
-                        className="p-2 bg-white/90 backdrop-blur-sm text-sage-600 rounded-full hover:bg-white hover:text-rose-500 shadow-lg transition-colors"
-                        title="Edit"
-                    >
-                        <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                        onClick={() => onDelete(book)}
-                        className="p-2 bg-white/90 backdrop-blur-sm text-sage-600 rounded-full hover:bg-white hover:text-rose-500 shadow-lg transition-colors"
-                        title="Delete"
-                    >
-                        <Trash2 className="w-4 h-4" />
-                    </button>
+                <div className={`absolute bottom-4 right-4 flex gap-2 transition-all duration-300 delay-100 ${onAdd ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 group-hover:translate-y-0 group-hover:opacity-100'}`}>
+                    {onAdd ? (
+                        <button
+                            onClick={() => onAdd(book)}
+                            className="p-2 bg-white/90 backdrop-blur-sm text-sage-600 rounded-full hover:bg-white hover:text-rose-500 shadow-lg transition-colors"
+                            title="Add to Library"
+                        >
+                            <BookmarkPlus className="w-4 h-4" />
+                        </button>
+                    ) : (
+                        <>
+                            <button
+                                onClick={() => onEdit(book)}
+                                className="p-2 bg-white/90 backdrop-blur-sm text-sage-600 rounded-full hover:bg-white hover:text-rose-500 shadow-lg transition-colors"
+                                title="Edit"
+                            >
+                                <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => onDelete(book)}
+                                className="p-2 bg-white/90 backdrop-blur-sm text-sage-600 rounded-full hover:bg-white hover:text-rose-500 shadow-lg transition-colors"
+                                title="Delete"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -88,16 +127,36 @@ export function BookCard({ book, onEdit, onDelete }) {
                         <ExternalLink className="w-3 h-3" />
                         <span>OpenLibrary</span>
                     </a>
-                    <a
-                        href={libGenLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 hover:text-rose-500 transition-colors"
-                        title="Search on LibGen"
-                    >
-                        <Download className="w-3 h-3" />
-                        <span>LibGen</span>
-                    </a>
+                    <div className="flex items-center gap-1">
+                        <a
+                            href={directLibGenLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1 hover:text-rose-500 transition-colors"
+                            title={result1?.extension ? `LibGen.li - ${result1.extension.toUpperCase()}` : "LibGen.li"}
+                        >
+                            <Download className="w-3 h-3" />
+                            <span>LibGen</span>
+                        </a>
+                        <a
+                            href={mirror2Link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] bg-stone-100 px-1.5 py-0.5 rounded hover:bg-rose-100 hover:text-rose-600 transition-colors"
+                            title={result2?.extension ? `LibGen.st - ${result2.extension.toUpperCase()}` : "LibGen.st"}
+                        >
+                            2
+                        </a>
+                        <a
+                            href={mirror3Link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] bg-stone-100 px-1.5 py-0.5 rounded hover:bg-rose-100 hover:text-rose-600 transition-colors"
+                            title={result3?.extension ? `LibGen.gs - ${result3.extension.toUpperCase()}` : "LibGen.gs"}
+                        >
+                            3
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { BookCard } from './BookCard';
 
-export function BookGrid({ books, onEdit, onDelete, emptyMessage }) {
+export function BookGrid({ books, onEdit, onDelete, onAdd, emptyMessage }) {
     if (!books || books.length === 0) {
         return (
             <div className="text-center py-20 bg-white rounded-3xl border border-stone-100 shadow-sm">
@@ -24,6 +24,7 @@ export function BookGrid({ books, onEdit, onDelete, emptyMessage }) {
                     book={book}
                     onEdit={onEdit}
                     onDelete={onDelete}
+                    onAdd={onAdd}
                 />
             ))}
         </div>

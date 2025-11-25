@@ -18,7 +18,7 @@ create table if not exists public.books (
   updatedAt timestamptz not null default now()
 );
 
--- Safely add columns if they were missing from a previous create
+-- Safely add user_id if it was missing from a previous create
 do $$
 begin
   if not exists (select 1 from information_schema.columns where table_name = 'books' and column_name = 'user_id') then
