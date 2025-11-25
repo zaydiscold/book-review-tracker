@@ -19,6 +19,7 @@ import { ToastOverlay } from "./components/ToastOverlay";
 import { StatsView } from "./components/StatsView";
 import { LibGenView } from "./components/LibGenView";
 import { ensureCover, getCoverUrl } from "./utils/covers";
+import { AddBookModal } from "./components/AddBookModal";
 
 export default function App() {
   const [cloudStatus, setCloudStatus] = useState(() => ({
@@ -32,6 +33,7 @@ export default function App() {
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [currentView, setCurrentView] = useState("home"); // home, readlist, stats, libgen
+  const [showAddModal, setShowAddModal] = useState(false);
 
   // Calculate library statistics
   const libraryStats = useMemo(() => calculateLibraryStats(books), [books]);
@@ -160,6 +162,7 @@ export default function App() {
       currentView={currentView}
       onNavigate={setCurrentView}
       cloudStatus={cloudStatus}
+      onAddBook={() => setShowAddModal(true)}
     >
       {currentView === 'home' && <HeroSection onSearch={handleSearch} />}
 
@@ -292,6 +295,15 @@ export default function App() {
           onDismiss={clearToast}
         />
       )}
+
+      <AddBookModal
+        isOpen={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSave={(book) => {
+          handleAddBook(book);
+          setShowAddModal(false);
+        }}
+      />
     </Layout>
   );
 }

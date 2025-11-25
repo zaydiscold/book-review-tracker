@@ -1,7 +1,7 @@
 import React from 'react';
 import { BookOpen, Search, Plus, BarChart3, Library, Database } from 'lucide-react';
 
-export function Navbar({ currentView = 'library', onNavigate, cloudStatus }) {
+export function Navbar({ currentView = 'library', onNavigate, cloudStatus, onAddBook }) {
     return (
         <nav className="sticky top-0 z-50 bg-cream-50/80 backdrop-blur-md border-b border-stone-200/50 shadow-soft transition-all duration-300">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
@@ -52,7 +52,10 @@ export function Navbar({ currentView = 'library', onNavigate, cloudStatus }) {
                     <button className="p-2.5 text-sage-500 hover:text-rose-600 hover:bg-rose-50 rounded-full transition-all duration-300 group">
                         <Search className="w-5 h-5 group-hover:scale-110 transition-transform" strokeWidth={2} />
                     </button>
-                    <button className="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white px-5 py-2.5 rounded-full font-medium shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5 transition-all duration-300 active:scale-95">
+                    <button
+                        onClick={() => onAddBook && onAddBook()}
+                        className="flex items-center gap-2 bg-rose-500 hover:bg-rose-600 text-white px-5 py-2.5 rounded-full font-medium shadow-soft hover:shadow-soft-lg hover:-translate-y-0.5 transition-all duration-300 active:scale-95"
+                    >
                         <Plus className="w-5 h-5" strokeWidth={2.5} />
                         <span>Add Book</span>
                     </button>
