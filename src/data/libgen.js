@@ -84,6 +84,9 @@ export async function getLatestUpload() {
 function normalizeLibgenResult(result, index = 0, allResults = []) {
   if (!result) return null;
 
+  const cover = deriveLibgenCover(result);
+  const coverUrl = buildCoverUrl(cover);
+
   return {
     key: `libgen-${result.id || result.md5}`,
     title: result.title || "Untitled",
@@ -96,7 +99,8 @@ function normalizeLibgenResult(result, index = 0, allResults = []) {
     filesize: result.filesize || null,
     extension: result.extension || null,
     md5: result.md5,
-    cover: deriveLibgenCover(result),
+    cover,
+    coverUrl,
     libgenMetadata: {
       id: result.id,
       md5: result.md5,
@@ -155,6 +159,22 @@ function deriveLibgenCover(result) {
     if (cleanIsbn.length === 10 || cleanIsbn.length === 13) {
       return { type: "isbn", value: cleanIsbn };
     }
+  }
+
+  return null;
+}
+
+function buildCoverUrl(cover, size = "L") {
+  if (!cover || !cover.value) return null;
+
+  if (cover.type === "url") {
+    return cover.value;
+  }
+
+  const type = cover.type.toLowerCase();
+  if (["isbn", "olid", "id", "lccn", "oclc"].includes(type)) {
+    const key = type === "id" ? "id" : type.toUpperCase();
+    return `https://covers.openlibrary.org/b/${key}/${cover.value}-${size}.jpg`;
   }
 
   return null;
