@@ -18,7 +18,7 @@ import { HeroSection } from "./components/HeroSection";
 import { BookGrid } from "./components/BookGrid";
 import { ToastOverlay } from "./components/ToastOverlay";
 import { LibGenWidget } from "./components/LibGenWidget";
-// import { StatsView } from "./components/StatsView";
+import { StatsView } from "./components/StatsView";
 
 export default function App() {
   const [books, setBooks] = useState([]);
@@ -26,7 +26,7 @@ export default function App() {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const [currentView, setCurrentView] = useState("library"); // library, wishlist, stats
+  const [currentView, setCurrentView] = useState("home"); // home, readlist, stats
 
   // Calculate library statistics
   const libraryStats = useMemo(() => calculateLibraryStats(books), [books]);
@@ -126,7 +126,7 @@ export default function App() {
 
   return (
     <Layout currentView={currentView} onNavigate={setCurrentView}>
-      <HeroSection onSearch={handleSearch} />
+      {currentView === 'home' && <HeroSection onSearch={handleSearch} />}
 
       {/* Search Results Section */}
       {searching && (
@@ -175,34 +175,26 @@ export default function App() {
       )}
 
       {/* Main Content Area based on View */}
-      {currentView === 'stats' ? (
-        // <StatsView stats={libraryStats} />
-        <div className="p-8 text-center">Stats View (Under Construction)</div>
-      ) : (
+      {/* Main Content Area based on View */}
+      {currentView === 'stats' && <StatsView stats={libraryStats} />}
+
+      {currentView === 'readlist' && (
         <>
           <div className="mb-8 flex items-center justify-between px-4">
-            <h3 className="text-2xl font-serif font-bold text-sage-700">
-              {currentView === 'wishlist' ? 'Your Wishlist' : 'Your Library'}
-            </h3>
+            <h3 className="text-2xl font-serif font-bold text-sage-700">Your Read List</h3>
             <div className="text-sm text-sage-400 font-medium">
-              {currentView === 'wishlist'
-                ? books.filter(b => b.status === 'wishlist').length
-                : books.filter(b => b.status !== 'wishlist').length
-              } books
+              {books.length} books
             </div>
           </div>
 
           <BookGrid
-            books={currentView === 'wishlist'
-              ? books.filter(b => b.status === 'wishlist')
-              : books.filter(b => b.status !== 'wishlist')
-            }
+            books={books}
             onEdit={handleEditBook}
             onDelete={handleDeleteBook}
-            emptyMessage={currentView === 'wishlist' ? {
-              title: "Your wishlist is empty",
-              description: "Found something interesting? Add it to your wishlist to read later."
-            } : undefined}
+            emptyMessage={{
+              title: "Your read list is empty",
+              description: "Start searching for books on the Home page to add them here."
+            }}
           />
         </>
       )}

@@ -8,7 +8,7 @@ export function Navbar({ currentView = 'library', onNavigate }) {
                 {/* Logo Area */}
                 <div
                     className="flex items-center gap-3 group cursor-pointer"
-                    onClick={() => onNavigate && onNavigate('library')}
+                    onClick={() => onNavigate && onNavigate('home')}
                 >
                     <div className="w-10 h-10 bg-gradient-to-br from-rose-100 to-rose-200 rounded-2xl flex items-center justify-center text-rose-600 shadow-inner-soft group-hover:scale-105 group-hover:shadow-soft transition-all duration-300">
                         <BookOpen className="w-6 h-6" strokeWidth={2} />
@@ -22,15 +22,15 @@ export function Navbar({ currentView = 'library', onNavigate }) {
                 <div className="hidden md:flex items-center gap-1">
                     <NavLink
                         icon={<Library className="w-4 h-4" />}
-                        text="Library"
-                        active={currentView === 'library'}
-                        onClick={() => onNavigate && onNavigate('library')}
+                        text="Home"
+                        active={currentView === 'home'}
+                        onClick={() => onNavigate && onNavigate('home')}
                     />
                     <NavLink
-                        icon={<Heart className="w-4 h-4" />}
-                        text="Wishlist"
-                        active={currentView === 'wishlist'}
-                        onClick={() => onNavigate && onNavigate('wishlist')}
+                        icon={<BookOpen className="w-4 h-4" />}
+                        text="Read List"
+                        active={currentView === 'readlist'}
+                        onClick={() => onNavigate && onNavigate('readlist')}
                     />
                     <NavLink
                         icon={<BarChart3 className="w-4 h-4" />}
