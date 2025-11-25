@@ -51,38 +51,48 @@ export default function App() {
         await initDB();
 
         if (cloudStatus.enabled) {
-          checkSupabaseConnection()
-            .then((result) => {
-              if (result.status === "online") {
-                setCloudStatus({ enabled: true, status: "online", message: "" });
+          setCloudStatus((prev) => ({ ...prev, status: "checking", message: "" }));
+
+          const probe = await checkSupabaseConnection();
+          if (probe.status !== "online") {
+            setCloudStatus({
+              enabled: true,
+              status: "offline",
+              message: probe.message ?? "Supabase not reachable"
+            });
+            showToast("Supabase offline, using local data only.", "warning");
+          } else {
+            try {
+              const snapshot = await pullCloudSnapshot();
+              if (snapshot.status === "ok") {
+                const result = await applyRemoteSnapshot(snapshot);
+                setCloudStatus({
+                  enabled: true,
+                  status: "online",
+                  message: `Synced ${result.books} books${result.reviews ? `, ${result.reviews} reviews` : ""}`
+                });
               } else {
                 setCloudStatus({
                   enabled: true,
                   status: "offline",
-                  message: result.message ?? "Supabase not reachable"
+                  message: "Supabase snapshot unavailable"
                 });
+                showToast("Supabase offline, using local data only.", "warning");
               }
-            })
-            .catch((err) => {
+            } catch (cloudError) {
+              console.warn("Failed to sync remote snapshot", cloudError);
               setCloudStatus({
                 enabled: true,
                 status: "offline",
-                message: err?.message ?? "Supabase check failed"
+                message: cloudError?.message ?? "Supabase sync failed"
               });
-            });
-
-          try {
-            const snapshot = await pullCloudSnapshot();
-            if (snapshot.status === "ok") {
-              await applyRemoteSnapshot(snapshot);
+              showToast("Supabase offline, using local data only.", "warning");
             }
-          } catch (cloudError) {
-            console.warn("Failed to sync remote snapshot", cloudError);
-            showToast("Cloud sync unavailable. Using local data only.", "warning");
           }
         }
 
         await refreshData();
+        console.info("[app] Loaded books from local store:", (await getBooks())?.length ?? 0);
       } catch (error) {
         console.error("Failed to init IndexedDB", error);
         showToast("IndexedDB unavailable. Data will not persist.", "warning");
