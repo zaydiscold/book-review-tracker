@@ -1,6 +1,5 @@
 import React from 'react';
 import { getLibGenMirrorUrl } from '../../data/libgen';
-import { Download, ExternalLink, Database } from 'lucide-react';
 
 export function LibGenWidget({ book, onTryNextVersion }) {
   if (!book || !book.libgenMetadata) return null;
@@ -28,10 +27,7 @@ export function LibGenWidget({ book, onTryNextVersion }) {
   return (
     <div className="bg-paper-50 rounded-xl p-4 border border-taupe-200 mt-4">
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2 text-ink-600">
-          <Database className="w-4 h-4" />
-          <span className="text-xs font-bold uppercase tracking-wider">LibGen Archive</span>
-        </div>
+        <span className="text-xs font-bold uppercase tracking-wider text-ink-600">LibGen Archive</span>
         {extension && (
           <span className="px-2 py-0.5 bg-white border border-taupe-200 rounded text-xs font-mono text-ink-500 uppercase">
             {extension}
@@ -51,8 +47,7 @@ export function LibGenWidget({ book, onTryNextVersion }) {
           rel="noreferrer"
           className="flex-1 flex items-center justify-center gap-2 bg-taupe-500 text-white px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-taupe-600 hover:shadow-md transition-all active:scale-95"
         >
-          <Download className="w-4 h-4" />
-          <span>Download</span>
+          Download
         </a>
       </div>
 
@@ -67,7 +62,6 @@ export function LibGenWidget({ book, onTryNextVersion }) {
             className="text-clay-400 hover:text-clay-500 font-medium hover:underline flex items-center gap-1"
           >
             Try different version
-            <ExternalLink className="w-3 h-3" />
           </button>
         </div>
       )}
