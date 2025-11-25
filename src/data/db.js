@@ -231,7 +231,7 @@ function prepareBookForWrite(input, existing, now = new Date().toISOString()) {
     titleLower: toLowerOrNull(resolvedTitle),
     authorLower: toLowerOrNull(resolvedAuthor),
     createdAt: existing?.createdAt ?? merged.createdAt ?? now,
-    updatedAt: merged.updatedAt ?? now
+    updatedAt: input.updatedAt ?? now
   };
 }
 
@@ -245,7 +245,7 @@ function prepareReviewForWrite(input, existing, now = new Date().toISOString()) 
   return {
     ...merged,
     createdAt: existing?.createdAt ?? merged.createdAt ?? now,
-    updatedAt: merged.updatedAt ?? now
+    updatedAt: input.updatedAt ?? now
   };
 }
 

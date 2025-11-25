@@ -117,8 +117,19 @@ function normalizeBookFromCloud(book) {
     normalized.createdAt = now;
   }
 
-  if (!normalized.updatedAt) {
+  if (normalized.updatedAt) {
     normalized.updatedAt = normalized.createdAt;
+  }
+
+  // Parse cover if it's a JSON string
+  if (normalized.cover && typeof normalized.cover === "string") {
+    try {
+      if (normalized.cover.startsWith("{") || normalized.cover.startsWith("[")) {
+        normalized.cover = JSON.parse(normalized.cover);
+      }
+    } catch (e) {
+      // Ignore parse errors, keep as string
+    }
   }
 
   return normalized;
