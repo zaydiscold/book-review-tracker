@@ -190,13 +190,13 @@ export default function App() {
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {searchResults.map((result, idx) => (
               <div
                 key={result.key || result.md5 || idx}
-                className="bg-white p-6 rounded-3xl shadow-soft border border-stone-100 flex flex-col"
+                className="bg-white p-4 rounded-2xl shadow-soft border border-stone-100 flex flex-col"
               >
-                <div className="relative mb-4 overflow-hidden rounded-2xl aspect-[3/4] bg-stone-100">
+                <div className="relative mb-3 overflow-hidden rounded-xl aspect-[2/3] bg-stone-100">
                   {getCoverUrl(ensureCover(result), 'L') ? (
                     <img
                       src={getCoverUrl(ensureCover(result), 'L')}
@@ -218,7 +218,7 @@ export default function App() {
                   </button>
                   <button
                     onClick={() => handleAddBook({ ...result, status: 'reading' })}
-                    className="flex-1 bg-sage-100 text-sage-600 py-2 rounded-full font-medium hover:bg-sage-200 transition-colors"
+                    className="flex-1 bg-sage-50 text-sage-700 border border-sage-200 py-2 rounded-full font-medium hover:bg-sage-100 transition-colors"
                   >
                     Start Reading
                   </button>
