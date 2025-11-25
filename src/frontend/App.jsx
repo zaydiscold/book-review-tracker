@@ -17,6 +17,7 @@ import { BookGrid } from "./components/BookGrid";
 import { ToastOverlay } from "./components/ToastOverlay";
 import { StatsView } from "./components/StatsView";
 import { LibGenView } from "./components/LibGenView";
+import { ensureCover, getCoverUrl } from "./utils/covers";
 
 export default function App() {
   const [cloudStatus, setCloudStatus] = useState(() => ({
@@ -195,6 +196,17 @@ export default function App() {
                 key={result.key || result.md5 || idx}
                 className="bg-white p-6 rounded-3xl shadow-soft border border-stone-100 flex flex-col"
               >
+                <div className="relative mb-4 overflow-hidden rounded-2xl aspect-[3/4] bg-stone-100">
+                  {getCoverUrl(ensureCover(result), 'L') ? (
+                    <img
+                      src={getCoverUrl(ensureCover(result), 'L')}
+                      alt={result.title}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-sage-300 text-sm">No cover</div>
+                  )}
+                </div>
                 <h4 className="font-bold text-lg text-sage-800 mb-2">{result.title}</h4>
                 <p className="text-sage-500 mb-4">{result.author}</p>
                 <div className="mt-auto flex gap-3">

@@ -1,9 +1,10 @@
 import React from 'react';
 import { Star, Book, Edit, Trash2, ExternalLink, Download, BookmarkPlus } from 'lucide-react';
-import { hasCover, getCoverUrl } from '../utils/covers';
+import { getCoverUrl, ensureCover } from '../utils/covers';
 
 export function BookCard({ book, onEdit, onDelete, onAdd }) {
-    const coverUrl = hasCover(book.cover) ? getCoverUrl(book.cover) : null;
+    const cover = ensureCover(book);
+    const coverUrl = cover ? getCoverUrl(cover, 'L') : null;
 
     // Generate external links
     const openLibraryLink = book.openLibraryUrl || `https://openlibrary.org/search?q=${encodeURIComponent(book.title + ' ' + book.author)}`;
