@@ -12,7 +12,7 @@ import { calculateLibraryStats } from "../data/libgen";
 import { searchOpenLibrary } from "../data/openLibrary";
 
 // Import new Cozy components
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, BookOpen } from "lucide-react";
 import { Layout } from "./components/Layout";
 import { HeroSection } from "./components/HeroSection";
 import { BookGrid } from "./components/BookGrid";
@@ -247,7 +247,9 @@ export default function App() {
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-sage-300 text-sm bg-stone-50">No cover</div>
+                    <div className="w-full h-full flex items-center justify-center text-sage-300 bg-stone-50">
+                      <BookOpen className="w-8 h-8 animate-spin opacity-50" />
+                    </div>
                   )}
 
                   {/* Availability Badge */}

@@ -4,8 +4,15 @@ import { getCoverUrl, ensureCover } from '../utils/covers';
 
 export function BookCard({ book, onEdit, onDelete, onAdd }) {
     const [coverBroken, setCoverBroken] = useState(false);
+    const [imageLoaded, setImageLoaded] = useState(false);
     const cover = ensureCover(book);
     const coverUrl = !coverBroken && cover ? getCoverUrl(cover, 'L') : null;
+
+    // Reset state when cover changes
+    React.useEffect(() => {
+        setCoverBroken(false);
+        setImageLoaded(false);
+    }, [book.cover]);
 
     // Generate external links
     const openLibraryLink = book.openLibraryUrl || `https://openlibrary.org/search?q=${encodeURIComponent(book.title + ' ' + book.author)}`;
@@ -41,18 +48,23 @@ export function BookCard({ book, onEdit, onDelete, onAdd }) {
         <div className="group relative bg-white rounded-3xl shadow-soft hover:shadow-soft-xl transition-all duration-500 hover:-translate-y-2 overflow-hidden border border-stone-100 flex flex-col h-full">
             {/* Cover Image Area */}
             <div className="relative aspect-[2/3] overflow-hidden bg-stone-100">
-                {coverUrl ? (
+                {/* Placeholder / Loading State */}
+                <div className={`absolute inset-0 flex flex-col items-center justify-center text-sage-300 p-6 text-center bg-cream-50 transition-opacity duration-300 ${imageLoaded ? 'opacity-0' : 'opacity-100'}`}>
+                    <BookOpen className="w-16 h-16 mb-2 opacity-60 animate-spin" strokeWidth={1.5} />
+                    <span className="text-xs font-medium text-sage-400">
+                        {coverBroken ? 'No Cover' : 'Loading...'}
+                    </span>
+                </div>
+
+                {/* Cover Image */}
+                {coverUrl && !coverBroken && (
                     <img
                         src={coverUrl}
                         alt={`Cover of ${book.title}`}
-                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 group-hover:scale-110 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                        onLoad={() => setImageLoaded(true)}
                         onError={() => setCoverBroken(true)}
                     />
-                ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-sage-300 p-6 text-center bg-cream-50">
-                        <BookOpen className="w-16 h-16 mb-2 opacity-60 animate-spin" strokeWidth={1.5} />
-                        <span className="text-xs font-medium text-sage-400">Loading cover…</span>
-                    </div>
                 )}
 
                 {/* Overlay Gradient */}
