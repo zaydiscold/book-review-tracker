@@ -86,11 +86,11 @@ function NavLink({ icon, text, active, onClick }) {
 function CloudBadge({ cloudStatus }) {
     const status = cloudStatus?.status || "disabled";
     const copy = status === "online"
-        ? "Supabase connected"
+        ? "Server connected"
         : status === "checking"
-            ? "Checking Supabase…"
+            ? "Checking server…"
             : status === "offline"
-                ? "Supabase offline"
+                ? "Server offline"
                 : "Offline only";
 
     const styles = status === "online"
