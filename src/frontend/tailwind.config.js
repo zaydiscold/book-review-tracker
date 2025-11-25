@@ -11,56 +11,51 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Warm, cozy color palette
-        cream: {
-          50: '#FFFBF5',
-          100: '#FFF7ED',
-          200: '#FFEFD9',
-          300: '#FFE4C4',
-          400: '#FFD9AF',
-          500: '#FFCF9A',
+        // Paper & Ink Theme
+        paper: {
+          50: '#FDFBF7',
+          100: '#F9F5F1', // Main background
+          200: '#F2EBE5',
+          300: '#E6DCD3',
+          400: '#D4C5B9',
+          500: '#BFAFA6',
         },
-        rose: {
-          50: '#FFF1F2',
-          100: '#FFE4E6',
-          200: '#FECDD3',
-          300: '#FDA4AF',
-          400: '#FB7185',
-          500: '#F43F5E',
-          600: '#E11D48',
+        ink: {
+          50: '#F5F5F4',
+          100: '#E7E5E4',
+          200: '#D6D3D1',
+          300: '#A8A29E',
+          400: '#78716C',
+          500: '#57534E',
+          600: '#44403C',
+          700: '#2C2825', // Main text
+          800: '#1C1917',
+          900: '#0C0A09',
         },
-        sage: {
-          50: '#F6F7F6',
-          100: '#E8EBE8',
-          200: '#D1D8D1',
-          300: '#A8B5A8',
-          400: '#7F927F',
-          500: '#5A6D5A',
-          600: '#495749',
+        taupe: {
+          50: '#F7F6F5',
+          100: '#EBE9E8',
+          200: '#D8D4D2',
+          300: '#BDB6B3',
+          400: '#9E9490',
+          500: '#8C7B75', // Primary accent
+          600: '#70625D',
         },
-        lavender: {
-          50: '#FAF5FF',
-          100: '#F3E8FF',
-          200: '#E9D5FF',
-          300: '#D8B4FE',
-          400: '#C084FC',
-          500: '#A855F7',
+        sand: {
+          50: '#FDFCFB',
+          100: '#F7F4F1',
+          200: '#EBE5DF',
+          300: '#DCD3CB',
+          400: '#D4C5B9', // Secondary accent
+          500: '#B0A093',
         },
-        peach: {
-          50: '#FFF7ED',
-          100: '#FFEDD5',
-          200: '#FED7AA',
-          300: '#FDBA74',
-          400: '#FB923C',
-          500: '#F97316',
-        },
-        honey: {
-          50: '#FFFBEB',
-          100: '#FEF3C7',
-          200: '#FDE68A',
-          300: '#FCD34D',
-          400: '#FBBF24',
-          500: '#F59E0B',
+        clay: {
+          50: '#FCF7F5',
+          100: '#F8EDE9',
+          200: '#F0DCD5',
+          300: '#E6B8A2', // Highlight
+          400: '#D9967A',
+          500: '#C47456',
         },
       },
       fontFamily: {

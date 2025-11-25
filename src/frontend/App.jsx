@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { HashRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import {
   initDB,
   addBook,
@@ -14,44 +15,50 @@ import {
 
 // Import new Cozy components
 import { Layout } from "./components/Layout";
-import { HeroSection } from "./components/HeroSection";
-import { BookGrid } from "./components/BookGrid";
+import { Navbar } from "./components/Navbar";
 import { ToastOverlay } from "./components/ToastOverlay";
-import { LibGenWidget } from "./components/LibGenWidget";
+
+import { SettingsModal } from "./components/SettingsModal";
+
+// Pages
+import { Home } from "./pages/Home";
+import { MyLibrary } from "./pages/MyLibrary";
 
 export default function App() {
   const [books, setBooks] = useState([]);
-  const [toast, setToast] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [toast, setToast] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
 
-  // Calculate library statistics
-  const libraryStats = useMemo(() => calculateLibraryStats(books), [books]);
+  // Stats
+  const libraryStats = calculateLibraryStats(books);
 
-  const showToast = useCallback((text, tone = "info") => {
-    setToast({ id: Date.now(), text, tone });
+  // Toast helper
+  const showToast = useCallback((message, type = "info") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
   }, []);
 
-  const clearToast = useCallback(() => {
-    setToast(null);
-  }, []);
+  const clearToast = () => setToast(null);
 
-  // Bootstrap data
+  // Bootstrap
   useEffect(() => {
     async function bootstrap() {
       try {
         await initDB();
 
+        // Check for cloud sync
         if (isCloudSyncEnabled()) {
           try {
             const snapshot = await pullCloudSnapshot();
-            if (snapshot.status === "ok") {
+            if (snapshot) {
               await applyRemoteSnapshot(snapshot);
+              showToast("Synced with cloud!", "success");
             }
-          } catch (cloudError) {
-            console.warn("Failed to sync remote snapshot", cloudError);
-            showToast("Cloud sync unavailable. Using local data only.", "warning");
+          } catch (err) {
+            console.error("Sync failed:", err);
           }
         }
 
@@ -78,9 +85,6 @@ export default function App() {
       // Use the new LibGen search
       const results = await searchLibgen(query);
       setSearchResults(results);
-
-      // Also scroll to results
-      window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
     } catch (err) {
       setSearchError("Failed to search. Please try again.");
       console.error(err);
@@ -123,75 +127,49 @@ export default function App() {
   };
 
   return (
-    <Layout>
-      <HeroSection onSearch={handleSearch} />
+    <Router>
+      <Layout>
+        <Navbar onOpenSettings={() => setShowSettings(true)} />
 
-      {/* Search Results Section */}
-      {searching && (
-        <div className="text-center py-12">
-          <div className="animate-spin w-8 h-8 border-4 border-rose-400 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-sage-500">Searching the archives...</p>
-        </div>
-      )}
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <Home
+                onSearch={handleSearch}
+                searchResults={searchResults}
+                searching={searching}
+                searchError={searchError}
+                onAddBook={handleAddBook}
+              />
+            }
+          />
+          <Route
+            path="/library"
+            element={
+              <MyLibrary
+                books={books}
+                libraryStats={libraryStats}
+                onEdit={handleEditBook}
+                onDelete={handleDeleteBook}
+              />
+            }
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
 
-      {searchError && (
-        <div className="mb-10 mx-4 md:mx-0 rounded-2xl border border-rose-200 bg-rose-50/70 px-4 py-3 text-rose-700 shadow-soft animate-slide-up">
-          {searchError}
-        </div>
-      )}
+        {toast && (
+          <ToastOverlay
+            toast={toast}
+            onDismiss={clearToast}
+          />
+        )}
 
-      {searchResults.length > 0 && (
-        <div className="mb-16 animate-fade-in">
-          <h3 className="text-2xl font-serif font-bold text-sage-700 mb-6 px-4">Search Results</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {searchResults.map((result) => (
-              <div key={result.md5} className="bg-white p-6 rounded-3xl shadow-soft border border-stone-100 flex flex-col">
-                <h4 className="font-bold text-lg text-sage-800 mb-2">{result.title}</h4>
-                <p className="text-sage-500 mb-4">{result.author}</p>
-                <div className="mt-auto flex gap-3">
-                  <button
-                    onClick={() => handleAddBook({ ...result, status: 'wishlist' })}
-                    className="flex-1 bg-rose-100 text-rose-600 py-2 rounded-full font-medium hover:bg-rose-200 transition-colors"
-                  >
-                    Add to Wishlist
-                  </button>
-                  <button
-                    onClick={() => handleAddBook({ ...result, status: 'reading' })}
-                    className="flex-1 bg-sage-100 text-sage-600 py-2 rounded-full font-medium hover:bg-sage-200 transition-colors"
-                  >
-                    Start Reading
-                  </button>
-                </div>
-                {/* LibGen Widget for direct downloads */}
-                <div className="mt-4 pt-4 border-t border-stone-100">
-                  <LibGenWidget book={{ libgenMetadata: result.libgenMetadata }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Main Library Grid */}
-      <div className="mb-8 flex items-center justify-between px-4">
-        <h3 className="text-2xl font-serif font-bold text-sage-700">Your Library</h3>
-        <div className="text-sm text-sage-400 font-medium">
-          {books.length} books • {libraryStats.totalSize}
-        </div>
-      </div>
-
-      <BookGrid
-        books={books}
-        onEdit={handleEditBook}
-        onDelete={handleDeleteBook}
-      />
-
-      {toast && (
-        <ToastOverlay
-          toast={toast}
-          onDismiss={clearToast}
+        <SettingsModal
+          isOpen={showSettings}
+          onClose={() => setShowSettings(false)}
         />
-      )}
-    </Layout>
+      </Layout>
+    </Router>
   );
 }

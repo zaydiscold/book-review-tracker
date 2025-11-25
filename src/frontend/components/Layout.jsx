@@ -1,20 +1,15 @@
 import React from 'react';
-import { Navbar } from './Navbar';
 
 export function Layout({ children }) {
     return (
-        <div className="min-h-screen bg-cream-50 text-sage-600 font-sans selection:bg-rose-200 selection:text-rose-900">
-            <Navbar />
-
-            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fade-in">
+        <div className="min-h-screen bg-cream-50">
+            <main className="pb-20">
                 {children}
             </main>
 
-            <footer className="bg-white border-t border-stone-200 mt-auto">
-                <div className="max-w-7xl mx-auto px-4 py-12 sm:px-6 lg:px-8 text-center">
-                    <p className="text-sage-400 text-sm font-medium">
-                        &copy; {new Date().getFullYear()} The Reading Journal. Built with ❤️ for book lovers.
-                    </p>
+            <footer className="bg-white border-t border-stone-200 py-12">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sage-400 text-sm">
+                    <p>© {new Date().getFullYear()} Reading Journal. Crafted with care.</p>
                 </div>
             </footer>
         </div>
