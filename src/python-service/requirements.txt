@@ -1,3 +1,4 @@
 libgen-api-enhanced
 fastapi
 uvicorn
+aiohttp

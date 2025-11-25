@@ -1,12 +1,15 @@
 import React from 'react';
 import { BookOpen, Search, Plus, BarChart3, Library, Heart } from 'lucide-react';
 
-export function Navbar() {
+export function Navbar({ currentView = 'library', onNavigate }) {
     return (
         <nav className="sticky top-0 z-50 bg-cream-50/80 backdrop-blur-md border-b border-stone-200/50 shadow-soft transition-all duration-300">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
                 {/* Logo Area */}
-                <div className="flex items-center gap-3 group cursor-pointer">
+                <div
+                    className="flex items-center gap-3 group cursor-pointer"
+                    onClick={() => onNavigate && onNavigate('home')}
+                >
                     <div className="w-10 h-10 bg-gradient-to-br from-rose-100 to-rose-200 rounded-2xl flex items-center justify-center text-rose-600 shadow-inner-soft group-hover:scale-105 group-hover:shadow-soft transition-all duration-300">
                         <BookOpen className="w-6 h-6" strokeWidth={2} />
                     </div>
@@ -17,9 +20,24 @@ export function Navbar() {
 
                 {/* Navigation Links */}
                 <div className="hidden md:flex items-center gap-1">
-                    <NavLink icon={<Library className="w-4 h-4" />} text="Library" active />
-                    <NavLink icon={<Heart className="w-4 h-4" />} text="Wishlist" />
-                    <NavLink icon={<BarChart3 className="w-4 h-4" />} text="Stats" />
+                    <NavLink
+                        icon={<Library className="w-4 h-4" />}
+                        text="Home"
+                        active={currentView === 'home'}
+                        onClick={() => onNavigate && onNavigate('home')}
+                    />
+                    <NavLink
+                        icon={<BookOpen className="w-4 h-4" />}
+                        text="Read List"
+                        active={currentView === 'readlist'}
+                        onClick={() => onNavigate && onNavigate('readlist')}
+                    />
+                    <NavLink
+                        icon={<BarChart3 className="w-4 h-4" />}
+                        text="Stats"
+                        active={currentView === 'stats'}
+                        onClick={() => onNavigate && onNavigate('stats')}
+                    />
                 </div>
 
                 {/* Actions */}
@@ -37,10 +55,10 @@ export function Navbar() {
     );
 }
 
-function NavLink({ icon, text, active }) {
+function NavLink({ icon, text, active, onClick }) {
     return (
-        <a
-            href="#"
+        <button
+            onClick={onClick}
             className={`
                 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300
                 ${active
@@ -51,6 +69,6 @@ function NavLink({ icon, text, active }) {
         >
             {icon}
             <span>{text}</span>
-        </a>
+        </button>
     );
 }

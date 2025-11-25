@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 FRONTEND_DIR="$ROOT_DIR/src/frontend"
-BACKEND_DIR="$ROOT_DIR/src/backend"
+BACKEND_DIR="$ROOT_DIR/src/python-service"
 PID_FILE="$ROOT_DIR/.start-dev.pids"
 
 log() {
@@ -25,8 +25,8 @@ validate_workspace() {
     exit 1
   fi
 
-  if [[ ! -d "$BACKEND_DIR" || ! -f "$BACKEND_DIR/package.json" ]]; then
-    echo "Cannot find backend package.json in $BACKEND_DIR" >&2
+  if [[ ! -d "$BACKEND_DIR" || ! -f "$BACKEND_DIR/main.py" ]]; then
+    echo "Cannot find backend main.py in $BACKEND_DIR" >&2
     exit 1
   fi
 }
@@ -101,10 +101,13 @@ start_servers() {
   ) &
   local frontend_pid=$!
 
-  log "Starting backend (npm start)"
+  log "Starting backend (python main.py)"
   (
     cd "$BACKEND_DIR"
-    npm start
+    if [[ -d "venv" ]]; then
+        source venv/bin/activate
+    fi
+    python main.py
   ) &
   local backend_pid=$!
 

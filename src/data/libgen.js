@@ -1,6 +1,6 @@
 // Library Genesis API integration
 // Uses backend proxy to interact with libgen API
-const API_BASE_URL = "http://localhost:4000";
+const API_BASE_URL = "http://127.0.0.1:4000";
 
 /**
  * Get the fastest available libgen mirror
@@ -103,6 +103,7 @@ function normalizeLibgenResult(result, index = 0, allResults = []) {
       downloadUrl: result.downloadUrl,
       extension: result.extension,
       filesize: result.filesize,
+      size: result.size, // Add size field
       language: result.language,
       pages: result.pages,
       publisher: result.publisher,
@@ -116,6 +117,7 @@ function normalizeLibgenResult(result, index = 0, allResults = []) {
         year: r.year,
         extension: r.extension,
         filesize: r.filesize,
+        size: r.size, // Add size field here too
         pages: r.pages,
         language: r.language,
         publisher: r.publisher,

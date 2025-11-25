@@ -1,9 +1,13 @@
 import React from 'react';
-import { Star, Book, Edit, Trash2 } from 'lucide-react';
+import { Star, Book, Edit, Trash2, ExternalLink, Download } from 'lucide-react';
 import { hasCover, getCoverUrl } from '../utils/covers';
 
 export function BookCard({ book, onEdit, onDelete }) {
     const coverUrl = hasCover(book.cover) ? getCoverUrl(book.cover) : null;
+
+    // Generate external links
+    const openLibraryLink = book.openLibraryUrl || `https://openlibrary.org/search?q=${encodeURIComponent(book.title + ' ' + book.author)}`;
+    const libGenLink = book.libgenMetadata?.downloadUrl || `http://libgen.is/search.php?req=${encodeURIComponent(book.title + ' ' + book.author)}`;
 
     return (
         <div className="group relative bg-white rounded-3xl shadow-soft hover:shadow-soft-xl transition-all duration-500 hover:-translate-y-2 overflow-hidden border border-stone-100 flex flex-col h-full">
@@ -61,13 +65,39 @@ export function BookCard({ book, onEdit, onDelete }) {
                     </div>
 
                     <div className={`
-                px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider
-                ${book.status === 'reading' ? 'bg-rose-100 text-rose-600' :
+                        px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider
+                        ${book.status === 'reading' ? 'bg-rose-100 text-rose-600' :
                             book.status === 'completed' ? 'bg-sage-100 text-sage-600' :
-                                'bg-stone-100 text-stone-500'}
-            `}>
-                        {book.status}
+                                book.status === 'wishlist' ? 'bg-lavender-100 text-lavender-600' :
+                                    book.status === 'dnf' ? 'bg-stone-200 text-stone-500' :
+                                        'bg-stone-100 text-stone-500'}
+                    `}>
+                        {book.status === 'completed' ? 'Read' : book.status}
                     </div>
+                </div>
+
+                {/* External Links Footer */}
+                <div className="mt-3 pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-sage-400">
+                    <a
+                        href={openLibraryLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 hover:text-rose-500 transition-colors"
+                        title="View on OpenLibrary"
+                    >
+                        <ExternalLink className="w-3 h-3" />
+                        <span>OpenLibrary</span>
+                    </a>
+                    <a
+                        href={libGenLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1 hover:text-rose-500 transition-colors"
+                        title="Search on LibGen"
+                    >
+                        <Download className="w-3 h-3" />
+                        <span>LibGen</span>
+                    </a>
                 </div>
             </div>
         </div>

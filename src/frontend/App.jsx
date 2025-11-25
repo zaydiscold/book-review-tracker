@@ -18,6 +18,7 @@ import { HeroSection } from "./components/HeroSection";
 import { BookGrid } from "./components/BookGrid";
 import { ToastOverlay } from "./components/ToastOverlay";
 import { LibGenWidget } from "./components/LibGenWidget";
+import { StatsView } from "./components/StatsView";
 
 export default function App() {
   const [books, setBooks] = useState([]);
@@ -25,6 +26,7 @@ export default function App() {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [currentView, setCurrentView] = useState("home"); // home, readlist, stats
 
   // Calculate library statistics
   const libraryStats = useMemo(() => calculateLibraryStats(books), [books]);
@@ -123,8 +125,8 @@ export default function App() {
   };
 
   return (
-    <Layout>
-      <HeroSection onSearch={handleSearch} />
+    <Layout currentView={currentView} onNavigate={setCurrentView}>
+      {currentView === 'home' && <HeroSection onSearch={handleSearch} />}
 
       {/* Search Results Section */}
       {searching && (
@@ -172,19 +174,30 @@ export default function App() {
         </div>
       )}
 
-      {/* Main Library Grid */}
-      <div className="mb-8 flex items-center justify-between px-4">
-        <h3 className="text-2xl font-serif font-bold text-sage-700">Your Library</h3>
-        <div className="text-sm text-sage-400 font-medium">
-          {books.length} books • {libraryStats.totalSize}
-        </div>
-      </div>
+      {/* Main Content Area based on View */}
+      {/* Main Content Area based on View */}
+      {currentView === 'stats' && <StatsView stats={libraryStats} />}
 
-      <BookGrid
-        books={books}
-        onEdit={handleEditBook}
-        onDelete={handleDeleteBook}
-      />
+      {currentView === 'readlist' && (
+        <>
+          <div className="mb-8 flex items-center justify-between px-4">
+            <h3 className="text-2xl font-serif font-bold text-sage-700">Your Read List</h3>
+            <div className="text-sm text-sage-400 font-medium">
+              {books.length} books
+            </div>
+          </div>
+
+          <BookGrid
+            books={books}
+            onEdit={handleEditBook}
+            onDelete={handleDeleteBook}
+            emptyMessage={{
+              title: "Your read list is empty",
+              description: "Start searching for books on the Home page to add them here."
+            }}
+          />
+        </>
+      )}
 
       {toast && (
         <ToastOverlay
