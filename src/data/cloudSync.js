@@ -117,8 +117,19 @@ function normalizeBookFromCloud(book) {
     normalized.createdAt = now;
   }
 
-  if (!normalized.updatedAt) {
+  if (normalized.updatedAt) {
     normalized.updatedAt = normalized.createdAt;
+  }
+
+  // Parse cover if it's a JSON string
+  if (normalized.cover && typeof normalized.cover === "string") {
+    try {
+      if (normalized.cover.startsWith("{") || normalized.cover.startsWith("[")) {
+        normalized.cover = JSON.parse(normalized.cover);
+      }
+    } catch (e) {
+      // Ignore parse errors, keep as string
+    }
   }
 
   return normalized;
@@ -158,6 +169,31 @@ function assertIdentifier(value, label) {
 
 export function isCloudSyncEnabled() {
   return isSupabaseConfigured();
+}
+
+export async function checkSupabaseConnection() {
+  const client = getSupabaseClient();
+  if (!client) {
+    return { status: "disabled" };
+  }
+
+  try {
+    const { error } = await client
+      .from(BOOK_TABLE)
+      .select("id", { head: true, count: "exact" })
+      .limit(1);
+
+    if (error) {
+      throw error;
+    }
+
+    return { status: "online" };
+  } catch (err) {
+    return {
+      status: "offline",
+      message: err?.message ?? "Supabase not reachable"
+    };
+  }
 }
 
 async function fetchAllFromSupabase(client, table, { normalizer, validator }) {

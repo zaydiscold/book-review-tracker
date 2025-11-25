@@ -6,7 +6,7 @@ import {
   deleteBook,
   applyRemoteSnapshot
 } from "../data/db";
-import { isCloudSyncEnabled, pullCloudSnapshot } from "../data/cloudSync";
+import { isCloudSyncEnabled, pullCloudSnapshot, checkSupabaseConnection } from "../data/cloudSync";
 import {
   searchLibgen,
   calculateLibraryStats
@@ -21,6 +21,11 @@ import { LibGenWidget } from "./components/LibGenWidget";
 import { StatsView } from "./components/StatsView";
 
 export default function App() {
+  const [cloudStatus, setCloudStatus] = useState(() => ({
+    enabled: isCloudSyncEnabled(),
+    status: isCloudSyncEnabled() ? "checking" : "disabled",
+    message: ""
+  }));
   const [books, setBooks] = useState([]);
   const [toast, setToast] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
@@ -45,19 +50,49 @@ export default function App() {
       try {
         await initDB();
 
-        if (isCloudSyncEnabled()) {
-          try {
-            const snapshot = await pullCloudSnapshot();
-            if (snapshot.status === "ok") {
-              await applyRemoteSnapshot(snapshot);
+        if (cloudStatus.enabled) {
+          setCloudStatus((prev) => ({ ...prev, status: "checking", message: "" }));
+
+          const probe = await checkSupabaseConnection();
+          if (probe.status !== "online") {
+            setCloudStatus({
+              enabled: true,
+              status: "offline",
+              message: probe.message ?? "Supabase not reachable"
+            });
+            showToast("Supabase offline, using local data only.", "warning");
+          } else {
+            try {
+              const snapshot = await pullCloudSnapshot();
+              if (snapshot.status === "ok") {
+                const result = await applyRemoteSnapshot(snapshot);
+                setCloudStatus({
+                  enabled: true,
+                  status: "online",
+                  message: `Synced ${result.books} books${result.reviews ? `, ${result.reviews} reviews` : ""}`
+                });
+              } else {
+                setCloudStatus({
+                  enabled: true,
+                  status: "offline",
+                  message: "Supabase snapshot unavailable"
+                });
+                showToast("Supabase offline, using local data only.", "warning");
+              }
+            } catch (cloudError) {
+              console.warn("Failed to sync remote snapshot", cloudError);
+              setCloudStatus({
+                enabled: true,
+                status: "offline",
+                message: cloudError?.message ?? "Supabase sync failed"
+              });
+              showToast("Supabase offline, using local data only.", "warning");
             }
-          } catch (cloudError) {
-            console.warn("Failed to sync remote snapshot", cloudError);
-            showToast("Cloud sync unavailable. Using local data only.", "warning");
           }
         }
 
         await refreshData();
+        console.info("[app] Loaded books from local store:", (await getBooks())?.length ?? 0);
       } catch (error) {
         console.error("Failed to init IndexedDB", error);
         showToast("IndexedDB unavailable. Data will not persist.", "warning");
@@ -65,7 +100,7 @@ export default function App() {
     }
 
     bootstrap();
-  }, [showToast]);
+  }, [showToast, cloudStatus.enabled]);
 
   async function refreshData() {
     const bookList = await getBooks();
@@ -125,7 +160,11 @@ export default function App() {
   };
 
   return (
-    <Layout currentView={currentView} onNavigate={setCurrentView}>
+    <Layout
+      currentView={currentView}
+      onNavigate={setCurrentView}
+      cloudStatus={cloudStatus}
+    >
       {currentView === 'home' && <HeroSection onSearch={handleSearch} />}
 
       {/* Search Results Section */}
