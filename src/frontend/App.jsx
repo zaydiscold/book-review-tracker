@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   initDB,
   addBook,
+  updateBook,
   getBooks,
   deleteBook,
   applyRemoteSnapshot
@@ -157,6 +158,44 @@ export default function App() {
     }
   };
 
+  const handleRefreshCovers = async () => {
+    const missing = books.filter((b) => !ensureCover(b));
+    if (missing.length === 0) {
+      showToast("All books already have covers", "info");
+      return;
+    }
+
+    const updated = [];
+    for (const book of missing) {
+      const query = [book.title, book.author].filter(Boolean).join(" ");
+      if (!query) continue;
+
+      try {
+        const [ol] = await searchOpenLibrary(query, { limit: 1 });
+        if (!ol) continue;
+        const cover = ensureCover(ol);
+        if (!cover) continue;
+
+        await updateBook({
+          id: book.id,
+          cover,
+          openLibraryUrl: ol.openLibraryUrl ?? book.openLibraryUrl,
+          openLibraryIdentifiers: ol.identifiers ?? book.openLibraryIdentifiers
+        });
+        updated.push(book.id);
+      } catch (err) {
+        console.warn("Cover refresh failed for", book.id, err);
+      }
+    }
+
+    if (updated.length > 0) {
+      await refreshData();
+      showToast(`Updated covers for ${updated.length} book(s)`, "success");
+    } else {
+      showToast("No new covers found", "info");
+    }
+  };
+
   return (
     <Layout
       currentView={currentView}
@@ -272,8 +311,16 @@ export default function App() {
         <>
           <div className="mb-8 flex items-center justify-between px-4">
             <h3 className="text-2xl font-serif font-bold text-sage-700">Your Read List</h3>
-            <div className="text-sm text-sage-400 font-medium">
-              {books.length} books
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleRefreshCovers}
+                className="text-xs px-3 py-2 rounded-full border border-stone-200 text-sage-600 hover:border-rose-200 hover:text-rose-600 transition-colors"
+              >
+                Refresh covers
+              </button>
+              <div className="text-sm text-sage-400 font-medium">
+                {books.length} books
+              </div>
             </div>
           </div>
 
