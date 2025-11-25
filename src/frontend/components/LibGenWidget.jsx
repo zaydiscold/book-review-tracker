@@ -50,11 +50,6 @@ export function LibGenWidget({ book, onTryNextVersion }) {
           target="_blank"
           rel="noreferrer"
           className="flex-1 flex items-center justify-center gap-2 bg-taupe-500 text-white px-4 py-2 rounded-lg font-medium shadow-sm hover:bg-taupe-600 hover:shadow-md transition-all active:scale-95"
-          onClick={(e) => {
-            if (!downloadUrl) {
-              console.warn("No direct download URL available, using mirror");
-            }
-          }}
         >
           <Download className="w-4 h-4" />
           <span>Download</span>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Search, Plus, BarChart3, Library } from 'lucide-react';
+import { BookOpen, Search, Plus, BarChart3, Library, Database } from 'lucide-react';
 
 export function Navbar({ currentView = 'library', onNavigate, cloudStatus }) {
     return (
@@ -37,6 +37,12 @@ export function Navbar({ currentView = 'library', onNavigate, cloudStatus }) {
                         text="Stats"
                         active={currentView === 'stats'}
                         onClick={() => onNavigate && onNavigate('stats')}
+                    />
+                    <NavLink
+                        icon={<Database className="w-4 h-4" />}
+                        text="LibGen"
+                        active={currentView === 'libgen'}
+                        onClick={() => onNavigate && onNavigate('libgen')}
                     />
                 </div>
 

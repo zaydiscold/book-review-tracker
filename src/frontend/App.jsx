@@ -7,18 +7,16 @@ import {
   applyRemoteSnapshot
 } from "../data/db";
 import { isCloudSyncEnabled, pullCloudSnapshot, checkSupabaseConnection } from "../data/cloudSync";
-import {
-  searchLibgen,
-  calculateLibraryStats
-} from "../data/libgen";
+import { calculateLibraryStats } from "../data/libgen";
+import { searchOpenLibrary } from "../data/openLibrary";
 
 // Import new Cozy components
 import { Layout } from "./components/Layout";
 import { HeroSection } from "./components/HeroSection";
 import { BookGrid } from "./components/BookGrid";
 import { ToastOverlay } from "./components/ToastOverlay";
-import { LibGenWidget } from "./components/LibGenWidget";
 import { StatsView } from "./components/StatsView";
+import { LibGenView } from "./components/LibGenView";
 
 export default function App() {
   const [cloudStatus, setCloudStatus] = useState(() => ({
@@ -31,7 +29,7 @@ export default function App() {
   const [searchResults, setSearchResults] = useState([]);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
-  const [currentView, setCurrentView] = useState("home"); // home, readlist, stats
+  const [currentView, setCurrentView] = useState("home"); // home, readlist, stats, libgen
 
   // Calculate library statistics
   const libraryStats = useMemo(() => calculateLibraryStats(books), [books]);
@@ -112,14 +110,10 @@ export default function App() {
     setSearching(true);
     setSearchError("");
     try {
-      // Use the new LibGen search
-      const results = await searchLibgen(query);
+      const results = await searchOpenLibrary(query, { limit: 30 });
       setSearchResults(results);
-
-      // Also scroll to results
-      window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
     } catch (err) {
-      setSearchError("Failed to search. Please try again.");
+      setSearchError("Failed to search Open Library. Please try again.");
       console.error(err);
     } finally {
       setSearching(false);
@@ -181,12 +175,26 @@ export default function App() {
         </div>
       )}
 
-      {searchResults.length > 0 && (
+      {currentView === 'home' && searchResults.length > 0 && (
         <div className="mb-16 animate-fade-in">
-          <h3 className="text-2xl font-serif font-bold text-sage-700 mb-6 px-4">Search Results</h3>
+          <div className="px-4 mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="text-2xl font-serif font-bold text-sage-700">Search Results</h3>
+            <div className="flex items-center gap-3 text-sm text-sage-500">
+              <span>If you want a copy check out LibGen page</span>
+              <button
+                onClick={() => setCurrentView('libgen')}
+                className="inline-flex items-center gap-2 rounded-full bg-rose-100 text-rose-700 px-4 py-2 font-medium hover:bg-rose-200 transition-colors"
+              >
+                Go to LibGen
+              </button>
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {searchResults.map((result) => (
-              <div key={result.md5} className="bg-white p-6 rounded-3xl shadow-soft border border-stone-100 flex flex-col">
+            {searchResults.map((result, idx) => (
+              <div
+                key={result.key || result.md5 || idx}
+                className="bg-white p-6 rounded-3xl shadow-soft border border-stone-100 flex flex-col"
+              >
                 <h4 className="font-bold text-lg text-sage-800 mb-2">{result.title}</h4>
                 <p className="text-sage-500 mb-4">{result.author}</p>
                 <div className="mt-auto flex gap-3">
@@ -203,10 +211,18 @@ export default function App() {
                     Start Reading
                   </button>
                 </div>
-                {/* LibGen Widget for direct downloads */}
-                <div className="mt-4 pt-4 border-t border-stone-100">
-                  <LibGenWidget book={{ libgenMetadata: result.libgenMetadata }} />
-                </div>
+                {result.openLibraryUrl && (
+                  <div className="mt-4 pt-4 border-t border-stone-100 text-sm">
+                    <a
+                      className="text-rose-600 hover:text-rose-700 font-medium"
+                      href={result.openLibraryUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      View on Open Library
+                    </a>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -214,8 +230,9 @@ export default function App() {
       )}
 
       {/* Main Content Area based on View */}
-      {/* Main Content Area based on View */}
       {currentView === 'stats' && <StatsView stats={libraryStats} />}
+
+      {currentView === 'libgen' && <LibGenView onAddBook={handleAddBook} />}
 
       {currentView === 'readlist' && (
         <>
