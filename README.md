@@ -12,6 +12,15 @@ A local-first tracker for your library, wishlist, notes, and quick searches agai
 - IndexedDB for persistence (client only).
 - Optional LibGen proxy: Express on port 4000 forwarding to a Python microservice on 5001.
 
+## Supabase sync (optional)
+- Drop `docs/supabase.sql` into the Supabase SQL editor to create tables, indexes, triggers, and policies.
+- Add env vars in `src/frontend/.env`:
+  ```
+  VITE_SUPABASE_URL=...
+  VITE_SUPABASE_ANON_KEY=...
+  ```
+- The app will auto-sync when those env vars are set (see `src/data/supabaseClient.js` and `src/data/cloudSync.js`).
+
 ## Getting Started
 Frontend
 ```
