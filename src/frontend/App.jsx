@@ -11,6 +11,7 @@ import { calculateLibraryStats } from "../data/libgen";
 import { searchOpenLibrary } from "../data/openLibrary";
 
 // Import new Cozy components
+import { ExternalLink } from "lucide-react";
 import { Layout } from "./components/Layout";
 import { HeroSection } from "./components/HeroSection";
 import { BookGrid } from "./components/BookGrid";
@@ -190,48 +191,66 @@ export default function App() {
               </button>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {searchResults.map((result, idx) => (
               <div
                 key={result.key || result.md5 || idx}
-                className="bg-white p-4 rounded-2xl shadow-soft border border-stone-100 flex flex-col"
+                className="bg-white p-3 rounded-2xl shadow-sm border border-stone-100 flex flex-col h-full hover:shadow-md transition-shadow"
               >
-                <div className="relative mb-3 overflow-hidden rounded-xl aspect-[2/3] bg-stone-100">
+                <div className="relative mb-3 overflow-hidden rounded-xl aspect-[3/4] bg-stone-100 group">
                   {getCoverUrl(ensureCover(result), 'L') ? (
                     <img
                       src={getCoverUrl(ensureCover(result), 'L')}
                       alt={result.title}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-sage-300 text-sm">No cover</div>
+                    <div className="w-full h-full flex items-center justify-center text-sage-300 text-sm bg-stone-50">No cover</div>
+                  )}
+
+                  {/* Availability Badge */}
+                  {result.availability?.isReadAvailable && (
+                    <div className="absolute top-2 right-2 bg-emerald-500/90 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
+                      READ ONLINE
+                    </div>
                   )}
                 </div>
-                <h4 className="font-bold text-lg text-sage-800 mb-2">{result.title}</h4>
-                <p className="text-sage-500 mb-4">{result.author}</p>
-                <div className="mt-auto flex gap-3">
+
+                <div className="flex-1 min-h-0 flex flex-col">
+                  <h4 className="font-bold text-base text-sage-800 mb-1 line-clamp-2 leading-tight" title={result.title}>
+                    {result.title}
+                  </h4>
+                  <p className="text-xs text-sage-500 mb-0.5 line-clamp-1">{result.author}</p>
+                  {result.year && (
+                    <p className="text-[10px] text-sage-400 font-medium mb-3">{result.year}</p>
+                  )}
+                </div>
+
+                <div className="mt-3 flex gap-2">
                   <button
                     onClick={() => handleAddBook({ ...result, status: 'wishlist' })}
-                    className="flex-1 bg-rose-100 text-rose-600 py-2 rounded-full font-medium hover:bg-rose-200 transition-colors"
+                    className="flex-1 bg-rose-50 text-rose-600 border border-rose-100 py-1.5 rounded-lg font-medium text-xs hover:bg-rose-100 transition-colors"
                   >
-                    Add to Wishlist
+                    Wishlist
                   </button>
                   <button
                     onClick={() => handleAddBook({ ...result, status: 'reading' })}
-                    className="flex-1 bg-sage-50 text-sage-700 border border-sage-200 py-2 rounded-full font-medium hover:bg-sage-100 transition-colors"
+                    className="flex-1 bg-sage-50 text-sage-700 border border-sage-200 py-1.5 rounded-lg font-medium text-xs hover:bg-sage-100 transition-colors"
                   >
-                    Start Reading
+                    Read
                   </button>
                 </div>
+
                 {result.openLibraryUrl && (
-                  <div className="mt-4 pt-4 border-t border-stone-100 text-sm">
+                  <div className="mt-3 pt-2 border-t border-stone-50 text-center">
                     <a
-                      className="text-rose-600 hover:text-rose-700 font-medium"
+                      className="text-[10px] text-stone-400 hover:text-rose-500 font-medium transition-colors flex items-center justify-center gap-1"
                       href={result.openLibraryUrl}
                       target="_blank"
                       rel="noreferrer"
                     >
                       View on Open Library
+                      <ExternalLink className="w-3 h-3" />
                     </a>
                   </div>
                 )}
