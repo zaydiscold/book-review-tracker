@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Search, Download, ExternalLink, Loader2, ArrowUpRight } from 'lucide-react';
+import { Search, Download, ExternalLink, Loader2, ArrowUpRight, BookOpen } from 'lucide-react';
 import { searchLibgen } from '../../data/libgen';
 import { LibGenWidget } from './LibGenWidget';
 import { searchOpenLibrary } from '../../data/openLibrary';
@@ -189,7 +189,9 @@ export function LibGenView({ onAddBook }) {
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-sage-300 text-sm">No cover</div>
+                                                <div className="w-full h-full flex items-center justify-center text-sage-300">
+                                                    <BookOpen className="w-8 h-8 animate-spin" />
+                                                </div>
                                             )}
                                         </div>
                                     </div>

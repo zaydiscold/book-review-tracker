@@ -1,5 +1,5 @@
 import React from 'react';
-import { Star, Book, Edit, Trash2, ExternalLink, Download, BookmarkPlus } from 'lucide-react';
+import { Star, Book, Edit, Trash2, ExternalLink, Download, BookmarkPlus, BookOpen } from 'lucide-react';
 import { getCoverUrl, ensureCover } from '../utils/covers';
 
 export function BookCard({ book, onEdit, onDelete, onAdd }) {
@@ -48,8 +48,7 @@ export function BookCard({ book, onEdit, onDelete, onAdd }) {
                     />
                 ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-sage-300 p-6 text-center bg-cream-50">
-                        <Book className="w-16 h-16 mb-2 opacity-50" strokeWidth={1} />
-                        <span className="text-sm font-medium">No Cover</span>
+                        <BookOpen className="w-16 h-16 mb-2 opacity-50 animate-spin" strokeWidth={1} />
                     </div>
                 )}
 
