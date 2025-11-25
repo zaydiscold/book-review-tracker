@@ -1,7 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Download, ExternalLink, Loader2, ArrowUpRight } from 'lucide-react';
 import { searchLibgen } from '../../data/libgen';
 import { LibGenWidget } from './LibGenWidget';
+import { searchOpenLibrary } from '../../data/openLibrary';
+import { ensureCover, getCoverUrl } from '../utils/covers';
 
 // Working mirrors with specific URL patterns
 const MIRROR_CONFIGS = [
@@ -35,6 +37,7 @@ export function LibGenView({ onAddBook }) {
     const [results, setResults] = useState([]);
     const [searching, setSearching] = useState(false);
     const [error, setError] = useState('');
+    const [coverMap, setCoverMap] = useState({});
 
     const handleSearch = async (e) => {
         e.preventDefault();
@@ -61,6 +64,37 @@ export function LibGenView({ onAddBook }) {
             }
         }
     }, [results, error]);
+
+    // Try to fill missing covers using Open Library as fallback (best-effort)
+    useEffect(() => {
+        async function hydrateCovers() {
+            const missing = results.filter(r => !r.coverUrl).slice(0, 10); // limit requests
+            if (missing.length === 0) return;
+
+            const updates = {};
+            for (const res of missing) {
+                const query = [res.title, res.author].filter(Boolean).join(' ');
+                if (!query) continue;
+                try {
+                    const ol = await searchOpenLibrary(query, { limit: 1 });
+                    const first = ol[0];
+                    const cover = ensureCover(first);
+                    const url = cover ? getCoverUrl(cover, 'L') : null;
+                    if (url) {
+                        updates[res.md5] = url;
+                    }
+                } catch (err) {
+                    console.warn('Open Library cover lookup failed', err);
+                }
+            }
+
+            if (Object.keys(updates).length > 0) {
+                setCoverMap((prev) => ({ ...prev, ...updates }));
+            }
+        }
+
+        hydrateCovers();
+    }, [results]);
 
     return (
         <div className="min-h-screen bg-cream-50">
@@ -148,9 +182,9 @@ export function LibGenView({ onAddBook }) {
                                 <div key={result.md5} className="bg-white p-6 rounded-3xl shadow-soft border border-stone-100 flex flex-col">
                                     <div className="mb-4">
                                         <div className="relative rounded-xl overflow-hidden aspect-[3/4] bg-stone-100">
-                                            {result.coverUrl ? (
+                                            {coverMap[result.md5] || result.coverUrl ? (
                                                 <img
-                                                    src={result.coverUrl}
+                                                    src={coverMap[result.md5] || result.coverUrl}
                                                     alt={result.title}
                                                     className="w-full h-full object-cover"
                                                 />
