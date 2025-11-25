@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Star, Book, Edit, Trash2, ExternalLink, Download, BookmarkPlus, BookOpen } from 'lucide-react';
 import { getCoverUrl, ensureCover } from '../utils/covers';
 
 export function BookCard({ book, onEdit, onDelete, onAdd }) {
+    const [coverBroken, setCoverBroken] = useState(false);
     const cover = ensureCover(book);
-    const coverUrl = cover ? getCoverUrl(cover, 'L') : null;
+    const coverUrl = !coverBroken && cover ? getCoverUrl(cover, 'L') : null;
 
     // Generate external links
     const openLibraryLink = book.openLibraryUrl || `https://openlibrary.org/search?q=${encodeURIComponent(book.title + ' ' + book.author)}`;
@@ -45,10 +46,12 @@ export function BookCard({ book, onEdit, onDelete, onAdd }) {
                         src={coverUrl}
                         alt={`Cover of ${book.title}`}
                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                        onError={() => setCoverBroken(true)}
                     />
                 ) : (
                     <div className="w-full h-full flex flex-col items-center justify-center text-sage-300 p-6 text-center bg-cream-50">
-                        <BookOpen className="w-16 h-16 mb-2 opacity-50 animate-spin" strokeWidth={1} />
+                        <BookOpen className="w-16 h-16 mb-2 opacity-60 animate-spin" strokeWidth={1.5} />
+                        <span className="text-xs font-medium text-sage-400">Loading cover…</span>
                     </div>
                 )}
 
