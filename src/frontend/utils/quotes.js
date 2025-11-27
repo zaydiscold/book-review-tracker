@@ -62,7 +62,7 @@ export const fallbackQuotes = [
   "The library is inhabited by spirits that come out of the pages at night. — Isabel Allende",
   "When in doubt, go to the library. — Ron Weasley",
   "Reading furnishes the mind only with materials of knowledge; it is thinking that makes what we read ours. — John Locke",
-  '"Iqra" — the first word of the Quran; it means "Read."',
+  "\"Iqra\" — the first word of the Quran; it means to \"Read.\"",
   "The reading of all good books is like a conversation with the finest minds of past centuries. — René Descartes",
   "Good friends, good books, and a sleepy conscience: this is the ideal life. — Mark Twain",
   "Never trust anyone who has not brought a book with them. — Lemony Snicket",
