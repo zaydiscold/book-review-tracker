@@ -1,4 +1,4 @@
--- Supabase bootstrap for Reading Journal
+-- Supabase bootstrap for A Reader's Memoir
 -- Run in the SQL editor. Adjust names if you prefer a different schema.
 
 -- Books table

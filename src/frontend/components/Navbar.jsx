@@ -14,7 +14,7 @@ export function Navbar({ currentView = 'library', onNavigate, cloudStatus, onAdd
                         <BookOpen className="w-6 h-6" strokeWidth={2} />
                     </div>
                     <h1 className="text-2xl font-serif font-bold text-sage-800 tracking-tight group-hover:text-rose-600 transition-colors">
-                        Reading Journal
+                        A Reader's Memoir
                     </h1>
                 </div>
 

@@ -1,4 +1,4 @@
-# Reading Journal
+# A Reader's Memoir
 A local-first tracker for your library, wishlist, notes, and quick searches against OpenLibrary or LibGen.
 
 ## Highlights

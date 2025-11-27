@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the LibGen (Library Genesis) integration for the Reading Journal app, based on the enhanced Python library's capabilities but implemented in JavaScript/Node.js.
+This document describes the LibGen (Library Genesis) integration for the A Reader's Memoir app, based on the enhanced Python library's capabilities but implemented in JavaScript/Node.js.
 
 ---
 
