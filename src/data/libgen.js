@@ -4,6 +4,7 @@
 import { getSupabaseClient, isSupabaseConfigured } from "./supabaseClient";
 
 const API_BASE_URL = "http://127.0.0.1:4000";
+const isBrowser = typeof window !== "undefined";
 
 /**
  * Get the fastest available libgen mirror
@@ -35,7 +36,8 @@ export async function searchLibgen(query, { count = 10, sort_by = "def", reverse
     reverse
   };
 
-  // Prefer Supabase Edge Function in production/static hosting
+  // Try Supabase Edge Function first when configured (even on localhost),
+  // then fall back to local proxy if available.
   if (isSupabaseConfigured()) {
     const supabase = getSupabaseClient();
     if (supabase) {
@@ -57,20 +59,25 @@ export async function searchLibgen(query, { count = 10, sort_by = "def", reverse
   }
 
   // Local dev fallback (expects backend running on API_BASE_URL)
-  const response = await fetch(`${API_BASE_URL}/api/libgen/search`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(requestPayload)
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/libgen/search`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(requestPayload)
+    });
 
-  if (!response.ok) {
-    throw new Error(`Libgen search failed: ${response.status}`);
+    if (!response.ok) {
+      throw new Error(`Libgen search failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return normalizeLibgenResults(data.results);
+  } catch (err) {
+    console.error("[libgen] Local fallback failed:", err);
+    throw err;
   }
-
-  const data = await response.json();
-  return normalizeLibgenResults(data.results);
 }
 
 /**

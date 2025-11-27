@@ -1,8 +1,59 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, Sparkles } from 'lucide-react';
+import { fallbackQuotes, pickRandomQuote } from '../utils/quotes';
 
 export function HeroSection({ onSearch }) {
     const [query, setQuery] = useState("");
+    const [quote, setQuote] = useState(() => pickRandomQuote());
+
+    useEffect(() => {
+        let active = true;
+
+        const setIfActive = (text) => {
+            if (active && text) {
+                setQuote(text);
+            }
+        };
+
+        (async () => {
+            // Primary: Quotable (short quotes, English)
+            try {
+                const res = await fetch("https://api.quotable.io/random?maxLength=200");
+                if (!res.ok) throw new Error(`quotable status ${res.status}`);
+                const data = await res.json();
+                if (data?.content) {
+                    const author = data.author ? ` — ${data.author}` : "";
+                    setIfActive(`${data.content}${author}`);
+                    return;
+                }
+            } catch (err) {
+                console.warn("[quote] quotable fetch failed; trying secondary", err);
+            }
+
+            // Secondary: GitHub-hosted quotes JSON (programming-quotes-api)
+            try {
+                const res = await fetch(
+                    "https://raw.githubusercontent.com/skolakoda/programming-quotes-api/master/quotes.json"
+                );
+                if (!res.ok) throw new Error(`github quotes status ${res.status}`);
+                const list = await res.json();
+                if (Array.isArray(list) && list.length > 0) {
+                    const pick = list[Math.floor(Math.random() * list.length)];
+                    const line = pick?.en || pick?.quote;
+                    const author = pick?.author ? ` — ${pick.author}` : "";
+                    if (line) {
+                        setIfActive(`${line}${author}`);
+                    }
+                }
+            } catch (err) {
+                console.warn("[quote] secondary fetch failed; using fallback", err);
+            }
+        })();
+
+        return () => {
+            active = false;
+        };
+    }, []);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -25,8 +76,8 @@ export function HeroSection({ onSearch }) {
                     <div className="mb-8 flex justify-center">
                         <div className="relative rounded-full px-4 py-1.5 text-sm leading-6 text-sage-600 ring-1 ring-sage-900/10 hover:ring-sage-900/20 bg-white/50 backdrop-blur-sm shadow-sm transition-all">
                             <span className="flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-rose-400" />
-                                Rediscover the joy of reading
+                        <Sparkles className="w-4 h-4 text-rose-400" />
+                        Follow the ink, find the wonder
                             </span>
                         </div>
                     </div>
@@ -36,7 +87,11 @@ export function HeroSection({ onSearch }) {
                     </h1>
 
                     <p className="mt-6 text-lg leading-8 text-sage-600 max-w-xl mx-auto font-light">
-                        Track your reading journey, discover hidden gems, and build a library that reflects your soul.
+                        Rummage the ink-black stacks and grow a library that reflects you.
+                    </p>
+
+                    <p className="mt-4 text-sm text-sage-500 max-w-md mx-auto italic">
+                        {quote}
                     </p>
 
                     <div className="mt-10 flex items-center justify-center gap-x-6">
