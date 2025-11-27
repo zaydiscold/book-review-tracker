@@ -1,5 +1,8 @@
 // Library Genesis API integration
-// Uses backend proxy to interact with libgen API
+// Primary path: Supabase Edge Function (libgen-search)
+// Fallback: local backend proxy at API_BASE_URL (for local dev)
+import { getSupabaseClient, isSupabaseConfigured } from "./supabaseClient";
+
 const API_BASE_URL = "http://127.0.0.1:4000";
 
 /**
@@ -7,17 +10,8 @@ const API_BASE_URL = "http://127.0.0.1:4000";
  * @returns {Promise<string>} The fastest mirror URL
  */
 export async function getMirror() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/libgen/mirror`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch mirror: ${response.status}`);
-    }
-    const data = await response.json();
-    return data.mirror;
-  } catch (error) {
-    console.warn("Error fetching libgen mirror, using fallback:", error);
-    return "http://libgen.is";
-  }
+  // Edge function doesn't expose mirror endpoint; use a reliable default
+  return "http://libgen.li";
 }
 
 /**
@@ -30,30 +24,53 @@ export async function getMirror() {
  * @returns {Promise<Array>} Array of book results with libgen metadata
  */
 export async function searchLibgen(query, { count = 10, sort_by = "def", reverse = false } = {}) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/libgen/search`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        query,
-        count,
-        sort_by,
-        reverse
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Libgen search failed: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return normalizeLibgenResults(data.results);
-  } catch (error) {
-    console.error("Error searching libgen:", error);
-    throw error;
+  if (!query || query.trim().length < 3) {
+    throw new Error("Search query must be at least 3 characters");
   }
+
+  const requestPayload = {
+    query: query.trim(),
+    count,
+    sort_by,
+    reverse
+  };
+
+  // Prefer Supabase Edge Function in production/static hosting
+  if (isSupabaseConfigured()) {
+    const supabase = getSupabaseClient();
+    if (supabase) {
+      try {
+        const { data, error } = await supabase.functions.invoke("libgen-search", {
+          body: requestPayload
+        });
+        if (error) {
+          throw error;
+        }
+        if (data?.error) {
+          throw new Error(data.error);
+        }
+        return normalizeLibgenResults(data?.results ?? []);
+      } catch (err) {
+        console.warn("[libgen] Supabase function failed, falling back to local API:", err);
+      }
+    }
+  }
+
+  // Local dev fallback (expects backend running on API_BASE_URL)
+  const response = await fetch(`${API_BASE_URL}/api/libgen/search`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(requestPayload)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Libgen search failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return normalizeLibgenResults(data.results);
 }
 
 /**
@@ -61,17 +78,13 @@ export async function searchLibgen(query, { count = 10, sort_by = "def", reverse
  * @returns {Promise<Object>} Latest book metadata
  */
 export async function getLatestUpload() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/libgen/latest`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch latest upload: ${response.status}`);
-    }
-    const data = await response.json();
-    return normalizeLibgenResult(data.latest);
-  } catch (error) {
-    console.error("Error fetching latest upload:", error);
-    throw error;
+  // Not supported via edge function; fallback to local backend only
+  const response = await fetch(`${API_BASE_URL}/api/libgen/latest`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch latest upload: ${response.status}`);
   }
+  const data = await response.json();
+  return normalizeLibgenResult(data.latest);
 }
 
 /**
