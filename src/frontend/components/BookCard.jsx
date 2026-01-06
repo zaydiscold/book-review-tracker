@@ -77,6 +77,7 @@ export function BookCard({ book, onEdit, onDelete, onAdd }) {
                             onClick={() => onAdd(book)}
                             className="p-2 bg-white/90 backdrop-blur-sm text-sage-600 rounded-full hover:bg-white hover:text-rose-500 shadow-lg transition-colors"
                             title="Add to Library"
+                            aria-label={`Add ${book.title} to library`}
                         >
                             <BookmarkPlus className="w-4 h-4" />
                         </button>
@@ -86,6 +87,7 @@ export function BookCard({ book, onEdit, onDelete, onAdd }) {
                                 onClick={() => onEdit(book)}
                                 className="p-2 bg-white/90 backdrop-blur-sm text-sage-600 rounded-full hover:bg-white hover:text-rose-500 shadow-lg transition-colors"
                                 title="Edit"
+                                aria-label={`Edit ${book.title}`}
                             >
                                 <Edit className="w-4 h-4" />
                             </button>
@@ -93,6 +95,7 @@ export function BookCard({ book, onEdit, onDelete, onAdd }) {
                                 onClick={() => onDelete(book)}
                                 className="p-2 bg-white/90 backdrop-blur-sm text-sage-600 rounded-full hover:bg-white hover:text-rose-500 shadow-lg transition-colors"
                                 title="Delete"
+                                aria-label={`Delete ${book.title}`}
                             >
                                 <Trash2 className="w-4 h-4" />
                             </button>
