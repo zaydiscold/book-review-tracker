@@ -71,7 +71,7 @@ export function BookCard({ book, onEdit, onDelete, onAdd }) {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                 {/* Quick Actions Overlay */}
-                <div className={`absolute bottom-4 right-4 flex gap-2 transition-all duration-300 delay-100 ${onAdd ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 group-hover:translate-y-0 group-hover:opacity-100'}`}>
+                <div className={`absolute bottom-4 right-4 flex gap-2 transition-all duration-300 delay-100 ${onAdd ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 focus-within:translate-y-0 focus-within:opacity-100'}`}>
                     {onAdd ? (
                         <button
                             onClick={() => onAdd(book)}
@@ -161,6 +161,7 @@ export function BookCard({ book, onEdit, onDelete, onAdd }) {
                             rel="noopener noreferrer"
                             className="text-[10px] bg-stone-100 px-1.5 py-0.5 rounded hover:bg-rose-100 hover:text-rose-600 transition-colors"
                             title={result2?.extension ? `LibGen.st - ${result2.extension.toUpperCase()}` : "LibGen.st"}
+                            aria-label={result2?.extension ? `LibGen.st mirror (${result2.extension.toUpperCase()})` : "LibGen.st mirror"}
                         >
                             2
                         </a>
@@ -170,6 +171,7 @@ export function BookCard({ book, onEdit, onDelete, onAdd }) {
                             rel="noopener noreferrer"
                             className="text-[10px] bg-stone-100 px-1.5 py-0.5 rounded hover:bg-rose-100 hover:text-rose-600 transition-colors"
                             title={result3?.extension ? `LibGen.gs - ${result3.extension.toUpperCase()}` : "LibGen.gs"}
+                            aria-label={result3?.extension ? `LibGen.gs mirror (${result3.extension.toUpperCase()})` : "LibGen.gs mirror"}
                         >
                             3
                         </a>
