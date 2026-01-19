@@ -59,19 +59,22 @@ export function AddBookModal({ isOpen, onClose, onSave }) {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-sage-600 mb-1">Title</label>
+                        <label htmlFor="add-book-title" className="block text-sm font-medium text-sage-600 mb-1">Title</label>
                         <input
+                            id="add-book-title"
                             value={title}
                             onChange={(e) => setTitle(e.target.value)}
                             className="w-full rounded-lg border border-stone-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-200"
                             placeholder="Book title"
                             required
+                            autoFocus
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-sage-600 mb-1">Author</label>
+                        <label htmlFor="add-book-author" className="block text-sm font-medium text-sage-600 mb-1">Author</label>
                         <input
+                            id="add-book-author"
                             value={author}
                             onChange={(e) => setAuthor(e.target.value)}
                             className="w-full rounded-lg border border-stone-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-200"
@@ -80,8 +83,9 @@ export function AddBookModal({ isOpen, onClose, onSave }) {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-sage-600 mb-1">Status</label>
+                        <label htmlFor="add-book-status" className="block text-sm font-medium text-sage-600 mb-1">Status</label>
                         <select
+                            id="add-book-status"
                             value={status}
                             onChange={(e) => setStatus(e.target.value)}
                             className="w-full rounded-lg border border-stone-200 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-rose-200"
@@ -95,8 +99,9 @@ export function AddBookModal({ isOpen, onClose, onSave }) {
                     <div className="space-y-2">
                         <div className="flex gap-2">
                             <div className="flex-1">
-                                <label className="block text-sm font-medium text-sage-600 mb-1">Cover type</label>
+                                <label htmlFor="add-book-cover-type" className="block text-sm font-medium text-sage-600 mb-1">Cover type</label>
                                 <select
+                                    id="add-book-cover-type"
                                     value={coverType}
                                     onChange={(e) => setCoverType(e.target.value)}
                                     className="w-full rounded-lg border border-stone-200 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-rose-200"
@@ -107,8 +112,9 @@ export function AddBookModal({ isOpen, onClose, onSave }) {
                                 </select>
                             </div>
                             <div className="flex-1">
-                                <label className="block text-sm font-medium text-sage-600 mb-1">Cover value</label>
+                                <label htmlFor="add-book-cover-value" className="block text-sm font-medium text-sage-600 mb-1">Cover value</label>
                                 <input
+                                    id="add-book-cover-value"
                                     value={coverValue}
                                     onChange={(e) => setCoverValue(e.target.value)}
                                     className="w-full rounded-lg border border-stone-200 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-rose-200"
