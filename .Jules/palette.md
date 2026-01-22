@@ -7,3 +7,7 @@
 ## 2024-05-22 - Modal Interaction Patterns
 **Learning:** Users expect modals to be keyboard-ready immediately upon opening.
 **Action:** Always use `autoFocus` on the primary input field and ensure the modal container has `role="dialog"` and `aria-modal="true"`.
+
+## 2024-05-22 - Input Action Button Layouts
+**Learning:** When placing absolute-positioned action buttons (like "Search" or "Clear") inside text inputs, standard padding (e.g., `pr-4`) is insufficient and causes text overlap.
+**Action:** Measure the button width and apply generous right padding (e.g., `pr-32` or more) to the input field to ensure text remains visible and doesn't run behind the actions.

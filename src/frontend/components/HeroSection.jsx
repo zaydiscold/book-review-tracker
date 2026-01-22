@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Search, Sparkles } from 'lucide-react';
+import { Search, Sparkles, X } from 'lucide-react';
 import { fallbackQuotes, pickRandomQuote } from '../utils/quotes';
 
 export function HeroSection({ onSearch }) {
@@ -102,11 +102,22 @@ export function HeroSection({ onSearch }) {
                             <input
                                 type="text"
                                 id="search-input"
-                                className="block w-full rounded-full border-0 py-4 pl-11 pr-4 text-sage-900 shadow-soft ring-1 ring-inset ring-sage-200 placeholder:text-sage-400 focus:ring-2 focus:ring-inset focus:ring-rose-300 sm:text-sm sm:leading-6 transition-all duration-300 bg-white/80 backdrop-blur-sm hover:bg-white"
+                                className="block w-full rounded-full border-0 py-4 pl-11 pr-32 text-sage-900 shadow-soft ring-1 ring-inset ring-sage-200 placeholder:text-sage-400 focus:ring-2 focus:ring-inset focus:ring-rose-300 sm:text-sm sm:leading-6 transition-all duration-300 bg-white/80 backdrop-blur-sm hover:bg-white"
                                 placeholder="Search for a book, author, or ISBN..."
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
+                                aria-label="Search books"
                             />
+                            {query && (
+                                <button
+                                    type="button"
+                                    onClick={() => setQuery('')}
+                                    className="absolute right-28 top-1/2 -translate-y-1/2 p-1 text-sage-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-colors"
+                                    aria-label="Clear search"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            )}
                             <button
                                 type="submit"
                                 className="absolute right-2 top-2 bottom-2 bg-rose-500 text-white px-6 rounded-full font-medium text-sm shadow-md hover:bg-rose-600 transition-all duration-200 hover:shadow-lg active:scale-95"
