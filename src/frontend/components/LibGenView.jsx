@@ -128,11 +128,13 @@ export function LibGenView({ onAddBook }) {
 
                         <div className="mt-10 flex items-center justify-center gap-x-6">
                             <form onSubmit={handleSearch} className="relative w-full max-w-md group">
+                                <label htmlFor="libgen-search" className="sr-only">Search LibGen</label>
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                     <Search className="h-5 w-5 text-sage-400 group-focus-within:text-rose-500 transition-colors" />
                                 </div>
                                 <input
                                     type="text"
+                                    id="libgen-search"
                                     className="block w-full rounded-full border-0 py-4 pl-11 pr-4 text-sage-900 shadow-soft ring-1 ring-inset ring-sage-200 placeholder:text-sage-400 focus:ring-2 focus:ring-inset focus:ring-rose-300 sm:text-sm sm:leading-6 transition-all duration-300 bg-white/80 backdrop-blur-sm hover:bg-white"
                                     placeholder="Search for a book, author, or ISBN..."
                                     value={query}
@@ -205,12 +207,14 @@ export function LibGenView({ onAddBook }) {
                                         <button
                                             onClick={() => onAddBook({ ...result, status: 'wishlist' })}
                                             className="flex-1 bg-rose-100 text-rose-600 py-2 rounded-full font-medium hover:bg-rose-200 transition-colors text-sm"
+                                            aria-label={`Add ${result.title} to Wishlist`}
                                         >
                                             Add to Wishlist
                                         </button>
                                         <button
                                             onClick={() => onAddBook({ ...result, status: 'reading' })}
                                             className="flex-1 bg-sage-100 text-sage-600 py-2 rounded-full font-medium hover:bg-sage-200 transition-colors text-sm"
+                                            aria-label={`Start reading ${result.title}`}
                                         >
                                             Start Reading
                                         </button>
