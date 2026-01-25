@@ -6,9 +6,11 @@ export function Navbar({ currentView = 'library', onNavigate, cloudStatus, onAdd
         <nav className="sticky top-0 z-50 bg-cream-50/80 backdrop-blur-md border-b border-stone-200/50 shadow-soft transition-all duration-300">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
                 {/* Logo Area */}
-                <div
-                    className="flex items-center gap-3 group cursor-pointer"
+                <button
+                    type="button"
+                    className="flex items-center gap-3 group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded-xl"
                     onClick={() => onNavigate && onNavigate('home')}
+                    aria-label="Go to home"
                 >
                     <div className="w-10 h-10 bg-gradient-to-br from-rose-100 to-rose-200 rounded-2xl flex items-center justify-center text-rose-600 shadow-inner-soft group-hover:scale-105 group-hover:shadow-soft transition-all duration-300">
                         <BookOpen className="w-6 h-6" strokeWidth={2} />
@@ -16,7 +18,7 @@ export function Navbar({ currentView = 'library', onNavigate, cloudStatus, onAdd
                     <h1 className="text-2xl font-serif font-bold text-sage-800 tracking-tight group-hover:text-rose-600 transition-colors">
                         A Reader's Memoir
                     </h1>
-                </div>
+                </button>
 
                 {/* Navigation Links */}
                 <div className="hidden md:flex items-center gap-1">
