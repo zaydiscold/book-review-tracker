@@ -7,6 +7,7 @@ const MIRRORS = [
   { name: "LibGen.vg", url: "https://libgen.vg/index.php?req=", label: "Backup 02" }
 ];
 const SHELF_KEY = "readers-memoir-searches";
+const DEMO_QUERIES = ["Dune", "The Color Purple", "Red Mars", "Beloved"];
 
 function coverUrl(book) {
   return book?.cover?.value ? `https://covers.openlibrary.org/b/${book.cover.type === "id" ? "id" : "ISBN"}/${book.cover.value}-L.jpg` : null;
@@ -25,14 +26,19 @@ export default function App() {
     catch { setSaved([]); }
   }, []);
 
-  async function search(event) {
-    event?.preventDefault();
-    const term = query.trim();
+  async function runSearch(rawQuery) {
+    const term = rawQuery.trim();
     if (!term) return;
+    setQuery(term);
     setSearching(true); setError("");
     try { setResults(await searchOpenLibrary(term, { limit: 9 })); }
     catch { setError("The book lookup is unavailable right now. You can still use the catalog links below."); }
     finally { setSearching(false); }
+  }
+
+  function search(event) {
+    event.preventDefault();
+    runSearch(query);
   }
 
   function saveSearch(book) {
@@ -50,8 +56,8 @@ export default function App() {
   return <main className="memoir">
     <header className="navbar"><button className="wordmark" onClick={() => setView("home")}>A Reader’s Memoir</button><nav><button className={view === "home" ? "selected" : ""} onClick={() => setView("home")}>Discover</button><button className={view === "shelf" ? "selected" : ""} onClick={() => setView("shelf")}>My library <span>{saved.length}</span></button></nav></header>
     {view === "home" ? <>
-      <section className="hero"><div className="orb rose" /><div className="orb lavender" /><div className="hero-copy"><p className="eyebrow">Your next chapter starts here</p><h1>Find a book.<br /><em>Choose a path.</em></h1><p>Look up a title, then open it through the primary catalog or either backup. The choices stay visible, right where you need them.</p><form onSubmit={search}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by title, author, or ISBN…" aria-label="Search books" /><button disabled={searching}>{searching ? "Searching…" : "Search the archive"}</button></form><div className="quick-searches"><span>Try</span><button onClick={() => { setQuery("Frankenstein"); }}>Frankenstein</button><button onClick={() => { setQuery("Dune"); }}>Dune</button><button onClick={() => { setQuery("Beloved"); }}>Beloved</button></div></div></section>
-      <section className="search-area"><div className="section-title"><div><p className="eyebrow">Search results</p><h2>{searching ? "Searching the shelves…" : results.length ? "Choose your edition" : "Search for a book"}</h2></div><p>Visible links, no hidden redirect</p></div>{error && <p className="alert">{error}</p>}{results.length > 0 && <div className="results-grid">{results.map((book) => <BookResult key={book.key} book={book} onSave={saveSearch} />)}</div>}{!searching && !results.length && !error && <div className="empty-state">Search a title and you’ll get a clean card with all three catalog routes.</div>}</section>
+      <section className="hero"><div className="orb rose" /><div className="orb lavender" /><div className="hero-copy"><p className="eyebrow">Your next chapter starts here</p><h1>Choose a book.<br /><em>Choose a path.</em></h1><p>Look up a title, then open it through the primary catalog or either backup. The choices stay visible, right where you need them.</p><form onSubmit={search}><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search by title, author, or ISBN…" aria-label="Search books" /><button disabled={searching}>{searching ? "Searching…" : "Search the archive"}</button></form><div className="quick-searches"><span>Demo lineup</span>{DEMO_QUERIES.map((title) => <button key={title} onClick={() => runSearch(title)}>{title}</button>)}</div></div></section>
+      <section className="search-area"><div className="section-title"><div><p className="eyebrow">Search results</p><h2>{searching ? "Searching the shelves…" : results.length ? "Choose your edition" : "Choose a book"}</h2></div><p>Visible links, no hidden redirect</p></div>{error && <p className="alert">{error}</p>}{results.length > 0 && <div className="results-grid">{results.map((book) => <BookResult key={book.key} book={book} onSave={saveSearch} />)}</div>}{!searching && !results.length && !error && <div className="empty-state">Choose a demo title above or search anything you want; every result gets three visible catalog routes.</div>}</section>
     </> : <section className="library"><p className="eyebrow">Kept in this browser</p><h1>Your reading paths</h1>{saved.length === 0 ? <div className="empty-state">Save a result to keep its catalog links close at hand.</div> : <div className="saved-list">{saved.map((book) => <article key={book.title}><div><h2>{book.title}</h2><p>{book.author || "Catalog search"}</p></div><div className="saved-actions"><a href={`${MIRRORS[0].url}${encodeURIComponent(book.query)}`} target="_blank" rel="noreferrer">Open primary ↗</a><button onClick={() => removeSearch(book.title)}>Remove</button></div></article>)}</div>}</section>}
     <footer>Catalog availability can vary by location. The search links are deliberately shown together so a blocked route is never a dead end.</footer>
   </main>;
