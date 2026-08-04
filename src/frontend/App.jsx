@@ -13,6 +13,18 @@ function coverUrl(book) {
   return book?.cover?.value ? `https://covers.openlibrary.org/b/${book.cover.type === "id" ? "id" : "ISBN"}/${book.cover.value}-L.jpg` : null;
 }
 
+function rankResults(results, query) {
+  const normalizedQuery = query.toLocaleLowerCase();
+  return [...results]
+    .sort((left, right) => {
+      const leftExact = left.title?.toLocaleLowerCase() === normalizedQuery;
+      const rightExact = right.title?.toLocaleLowerCase() === normalizedQuery;
+      if (leftExact !== rightExact) return leftExact ? -1 : 1;
+      return (left.year ?? Number.MAX_SAFE_INTEGER) - (right.year ?? Number.MAX_SAFE_INTEGER);
+    })
+    .slice(0, 9);
+}
+
 export default function App() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -31,7 +43,7 @@ export default function App() {
     if (!term) return;
     setQuery(term);
     setSearching(true); setError("");
-    try { setResults(await searchOpenLibrary(term, { limit: 9 })); }
+    try { setResults(rankResults(await searchOpenLibrary(term, { limit: 30 }), term)); }
     catch { setError("The book lookup is unavailable right now. You can still use the catalog links below."); }
     finally { setSearching(false); }
   }
@@ -67,5 +79,5 @@ export default function App() {
 function BookResult({ book, onSave }) {
   const image = coverUrl(book);
   const catalogQuery = `${book.title} ${book.author || ""}`.trim();
-  return <article className="result-card"><div className="cover">{image ? <img src={image} alt={`Cover of ${book.title}`} /> : <span>Reader’s<br />Memoir</span>}</div><div className="result-info"><p className="year">{book.year || "Edition date unknown"}</p><h3>{book.title}</h3><p>{book.author || "Unknown author"}</p><button className="save" onClick={() => onSave(book)}>Save to my library</button></div><div className="routes"><p className="eyebrow">Open this search in</p>{MIRRORS.map((mirror) => <a key={mirror.name} href={`${mirror.url}${encodeURIComponent(catalogQuery)}`} target="_blank" rel="noreferrer"><span>{mirror.name}</span><small>{mirror.label} ↗</small></a>)}</div></article>;
+  return <article className="result-card"><div className="cover">{image ? <img src={image} alt={`Cover of ${book.title}`} /> : <span>Reader’s<br />Memoir</span>}</div><div className="result-info"><p className="year">{book.year || "Edition date unknown"}</p><h3>{book.title}</h3><p>{book.author || "Unknown author"}</p><button className="save" aria-label={`Save ${book.title}${book.author ? ` by ${book.author}` : ""} to my library`} onClick={() => onSave(book)}>Save to my library</button></div><div className="routes"><p className="eyebrow">Open this search in</p>{MIRRORS.map((mirror) => <a key={mirror.name} href={`${mirror.url}${encodeURIComponent(catalogQuery)}`} target="_blank" rel="noreferrer" aria-label={`Search ${book.title}${book.author ? ` by ${book.author}` : ""} on ${mirror.name}, ${mirror.label}`}><span>{mirror.name}</span><small>{mirror.label} ↗</small></a>)}</div></article>;
 }
