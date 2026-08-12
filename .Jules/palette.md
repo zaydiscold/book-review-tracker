@@ -7,3 +7,7 @@
 ## 2024-05-22 - Modal Interaction Patterns
 **Learning:** Users expect modals to be keyboard-ready immediately upon opening.
 **Action:** Always use `autoFocus` on the primary input field and ensure the modal container has `role="dialog"` and `aria-modal="true"`.
+
+## 2024-10-24 - Semantic Clickable Elements
+**Learning:** Using `div` with `onClick` for navigation or actions excludes keyboard and screen reader users.
+**Action:** Replace clickable `div`s with semantic `<button>` elements, ensuring `type="button"` and proper focus styles are applied.
