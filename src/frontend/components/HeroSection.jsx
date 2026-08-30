@@ -96,13 +96,16 @@ export function HeroSection({ onSearch }) {
 
                     <div className="mt-10 flex items-center justify-center gap-x-6">
                         <form onSubmit={handleSubmit} className="relative w-full max-w-md group">
+                            <label htmlFor="search-input" className="sr-only">
+                                Search for a book
+                            </label>
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <Search className="h-5 w-5 text-sage-400 group-focus-within:text-rose-500 transition-colors" />
                             </div>
                             <input
                                 type="text"
                                 id="search-input"
-                                className="block w-full rounded-full border-0 py-4 pl-11 pr-4 text-sage-900 shadow-soft ring-1 ring-inset ring-sage-200 placeholder:text-sage-400 focus:ring-2 focus:ring-inset focus:ring-rose-300 sm:text-sm sm:leading-6 transition-all duration-300 bg-white/80 backdrop-blur-sm hover:bg-white"
+                                className="block w-full rounded-full border-0 py-4 pl-11 pr-32 text-sage-900 shadow-soft ring-1 ring-inset ring-sage-200 placeholder:text-sage-400 focus:ring-2 focus:ring-inset focus:ring-rose-300 sm:text-sm sm:leading-6 transition-all duration-300 bg-white/80 backdrop-blur-sm hover:bg-white"
                                 placeholder="Search for a book, author, or ISBN..."
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
